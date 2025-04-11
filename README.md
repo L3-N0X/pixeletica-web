@@ -9,6 +9,8 @@ A web application for converting images to Minecraft block art and exploring the
 - Interactive web map viewer for exploring pixel art
 - Zoom, pan, and examine block details
 - Dark theme interface with serif fonts
+- URL-based sharing for map views and coordinates
+- Bookmark interesting locations and views
 
 ## Getting Started
 
@@ -73,6 +75,18 @@ pixeletica-web/
 - `npm run preview` - Preview production build
 - `npm run lint` - Lint code
 - `npm run format` - Format code with Prettier
+
+## URL Sharing
+
+The application supports sharing specific map views via URL parameters:
+
+- `/map/:mapId` - Base URL for viewing a map
+- `?x=123&y=456` - Specify the center position coordinates
+- `?zoom=2` - Set the zoom level (e.g., 2 = 200% zoom)
+- `?blockId=abc123` - Pre-select a specific block
+- `?chunkX=5&chunkZ=10` - Pre-select a specific chunk
+
+Example: `http://localhost:3000/map/abc123?x=150&y=-200&zoom=2.5&blockId=block_5_10`
 
 ## Backend Integration
 

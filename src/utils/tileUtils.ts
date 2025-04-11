@@ -174,3 +174,76 @@ export const getCachedTile = (
   const key = getTileCacheKey(mapName, zoom, x, y);
   return tileCache.get(key) || null;
 };
+
+/**
+ * Calculate the tile coordinates for a given point at a specific zoom level
+ */
+export function pointToTile(
+  x: number,
+  y: number,
+  zoom: number,
+  tileSize: number
+): { tileX: number; tileY: number } {
+  const scale = Math.pow(2, zoom);
+  const tileX = Math.floor((x / tileSize) * scale);
+  const tileY = Math.floor((y / tileSize) * scale);
+
+  return { tileX, tileY };
+}
+
+/**
+ * Calculate the block coordinates from pixel coordinates
+ */
+export function pixelToBlock(
+  x: number,
+  y: number,
+  blockSize: number
+): { blockX: number; blockY: number } {
+  const blockX = Math.floor(x / blockSize);
+  const blockY = Math.floor(y / blockSize);
+
+  return { blockX, blockY };
+}
+
+/**
+ * Calculate the chunk coordinates from block coordinates
+ */
+export function blockToChunk(
+  blockX: number,
+  blockY: number,
+  chunkSize: number
+): { chunkX: number; chunkY: number } {
+  const chunkX = Math.floor(blockX / chunkSize);
+  const chunkY = Math.floor(blockY / chunkSize);
+
+  return { chunkX, chunkY };
+}
+
+/**
+ * Calculate the scale factor for a given zoom level
+ */
+export function zoomToScale(zoom: number, maxZoom: number): number {
+  return Math.pow(2, zoom - maxZoom + 1);
+}
+
+/**
+ * Calculate the zoom level for a given scale
+ */
+export function scaleToZoom(scale: number, maxZoom: number): number {
+  return Math.log2(scale) + maxZoom - 1;
+}
+
+/**
+ * Generate a unique key for a tile
+ */
+export function generateTileKey(zoom: number, x: number, y: number): string {
+  return `${zoom}_${x}_${y}`;
+}
+
+/**
+ * Create a shareable URL for the current view
+ */
+export function createShareableUrl(mapId: string, x: number, y: number, zoom: number): string {
+  const baseUrl = window.location.origin;
+  return `${baseUrl}/map/${mapId}?x=${Math.round(x)}&y=${Math.round(y)}&zoom=${zoom}`;
+}

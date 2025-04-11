@@ -6,7 +6,7 @@ const colors = {
   darkBg: '#121212',
   darkElevated: '#1e1e1e',
   darkBorder: '#2e2e2e',
-  primaryDark: '#00897b',  // Dark teal-greenish main accent
+  primaryDark: '#00897b', // Dark teal-greenish main accent
   primaryDarker: '#00695c',
   primaryLightest: '#b2dfdb',
   textDark: '#e0e0e0',
@@ -28,9 +28,6 @@ const darkTheme = mergeTheme(defaultTheme, {
         primary: {
           backgroundColor: colors.primaryDark,
           color: 'white',
-          _hover: {
-            backgroundColor: colors.primaryDarker,
-          },
         },
       },
       baseStyle: {
@@ -65,29 +62,12 @@ const darkTheme = mergeTheme(defaultTheme, {
       baseStyle: {
         color: colors.primaryLightest,
         textDecoration: 'none',
-        _hover: {
-          textDecoration: 'underline',
-        },
       },
     },
     TableCell: {
       baseStyle: {
         backgroundColor: colors.darkElevated,
         borderBottom: `1px solid ${colors.darkBorder}`,
-      },
-    },
-    TableRow: {
-      baseStyle: {
-        _hover: {
-          backgroundColor: colors.darkBg,
-        },
-      },
-    },
-    Menu: {
-      baseStyle: {
-        backgroundColor: colors.darkElevated,
-        borderRadius: 4,
-        border: `1px solid ${colors.darkBorder}`,
       },
     },
     MenuItem: {

@@ -13,6 +13,7 @@ python -m pixeletica --mode api
 ```
 
 Additional options:
+
 - `--host` - Host to bind the server to (default: 0.0.0.0)
 - `--port` - Port to bind the server to (default: 8000)
 - `--log-level` - Logging level (debug, info, warning, error, critical)
@@ -26,6 +27,7 @@ python -m pixeletica --mode api --host 127.0.0.1 --port 9000 --log-level debug
 ### API Documentation
 
 Once the server is running, the API documentation is available at:
+
 - OpenAPI UI: `http://localhost:8000/docs`
 - Root endpoint: `http://localhost:8000/`
 
@@ -40,6 +42,7 @@ The API provides the following main endpoints:
 Starts a new image conversion task. This is an asynchronous operation: the API immediately returns a task ID, and the image processing takes place in the background.
 
 **Request Body**:
+
 ```json
 {
   "image": "base64-encoded-image-data",
@@ -68,6 +71,7 @@ Starts a new image conversion task. This is an asynchronous operation: the API i
 ```
 
 Parameters:
+
 - `image`: (required) Base64-encoded image data
 - `filename`: (required) Original filename with extension
 - `width`: (optional) Target width in pixels (maintaining aspect ratio if only one dimension provided)
@@ -77,6 +81,7 @@ Parameters:
 - `schematicSettings`: (optional) Schematic generation settings
 
 **Response**:
+
 ```json
 {
   "taskId": "uuid-task-identifier",
@@ -93,6 +98,7 @@ Parameters:
 Check the status of a conversion task.
 
 **Response**:
+
 ```json
 {
   "taskId": "uuid-task-identifier",
@@ -104,6 +110,7 @@ Check the status of a conversion task.
 ```
 
 Status values:
+
 - `queued`: Task is waiting to be processed
 - `processing`: Task is currently being processed
 - `completed`: Task has been successfully completed
@@ -116,9 +123,11 @@ Status values:
 Get a list of all generated files available for download.
 
 **Query Parameters**:
+
 - `category`: (optional) Filter files by category (dithered, rendered, schematic, web)
 
 **Response**:
+
 ```json
 {
   "taskId": "uuid-task-identifier",
@@ -171,6 +180,7 @@ Download all generated files as a ZIP archive.
 Download selected files as a ZIP archive.
 
 **Request Body**:
+
 ```json
 {
   "fileIds": ["1", "3"]
@@ -186,6 +196,7 @@ Download selected files as a ZIP archive.
 Delete a conversion task and all associated files.
 
 **Response**:
+
 ```json
 {
   "message": "Task uuid-task-identifier deletion initiated",

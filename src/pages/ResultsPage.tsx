@@ -13,6 +13,8 @@ import {
   IconButton,
   Table,
   Tooltip,
+  DownloadIcon,
+  ArrowRightIcon,
 } from 'evergreen-ui';
 import {
   getConversionStatus,
@@ -238,7 +240,7 @@ const ResultsPage: React.FC = () => {
               marginRight={8}
               onClick={handleDownloadSelected}
               disabled={selectedFiles.length === 0 || downloading}
-              iconBefore={downloading ? undefined : 'download'}
+              iconBefore={downloading ? undefined : DownloadIcon}
             >
               {downloading ? <Spinner size={16} /> : `Download (${selectedFiles.length})`}
             </Button>
@@ -246,7 +248,7 @@ const ResultsPage: React.FC = () => {
 
           <Tooltip content="Download all files as ZIP">
             <IconButton
-              icon="download"
+              icon={DownloadIcon}
               appearance="default"
               size="large"
               is="a"
@@ -271,9 +273,11 @@ const ResultsPage: React.FC = () => {
             <Table.Body>
               {filteredFiles.length === 0 ? (
                 <Table.Row>
-                  <Table.TextCell colSpan={6} textAlign="center" padding={24}>
-                    No files found in this category
-                  </Table.TextCell>
+                  <Table.Cell is="td" {...{ colspan: 6 }} flex={1}>
+                    <Text textAlign="center" display="block" padding={24}>
+                      No files found in this category
+                    </Text>
+                  </Table.Cell>
                 </Table.Row>
               ) : (
                 filteredFiles.map((file) => (
@@ -308,7 +312,7 @@ const ResultsPage: React.FC = () => {
                     <Table.Cell flexBasis={100}>
                       <Tooltip content="Download">
                         <IconButton
-                          icon="download"
+                          icon={DownloadIcon}
                           is="a"
                           href={taskId ? getFileDownloadUrl(taskId, file.fileId) : '#'}
                           target="_blank"
@@ -341,7 +345,7 @@ const ResultsPage: React.FC = () => {
         {filteredFiles.some((f) => f.category === 'rendered') && (
           <Button
             appearance="primary"
-            iconAfter="arrow-right"
+            iconAfter={<ArrowRightIcon />}
             onClick={() => {
               const renderedFile = filteredFiles.find((f) => f.category === 'rendered');
               if (renderedFile) {

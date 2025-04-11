@@ -1,7 +1,16 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import { Pane, Button, IconButton, Tooltip, Badge } from 'evergreen-ui';
-import { getTileUrl, getFullImage } from '@services/mapService';
+import {
+  Pane,
+  IconButton,
+  Tooltip,
+  Badge,
+  ZoomInIcon,
+  HomeIcon,
+  ZoomOutIcon,
+  ConsoleIcon,
+} from 'evergreen-ui';
+import { getFullImage } from '@services/mapService';
 import { calculateVisibleTiles, getBlockAtPosition } from '@utils/tileUtils';
 import type { PixelArtMetadata, BlockDetails, ImageTile } from '@types';
 
@@ -309,16 +318,16 @@ const PixelArtViewer: React.FC<PixelArtViewerProps> = ({ metadata, mapName, onBl
               borderRadius={4}
             >
               <Tooltip content="Zoom In">
-                <IconButton icon="zoom-in" onClick={() => zoomIn()} />
+                <IconButton icon={<ZoomInIcon />} onClick={() => zoomIn()} />
               </Tooltip>
               <Tooltip content="Zoom Out">
-                <IconButton icon="zoom-out" onClick={() => zoomOut()} />
+                <IconButton icon={<ZoomOutIcon />} onClick={() => zoomOut()} />
               </Tooltip>
               <Tooltip content="Reset View">
-                <IconButton icon="home" onClick={() => resetTransform()} />
+                <IconButton icon={<HomeIcon />} onClick={() => resetTransform()} />
               </Tooltip>
               <Tooltip content="Toggle Debug Info">
-                <IconButton icon="console" onClick={() => setDebug(!debug)} />
+                <IconButton icon={<ConsoleIcon />} onClick={() => setDebug(!debug)} />
               </Tooltip>
             </Pane>
 

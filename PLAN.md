@@ -18,146 +18,161 @@
    - Ensure proper contrast for accessibility
 
 4. Create basic types for your data structures:
-   - `PixelArtMetadata` (includes tile and coordinate system details)
-   - `ImageTile`
-   - `Chunk`
-   - `BlockDetails`
+   - Define types based on API OpenAPI specification
+   - `TaskResponse`, `FileInfo`, `MapInfo`
+   - `ConversionRequest` and related settings types
 
-## Phase 2: Core Components Structure
+## Phase 2: Application Routing Structure
 
 5. Create the application routing structure:
-   - Homepage listing all available pixel art maps
-   - Dynamic routes for individual maps (`/map/:mapName`)
-   - Detail panel component for block and chunk information
+   - Homepage (`/`) - Overview and starting point
+   - Create new conversion page (`/create`)
+   - Conversion status page (`/status/:taskId`) - For tracking conversion progress
+   - Map viewer page (`/map/:mapId`) - For viewing completed conversions
+   - Error and not found pages
 
-6. Implement the main `PixelArtViewer` component skeleton:
-   - Container for the transformation wrapper
-   - Placeholder for tile rendering
-   - Canvas overlay for the grid
-   - Controls for zoom in/out and reset
+6. Implement layout components:
+   - App shell with navigation
+   - Common header and footer
+   - Toast notification system for errors and success messages
 
-7. Create utility functions:
-   - Zoom level calculations
-   - Visible tile determination
-   - Coordinate and chunk calculations
-   - Metadata parsing for block and chunk details
+7. Create API service:
+   - Implement functions that match the OpenAPI specification
+   - Set up request and response handling with proper error management
+   - Create TypeScript interfaces that match API schemas
 
-## Phase 3: Data Loading
+## Phase 3: Image Upload and Conversion
 
-8. Create a data loading service that:
-   - Fetches the list of available maps from `/api/maps.json`
-   - Loads specific map metadata from `/api/map/{mapName}/metadata.json`
-   - Implements caching for already loaded data
+8. Build the create conversion page:
 
-9. Implement the two-tier tile and metadata loading:
-   - Load the full image at the initial zoom level (`/api/map/{mapName}/full-image.jpg`)
-   - Dynamically load tiles based on zoom level and viewport (`/api/map/{mapName}/tiles/{zoom}/{x}/{y}.jpg`)
+   - Implement drag-and-drop image upload with preview
+   - Create forms for configuring:
+     - Dithering algorithm (`floyd_steinberg`, `ordered`, `random`)
+     - Output dimensions (width/height)
+     - Export settings (file types, grid lines, etc.)
+     - Schematic settings (name, author, description)
 
-10. Parse metadata for:
-    - Tile stitching and coordinate system
-    - Block and chunk details
-    - Origin and grid alignment
+9. Implement the conversion submission flow:
+   - Convert image to base64 as required by the API
+   - Submit to `/conversion/start` endpoint
+   - Handle the response (which contains the task ID)
+   - Redirect to status page with task ID in URL (`/status/:taskId`)
 
-## Phase 4: Tiled Image Viewer Implementation
+10. Create the conversion status tracking page:
+    - Poll the `/conversion/{task_id}` endpoint to check progress
+    - Display progress with visual indicators
+    - Handle different status states (`queued`, `processing`, `completed`, `failed`)
+    - Provide cancel option using the DELETE endpoint
+    - Automatically redirect to map viewer when completed
 
-11. Implement the tile calculation logic:
-    - Calculate current zoom level based on transformation scale
-    - Determine which tiles are visible in the current viewport
-    - Generate tile URLs based on zoom level, x, and y coordinates
+## Phase 4: Result Preview and Download
 
-12. Create the tile rendering component:
-    - Implement efficient rendering with React `useMemo`
-    - Add image loading states (placeholder while loading)
-    - Configure proper pixel art rendering with CSS
+11. Implement conversion results preview:
+    - Fetch available files using `/conversion/{task_id}/files` endpoint
+    - Display thumbnails and previews for different result types (dithered, rendered)
+    - Group files by category for better organization
 
-13. Implement the dynamic tile loading system:
-    - Load tiles only when they become visible
-    - Implement proper loading/unloading as user pans
-    - Add preloading for adjacent tiles for smoother panning
+12. Create the file download functionality:
+    - Individual file downloads using `/conversion/{task_id}/files/{file_id}`
+    - Batch download options using `/conversion/{task_id}/download`
+    - Selective download using POST endpoint with file IDs
+    - Add download progress indicators
 
-## Phase 5: Grid Overlay Implementation
+13. Implement map viewing redirection:
+    - Add button to view the map in the interactive viewer
+    - Use the task ID as the map ID for the map viewer URL
+    - Redirect to `/map/:mapId` where mapId is the task ID
 
-14. Implement the canvas-based grid overlay:
-    - Create drawing functions for the block grid (e.g., 16×16 blocks per chunk)
-    - Add major grid lines for chunks
-    - Ensure the grid aligns properly with the origin coordinates
+## Phase 5: Map Listing and Management
 
-15. Add grid interactivity:
-    - Implement mouse position to block and chunk calculation
-    - Add hover highlighting for blocks and chunks
-    - Add selection functionality for blocks and chunks
+14. Create the homepage with map listing:
+    - Fetch available maps from `/api/maps.json` endpoint
+    - Display thumbnails and metadata for each map
+    - Provide quick access to create new conversions
+    - Add sorting and filtering options
 
-16. Create the detail panel component:
-    - Show information for the selected block and its chunk
-    - Include block type, coordinates, and chunk coordinates
-    - Style it properly with Evergreen and CSS
-    - Add animations for panel appearance/disappearance
+15. Implement map management features:
+    - Delete maps using the task deletion endpoint
+    - Add favorite/star feature (stored in local storage)
+    - Recent maps history
 
-## Phase 6: Image Upload and Conversion
+## Phase 6: Map Viewer Implementation
 
-17. Implement an image upload and configuration interface:
-    - Allow users to upload an image file
-    - Provide fields for configuring conversion settings:
-      - Dithering algorithm
-      - Schematic settings (e.g., coordinate origin, name, description, author)
-      - Image conversion settings (e.g., width, height, defaulting to original size/aspect ratio if missing)
-      - Colors for inserted lines in the final images
+16. Create the base map viewer component:
+    - Set up the route with URL parameter for map ID: `/map/:mapId`
+    - Load map metadata from `/api/map/{map_id}/metadata.json`
+    - Initialize transformation wrapper with proper settings
 
-18. Integrate with the Python backend:
-    - Use the backend's OpenAPI documentation (to be added later) to configure API requests
-    - Start the conversion process by sending the image and settings to the backend
-    - Poll the backend for conversion results
+17. Implement the tile loading system:
+    - Create a tile calculation engine to determine visible tiles based on zoom level
+    - Use the `/api/map/{map_id}/tiles/{zoom}/{x}/{y}.png` endpoint to load tiles
+    - Implement viewport calculation to only load visible tiles
+    - Add loading states and placeholders
 
-19. Display conversion results:
-    - Show different previews of the generated pixel art
-    - Allow users to download the schematic and other generated files
-    - Provide an option to load the result directly into the web map viewer for detailed exploration
+18. Implement the canvas-based grid overlay:
+    - Create drawing functions for block and chunk grids
+    - Align grid with the coordinate system from metadata
+    - Add different colors for block and chunk lines
 
-## Phase 7: Optimization and Refinement
+19. Add interactivity to the map viewer:
+    - Implement hover and selection functionality
+    - Create the detail panel to show block and chunk information
+    - Add zoom control buttons and reset view functionality
+    - Implement keyboard shortcuts for navigation
 
-20. Implement performance optimizations:
-    - Use `React.memo` for tile components to prevent unnecessary re-renders
-    - Implement tile caching to prevent reloading of already seen tiles
-    - Use `requestAnimationFrame` for smooth canvas rendering
+## Phase 7: URL Sharing and State Management
 
-21. Add user experience enhancements:
-    - Smooth loading transitions between zoom levels
-    - Loading indicators for both tiles and data
-    - Error handling for missing tiles or data
+20. Implement URL state management:
+    - Store current view position and zoom level in URL query parameters
+    - Enable direct sharing of specific map views
+    - Add "Copy share link" button to generate a URL with current viewport
+    - Restore view from URL parameters when loading page
 
-22. Implement responsive design:
-    - Adjust the viewer for different screen sizes
-    - Create mobile-friendly controls
-    - Handle touch events properly
+21. Create deep-linking functionality:
+    - Add the ability to link directly to specific blocks or chunks
+    - Implement URL format for coordinates: `/map/:mapId?x=123&y=456&zoom=2`
+    - Generate bookmark links for interesting locations
 
-## Phase 8: Docker Integration
+## Phase 8: Optimization and Performance
 
-23. Configure the application for Docker:
-    - Create proper Vite build configuration
-    - Set up correct asset paths for production builds
-    - Configure the app to handle Docker volume paths
+22. Implement performance optimizations:
+    - Use React.memo for tile components to prevent unnecessary re-renders
+    - Add tile caching to prevent reloading already visible tiles
+    - Implement progressive loading for different zoom levels
+    - Use requestAnimationFrame for smooth canvas rendering
+    - Add debouncing for viewport calculations during panning
 
-24. Test volume mounting:
-    - Ensure the app can access all JSON data and images from the Docker volume
-    - Verify dynamic loading works correctly with the volume structure
+23. Improve user experience:
+    - Add loading indicators and transitions
+    - Implement error boundary components
+    - Create fallback UI for missing tiles or data
+    - Add helpful tooltips and onboarding guidance
 
-## Phase 9: Finalization and Testing
+24. Create responsive design:
+    - Adjust UI for different screen sizes
+    - Optimize touch interactions for mobile devices
+    - Create collapsible panels for small screens
+    - Ensure accessibility compliance
 
-25. Implement final testing:
-    - Write tests for critical components
-    - Test zoom/pan functionality
-    - Verify grid selection works correctly
-    - Ensure block and chunk details load properly
-    - Test the image upload and conversion workflow
+## Phase 9: Docker Integration
 
-26. Create production build optimizations:
-    - Configure code splitting
-    - Implement proper caching strategies
-    - Minimize bundle size
+25. Configure Docker integration:
+    - Set up proper environment variable handling
+    - Configure API base URL for different environments
+    - Set up production build process with Docker
+    - Ensure proper asset paths for Docker deployment
 
-27. Document the frontend application:
-    - Create README with setup instructions
-    - Document component structure
-    - Add comments to complex functions
+26. Implement volume mounting configuration:
+    - Set up correct paths for accessing files from Docker volume
+    - Configure the app to handle Docker volume structures
+    - Test file access from mounted volumes
 
-This plan now includes functionality for uploading images, configuring conversion settings, and integrating with a Python backend to generate pixel art results. The results can be explored in the web map viewer for building the pixel art in Minecraft block by block.
+## Phase 10: Testing and Documentation
+
+27. Create documentation:
+    - Add comprehensive README with setup instructions
+    - Document component structure and API
+    - Create user guide with tutorials
+    - Add developer documentation for future contributors
+
+This implementation plan now correctly integrates with the provided API endpoints, creates a proper URL structure for sharing, and implements the full workflow from image upload to interactive map viewing.

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Pane, Heading, Button, Text } from 'evergreen-ui';
 import { Link } from 'react-router-dom';
+import { Pane, Heading, Text, Button } from 'evergreen-ui';
 
 const NotFoundPage: React.FC = () => {
   return (
@@ -9,19 +9,20 @@ const NotFoundPage: React.FC = () => {
       flexDirection="column"
       alignItems="center"
       justifyContent="center"
-      height="100%"
-      textAlign="center"
+      height="60vh"
     >
       <Heading size={900} marginBottom={16}>
         404
       </Heading>
-      <Heading size={700} marginBottom={24}>
+      <Heading size={700} marginBottom={8}>
         Page Not Found
       </Heading>
-      <Text marginBottom={32}>The page you are looking for doesn't exist or has been moved.</Text>
-      <Link to="/">
-        <Button appearance="primary">Back to Home</Button>
-      </Link>
+      <Text size={500} marginBottom={32} color="muted">
+        The page you're looking for doesn't exist.
+      </Text>
+      <Button appearance="primary" as={Link} to="/">
+        Return to Home
+      </Button>
     </Pane>
   );
 };

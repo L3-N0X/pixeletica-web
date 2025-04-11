@@ -236,6 +236,160 @@
         }
       }
     },
+    "/api/maps.json": {
+      "get": {
+        "tags": ["maps"],
+        "summary": "List Maps",
+        "description": "List all available maps (completed conversion tasks).\n\nReturns:\n    List of all maps that have completed processing and have web exports",
+        "operationId": "list_maps_api_maps_json_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/MapListResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/map/{map_id}/metadata.json": {
+      "get": {
+        "tags": ["maps"],
+        "summary": "Get Map Metadata",
+        "description": "Get detailed metadata for a specific map.\n\nArgs:\n    map_id: Map identifier (task ID)\n\nReturns:\n    JSON metadata for the map including tile information",
+        "operationId": "get_map_metadata_api_map__map_id__metadata_json_get",
+        "parameters": [
+          {
+            "name": "map_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Map Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/map/{map_id}/full-image.jpg": {
+      "get": {
+        "tags": ["maps"],
+        "summary": "Get Map Full Image",
+        "description": "Get the full image for a map.\n\nArgs:\n    map_id: Map identifier (task ID)\n\nReturns:\n    Full-size JPEG image of the map",
+        "operationId": "get_map_full_image_api_map__map_id__full_image_jpg_get",
+        "parameters": [
+          {
+            "name": "map_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Map Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/map/{map_id}/thumbnail.jpg": {
+      "get": {
+        "tags": ["maps"],
+        "summary": "Get Map Thumbnail",
+        "description": "Get a thumbnail for a map.\n\nArgs:\n    map_id: Map identifier (task ID)\n\nReturns:\n    Thumbnail JPEG image of the map",
+        "operationId": "get_map_thumbnail_api_map__map_id__thumbnail_jpg_get",
+        "parameters": [
+          {
+            "name": "map_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Map Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/map/{map_id}/tiles/{zoom}/{x}/{y}.png": {
+      "get": {
+        "tags": ["maps"],
+        "summary": "Get Map Tile",
+        "description": "Get a specific tile for a map.\n\nArgs:\n    map_id: Map identifier (task ID)\n    zoom: Zoom level\n    x: X-coordinate of the tile\n    y: Y-coordinate of the tile\n\nReturns:\n    PNG image of the requested tile",
+        "operationId": "get_map_tile_api_map__map_id__tiles__zoom___x___y__png_get",
+        "parameters": [
+          {
+            "name": "map_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Map Id" }
+          },
+          {
+            "name": "zoom",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Zoom" }
+          },
+          {
+            "name": "x",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "X" }
+          },
+          {
+            "name": "y",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Y" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "tags": ["health"],
@@ -423,6 +577,45 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "MapInfo": {
+        "properties": {
+          "id": { "type": "string", "title": "Id", "description": "Map identifier (task ID)" },
+          "name": { "type": "string", "title": "Name", "description": "Human-readable map name" },
+          "created": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created",
+            "description": "Creation timestamp"
+          },
+          "thumbnail": {
+            "type": "string",
+            "title": "Thumbnail",
+            "description": "URL to thumbnail image"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description",
+            "description": "Map description"
+          }
+        },
+        "type": "object",
+        "required": ["id", "name", "created", "thumbnail"],
+        "title": "MapInfo",
+        "description": "Information about an available map."
+      },
+      "MapListResponse": {
+        "properties": {
+          "maps": {
+            "items": { "$ref": "#/components/schemas/MapInfo" },
+            "type": "array",
+            "title": "Maps",
+            "description": "Available maps"
+          }
+        },
+        "type": "object",
+        "title": "MapListResponse",
+        "description": "Response model for the maps list endpoint."
       },
       "SchematicSettings": {
         "properties": {

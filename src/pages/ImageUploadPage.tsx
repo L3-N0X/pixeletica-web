@@ -7,10 +7,8 @@ import {
   TextInputField,
   Button,
   SelectField,
-  SwitchField,
-  ColorInput,
+  Switch,
   FormField,
-  RadioGroup,
   Label,
   Spinner,
   toaster,
@@ -46,8 +44,8 @@ const ImageUploadPage: React.FC = () => {
     },
   });
 
-  const handleFileChange = (files: FileList | null) => {
-    if (!files || files.length === 0) {
+  const handleFileChange = (files: File[]) => {
+    if (files.length === 0) {
       setFile(null);
       setImagePreview(null);
       return;
@@ -169,8 +167,13 @@ const ImageUploadPage: React.FC = () => {
           </Pane>
 
           <FileUploader
-            onChange={handleFileChange}
-            accept="image/*"
+            onChange={(files: File[]) => {
+              const validFiles = files.filter((file) => file.type.startsWith('image/'));
+              if (validFiles.length !== files.length) {
+                toaster.warning('Only image files are allowed.');
+              }
+              handleFileChange(validFiles);
+            }}
             maxSizeInBytes={5 * 1024 * 1024}
             maxFiles={1}
             width="100%"
@@ -179,7 +182,7 @@ const ImageUploadPage: React.FC = () => {
         </Pane>
 
         {/* Right side - Conversion settings */}
-        <Pane width="60%" as="form" onSubmit={handleSubmit}>
+        <Pane width="60%" is="form" onSubmit={handleSubmit}>
           <Pane marginBottom={24}>
             <Heading size={500} marginBottom={8}>
               Image Settings
@@ -292,30 +295,34 @@ const ImageUploadPage: React.FC = () => {
 
             <Pane display="flex" gap={16} marginBottom={8}>
               <Pane width="50%">
-                <SwitchField
-                  label="Draw Chunk Lines"
-                  checked={settings.exportSettings.drawChunkLines}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setSettings({
-                      ...settings,
-                      exportSettings: {
-                        ...settings.exportSettings,
-                        drawChunkLines: e.target.checked,
-                      },
-                    })
-                  }
-                  disabled={loading}
-                />
+                <Label>
+                  Draw Chunk Lines
+                  <Switch
+                    checked={settings.exportSettings.drawChunkLines}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setSettings({
+                        ...settings,
+                        exportSettings: {
+                          ...settings.exportSettings,
+                          drawChunkLines: e.target.checked,
+                        },
+                      })
+                    }
+                    disabled={loading}
+                  />
+                </Label>
                 {settings.exportSettings.drawChunkLines && (
                   <FormField label="Chunk Line Color" marginTop={8}>
-                    <ColorInput
+                    <TextInputField
+                      label="Chunk Line Color"
+                      type="text"
                       value={settings.exportSettings.chunkLineColor}
-                      onChange={(color) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setSettings({
                           ...settings,
                           exportSettings: {
                             ...settings.exportSettings,
-                            chunkLineColor: color,
+                            chunkLineColor: e.target.value,
                           },
                         })
                       }
@@ -326,68 +333,78 @@ const ImageUploadPage: React.FC = () => {
               </Pane>
 
               <Pane width="50%">
-                <SwitchField
-                  label="Draw Block Lines"
-                  checked={settings.exportSettings.drawBlockLines}
+                <Label>
+                  Draw Block Lines
+                  <Switch
+                    checked={settings.exportSettings.drawBlockLines}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setSettings({
+                        ...settings,
+                        exportSettings: {
+                          ...settings.exportSettings,
+                          drawBlockLines: e.target.checked,
+                        },
+                      })
+                    }
+                    disabled={loading}
+                  />
+                </Label>
+                <TextInputField
+                  label="Block Line Color"
+                  type="text"
+                  value={settings.exportSettings.blockLineColor}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setSettings({
                       ...settings,
                       exportSettings: {
                         ...settings.exportSettings,
-                        drawBlockLines: e.target.checked,
+                        blockLineColor: e.target.value,
                       },
                     })
                   }
                   disabled={loading}
                 />
-                {settings.exportSettings.drawBlockLines && (
-                  <FormField label="Block Line Color" marginTop={8}>
-                    <ColorInput
-                      value={settings.exportSettings.blockLineColor}
-                      onChange={(color) =>
-                        setSettings({
-                          ...settings,
-                          exportSettings: {
-                            ...settings.exportSettings,
-                            blockLineColor: color,
-                          },
-                        })
-                      }
-                      disabled={loading}
-                    />
-                  </FormField>
-                )}
               </Pane>
             </Pane>
 
             <FormField label="Export Formats" marginBottom={16}>
-              <RadioGroup
-                options={[
+              <Pane>
+                {[
                   { label: 'PNG', value: 'png' },
                   { label: 'JPG', value: 'jpg' },
                   { label: 'WebP', value: 'webp' },
                   { label: 'HTML', value: 'html' },
-                ]}
-                value={settings.exportSettings.exportTypes}
-                onChange={(values) =>
-                  setSettings({
-                    ...settings,
-                    exportSettings: {
-                      ...settings.exportSettings,
-                      exportTypes: values as Array<'png' | 'jpg' | 'webp' | 'html'>,
-                    },
-                  })
-                }
-                isMultiSelect
-                disabled={loading}
-              />
+                ].map((option) => (
+                  <Label key={option.value} display="block" marginBottom={8}>
+                    <Switch
+                      checked={settings.exportSettings.exportTypes.includes(option.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const updatedExportTypes = e.target.checked
+                          ? [...settings.exportSettings.exportTypes, option.value]
+                          : settings.exportSettings.exportTypes.filter(
+                              (type: string) => type !== option.value
+                            );
+                        setSettings({
+                          ...settings,
+                          exportSettings: {
+                            ...settings.exportSettings,
+                            exportTypes: updatedExportTypes,
+                          },
+                        });
+                      }}
+                      disabled={loading}
+                    />
+                    {option.label}
+                  </Label>
+                ))}
+              </Pane>
             </FormField>
           </Pane>
 
           <Pane marginBottom={24}>
             <Heading size={500} marginBottom={8}>
               <Label>
-                <SwitchField
+                <Switch
                   checked={settings.schematicSettings.generateSchematic}
                   onChange={(e) =>
                     setSettings({

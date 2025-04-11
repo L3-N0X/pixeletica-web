@@ -8,7 +8,10 @@ import {
   Badge,
   IconButton,
   Tooltip,
+  ClipboardIcon,
   Strong,
+  CrossIcon,
+  DownloadIcon,
 } from 'evergreen-ui';
 import type { BlockDetails } from '@types';
 import { getChunkBoundaries } from '@utils/tileUtils';
@@ -36,7 +39,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ block, onClose }) => {
     >
       <Pane display="flex" justifyContent="space-between" alignItems="center" marginBottom={16}>
         <Heading size={500}>Block Details</Heading>
-        <Button iconBefore="cross" appearance="minimal" onClick={onClose} />
+        <Button iconBefore={<CrossIcon />} appearance="minimal" onClick={onClose} />
       </Pane>
 
       <Pane
@@ -72,7 +75,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ block, onClose }) => {
               <Strong>{block.x}</Strong>
               <Tooltip content="Copy to clipboard">
                 <IconButton
-                  icon="clipboard"
+                  icon={<ClipboardIcon />}
                   appearance="minimal"
                   size="small"
                   marginLeft={8}
@@ -87,7 +90,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ block, onClose }) => {
               <Strong>{block.y}</Strong>
               <Tooltip content="Copy to clipboard">
                 <IconButton
-                  icon="clipboard"
+                  icon={<CrossIcon />}
                   appearance="minimal"
                   size="small"
                   marginLeft={8}
@@ -102,7 +105,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ block, onClose }) => {
               <Strong>{block.z}</Strong>
               <Tooltip content="Copy to clipboard">
                 <IconButton
-                  icon="clipboard"
+                  icon={<ClipboardIcon />}
                   appearance="minimal"
                   size="small"
                   marginLeft={8}
@@ -145,7 +148,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ block, onClose }) => {
         </Text>
         <Tooltip content="Copy command">
           <IconButton
-            icon="clipboard"
+            icon={<ClipboardIcon />}
             appearance="minimal"
             size="small"
             position="absolute"
@@ -160,7 +163,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ block, onClose }) => {
         </Text>
         <Tooltip content="Copy command">
           <IconButton
-            icon="clipboard"
+            icon={<ClipboardIcon />}
             appearance="minimal"
             size="small"
             position="absolute"
@@ -173,7 +176,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ block, onClose }) => {
       </Pane>
 
       <Pane marginTop="auto">
-        <Button appearance="primary" width="100%" iconBefore="download">
+        <Button appearance="primary" width="100%" iconBefore={<DownloadIcon />} marginTop={16}>
           Download Schematic for This Chunk
         </Button>
       </Pane>
