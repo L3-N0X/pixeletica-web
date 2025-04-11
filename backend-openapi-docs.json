@@ -1,0 +1,525 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Pixeletica API",
+    "description": "API for converting images to Minecraft block art",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/conversion/start": {
+      "post": {
+        "tags": ["conversion"],
+        "summary": "Start Conversion",
+        "description": "Start a new image conversion task.\n\nThis endpoint accepts an image and configuration parameters,\ncreates a new task, and returns a task ID for status tracking.",
+        "operationId": "start_conversion_conversion_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/ConversionRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/TaskResponse" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversion/{task_id}": {
+      "get": {
+        "tags": ["conversion"],
+        "summary": "Get Conversion Status",
+        "description": "Check the status of a conversion task.\n\nReturns the current status, progress, and any error information.",
+        "operationId": "get_conversion_status_conversion__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/TaskResponse" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["conversion"],
+        "summary": "Delete Task",
+        "description": "Delete a conversion task and all associated files.",
+        "operationId": "delete_task_conversion__task_id__delete",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversion/{task_id}/files": {
+      "get": {
+        "tags": ["conversion"],
+        "summary": "List Files",
+        "description": "List files generated for a task.\n\nOptionally filter by category (dithered, rendered, schematic, web).",
+        "operationId": "list_files_conversion__task_id__files_get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Category" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/FileListResponse" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversion/{task_id}/files/{file_id}": {
+      "get": {
+        "tags": ["conversion"],
+        "summary": "Download File",
+        "description": "Download a specific file from a conversion task.\n\nReturns the file for direct download.",
+        "operationId": "download_file_conversion__task_id__files__file_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          },
+          {
+            "name": "file_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "File Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversion/{task_id}/download": {
+      "get": {
+        "tags": ["conversion"],
+        "summary": "Download All Files",
+        "description": "Download all files from a conversion task as a ZIP archive.",
+        "operationId": "download_all_files_conversion__task_id__download_get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["conversion"],
+        "summary": "Download Selected Files",
+        "description": "Download selected files from a conversion task as a ZIP archive.\n\nSpecify file IDs to include in the download.",
+        "operationId": "download_selected_files_conversion__task_id__download_post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Task Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SelectiveDownloadRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Root",
+        "description": "Root endpoint for health checks.\n\nReturns:\n    Dictionary with API name, version, and status.",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Root  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ConversionRequest": {
+        "properties": {
+          "image": {
+            "type": "string",
+            "title": "Image",
+            "description": "Base64-encoded image data"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename",
+            "description": "Original filename with extension"
+          },
+          "width": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Width",
+            "description": "Target width (pixels)"
+          },
+          "height": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Height",
+            "description": "Target height (pixels)"
+          },
+          "algorithm": {
+            "$ref": "#/components/schemas/DitherAlgorithm",
+            "description": "Dithering algorithm to use",
+            "default": "floyd_steinberg"
+          },
+          "exportSettings": {
+            "$ref": "#/components/schemas/ExportSettings",
+            "description": "Output file settings"
+          },
+          "schematicSettings": {
+            "$ref": "#/components/schemas/SchematicSettings",
+            "description": "Schematic generation settings"
+          }
+        },
+        "type": "object",
+        "required": ["image", "filename"],
+        "title": "ConversionRequest",
+        "description": "Request model for starting a conversion task."
+      },
+      "DitherAlgorithm": {
+        "type": "string",
+        "enum": ["floyd_steinberg", "ordered", "random"],
+        "title": "DitherAlgorithm",
+        "description": "Supported dithering algorithms."
+      },
+      "ExportSettings": {
+        "properties": {
+          "exportTypes": {
+            "items": { "type": "string", "enum": ["png", "jpg", "webp", "html"] },
+            "type": "array",
+            "title": "Exporttypes",
+            "description": "Output file formats to generate",
+            "default": ["png"]
+          },
+          "originX": {
+            "type": "integer",
+            "title": "Originx",
+            "description": "X-coordinate origin in Minecraft world",
+            "default": 0
+          },
+          "originY": {
+            "type": "integer",
+            "title": "Originy",
+            "description": "Y-coordinate origin in Minecraft world",
+            "default": 0
+          },
+          "originZ": {
+            "type": "integer",
+            "title": "Originz",
+            "description": "Z-coordinate origin in Minecraft world",
+            "default": 0
+          },
+          "drawChunkLines": {
+            "type": "boolean",
+            "title": "Drawchunklines",
+            "description": "Draw chunk boundary lines",
+            "default": true
+          },
+          "chunkLineColor": {
+            "type": "string",
+            "title": "Chunklinecolor",
+            "description": "Color for chunk lines",
+            "default": "#FF0000"
+          },
+          "drawBlockLines": {
+            "type": "boolean",
+            "title": "Drawblocklines",
+            "description": "Draw block boundary lines",
+            "default": true
+          },
+          "blockLineColor": {
+            "type": "string",
+            "title": "Blocklinecolor",
+            "description": "Color for block lines",
+            "default": "#000000"
+          },
+          "splitCount": {
+            "type": "integer",
+            "title": "Splitcount",
+            "description": "Number of segments to split the image into",
+            "default": 1
+          },
+          "versionOptions": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Versionoptions",
+            "description": "Additional version-specific options",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "title": "ExportSettings",
+        "description": "Settings for exporting the converted image."
+      },
+      "FileInfo": {
+        "properties": {
+          "fileId": {
+            "type": "string",
+            "title": "Fileid",
+            "description": "Unique file identifier"
+          },
+          "filename": { "type": "string", "title": "Filename", "description": "Original filename" },
+          "type": { "type": "string", "title": "Type", "description": "MIME type" },
+          "size": { "type": "integer", "title": "Size", "description": "File size in bytes" },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "File category (dithered, rendered, schematic, etc.)"
+          }
+        },
+        "type": "object",
+        "required": ["fileId", "filename", "type", "size", "category"],
+        "title": "FileInfo",
+        "description": "Information about a generated file."
+      },
+      "FileListResponse": {
+        "properties": {
+          "taskId": { "type": "string", "title": "Taskid", "description": "Task identifier" },
+          "files": {
+            "items": { "$ref": "#/components/schemas/FileInfo" },
+            "type": "array",
+            "title": "Files",
+            "description": "Available files"
+          }
+        },
+        "type": "object",
+        "required": ["taskId"],
+        "title": "FileListResponse",
+        "description": "Response model listing available files for a task."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "SchematicSettings": {
+        "properties": {
+          "generateSchematic": {
+            "type": "boolean",
+            "title": "Generateschematic",
+            "description": "Whether to generate a schematic",
+            "default": false
+          },
+          "author": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Author",
+            "description": "Schematic author name",
+            "default": "Pixeletica API"
+          },
+          "name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Name",
+            "description": "Schematic name"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description",
+            "description": "Schematic description"
+          }
+        },
+        "type": "object",
+        "title": "SchematicSettings",
+        "description": "Settings for Litematica schematic generation."
+      },
+      "SelectiveDownloadRequest": {
+        "properties": {
+          "fileIds": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Fileids",
+            "description": "IDs of files to include in download"
+          }
+        },
+        "type": "object",
+        "required": ["fileIds"],
+        "title": "SelectiveDownloadRequest",
+        "description": "Request model for downloading selected files."
+      },
+      "TaskResponse": {
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "title": "Taskid",
+            "description": "Unique task identifier"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus",
+            "description": "Current task status"
+          },
+          "progress": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Progress",
+            "description": "Progress percentage (0-100)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "Last status update time"
+          },
+          "error": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Error",
+            "description": "Error message if task failed"
+          }
+        },
+        "type": "object",
+        "required": ["taskId", "status"],
+        "title": "TaskResponse",
+        "description": "Response model for a task status check."
+      },
+      "TaskStatus": {
+        "type": "string",
+        "enum": ["queued", "processing", "completed", "failed"],
+        "title": "TaskStatus",
+        "description": "Possible states of a conversion task."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
