@@ -1,11 +1,13 @@
 # Build stage
-FROM node:23-alpine as build
+FROM node:23-alpine AS build
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
+COPY package*.json pnpm-lock.yaml ./
+RUN npm install -g pnpm && pnpm install
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 # Production stage
-FROM devforth/spa-to-http:latest
-COPY --from=build /app/build /app
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/nginx.conf
+EXPOSE 80
