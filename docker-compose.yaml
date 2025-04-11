@@ -1,0 +1,33 @@
+networks:
+  traefik-public:
+    external: false
+
+services:
+  traefik:
+    image: traefik:v3.3
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --providers.docker.network=traefik-public
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - traefik-public
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`pixeletica.local`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+    networks:
+      - traefik-public
