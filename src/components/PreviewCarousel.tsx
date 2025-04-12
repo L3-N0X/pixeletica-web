@@ -1,17 +1,8 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  Flex,
-  IconButton,
-  Card,
-  CardBody,
-  Text,
-  Image,
-  Circle,
-} from '@chakra-ui/react';
-import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
+import { Box, Flex, IconButton, Card, CardBody, Text, Image, Circle } from '@chakra-ui/react';
 import { FileInfo } from '../types/api';
 import { conversionApi } from '../services/api';
+import { LuChevronLeft, LuChevronRight } from 'react-icons/lu';
 
 interface PreviewCarouselProps {
   files: FileInfo[];
@@ -30,14 +21,14 @@ const PreviewCarousel: React.FC<PreviewCarouselProps> = ({ files, taskId }) => {
 
   if (imageFiles.length === 0) {
     return (
-      <Card
+      <Card.Root
         bg="gray.100" // Light background for empty state
         boxShadow="sm"
       >
         <CardBody display="flex" alignItems="center" justifyContent="center" height="300px">
           <Text color="gray.500">No preview files available</Text>
         </CardBody>
-      </Card>
+      </Card.Root>
     );
   }
 
@@ -73,12 +64,12 @@ const PreviewCarousel: React.FC<PreviewCarouselProps> = ({ files, taskId }) => {
         overflow="hidden"
       >
         {isHtml ? (
-          <Box as="iframe"
+          <iframe
             src={fileUrl}
             title={currentFile.filename}
             width="100%"
             height="100%"
-            border="none"
+            style={{ border: 'none' }}
             onLoad={() => handleLoad(currentFile.fileId)}
             onError={() => handleError(currentFile.fileId)}
           />
@@ -99,7 +90,6 @@ const PreviewCarousel: React.FC<PreviewCarouselProps> = ({ files, taskId }) => {
       {imageFiles.length > 1 && (
         <>
           <IconButton
-            icon={<ChevronLeftIcon boxSize={6} />}
             aria-label="Previous image"
             variant="ghost"
             colorScheme="blackAlpha"
@@ -108,9 +98,10 @@ const PreviewCarousel: React.FC<PreviewCarouselProps> = ({ files, taskId }) => {
             top="50%"
             transform="translateY(-50%)"
             onClick={handlePrev}
-          />
+          >
+            <LuChevronLeft size={6} />
+          </IconButton>
           <IconButton
-            icon={<ChevronRightIcon boxSize={6} />}
             aria-label="Next image"
             variant="ghost"
             colorScheme="blackAlpha"
@@ -119,7 +110,9 @@ const PreviewCarousel: React.FC<PreviewCarouselProps> = ({ files, taskId }) => {
             top="50%"
             transform="translateY(-50%)"
             onClick={handleNext}
-          />
+          >
+            <LuChevronRight size={6} />
+          </IconButton>
         </>
       )}
 

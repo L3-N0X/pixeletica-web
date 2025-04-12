@@ -8,20 +8,27 @@ import {
   Button,
   IconButton,
   useDisclosure,
-  // Explicitly import Drawer components
-  Drawer,
-  DrawerBody,
-  DrawerContent,
-  DrawerHeader,
-  DrawerOverlay,
-  DrawerCloseButton,
+  Kbd,
 } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
-import { HamburgerIcon, AddIcon } from '@chakra-ui/icons';
+import { BsSearch, BsPlus, BsList } from 'react-icons/bs';
+
+// Import UI components
+import {
+  DrawerRoot,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerBackdrop,
+  DrawerCloseTrigger,
+} from './ui/drawer';
+
+// Import the SearchBox component
+import SearchBox from './SearchBox';
 
 const Layout: React.FC = () => {
   const location = useLocation();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { open, onOpen, onClose } = useDisclosure();
 
   const navLinks = [
     { path: '/', label: 'Home' },
@@ -52,40 +59,43 @@ const Layout: React.FC = () => {
         height={{ base: '56px', md: '64px' }}
         boxShadow="sm"
       >
+        {/* SearchBox component - invisible but listens for Ctrl+K */}
+        <SearchBox onSearch={(query) => console.log('Search for:', query)} />
+
         {/* Logo */}
-        <RouterLink to="/">
-          <ChakraLink display="flex" alignItems="center" _hover={{ textDecoration: 'none' }}>
+        <RouterLink to="/" style={{ textDecoration: 'none' }}>
+          <Flex alignItems="center" _hover={{ textDecoration: 'none' }}>
             <Heading size="lg" color="white" fontFamily="heading">
               Pixeletica
             </Heading>
-          </ChakraLink>
+          </Flex>
         </RouterLink>
 
         {/* Desktop Navigation */}
         <Flex display={{ base: 'none', md: 'flex' }} flex={1} justify="center" mx={4}>
           {navLinks.map((link) => (
-            <RouterLink key={link.path} to={link.path}>
-              <ChakraLink
-                mx={4}
-                color={isActive(link.path) ? 'primary.500' : 'text'}
-                textDecoration="none"
-                fontWeight={isActive(link.path) ? 'medium' : 'normal'}
-                position="relative"
-                _hover={{ color: 'white', textDecoration: 'none' }}
-                _after={{
-                  content: '""',
-                  position: 'absolute',
-                  width: '100%',
-                  height: '2px',
-                  bottom: '-5px',
-                  left: 0,
-                  bgColor: isActive(link.path) ? 'primary.500' : 'transparent',
-                  transition: 'all 0.3s ease',
-                }}
-              >
+            <Box
+              key={link.path}
+              mx={4}
+              color={isActive(link.path) ? 'primary.500' : 'text'}
+              fontWeight={isActive(link.path) ? 'medium' : 'normal'}
+              position="relative"
+              _hover={{ color: 'white', textDecoration: 'none' }}
+              _after={{
+                content: '""',
+                position: 'absolute',
+                width: '100%',
+                height: '2px',
+                bottom: '-5px',
+                left: 0,
+                bgColor: isActive(link.path) ? 'primary.500' : 'transparent',
+                transition: 'all 0.3s ease',
+              }}
+            >
+              <RouterLink to={link.path} style={{ textDecoration: 'none' }}>
                 {link.label}
-              </ChakraLink>
-            </RouterLink>
+              </RouterLink>
+            </Box>
           ))}
         </Flex>
 
@@ -95,33 +105,48 @@ const Layout: React.FC = () => {
           <IconButton
             display={{ base: 'flex', md: 'none' }}
             aria-label="Open menu"
-            icon={<HamburgerIcon />} // Standard 'icon' prop
             variant="ghost"
             onClick={onOpen}
             color="white"
             _hover={{ bg: 'gray.600' }}
-          />
+          >
+            <Box as={BsList} />
+          </IconButton>
           {/* Desktop Create Button */}
-          <RouterLink to="/create">
+          <Flex align="center">
+            {/* Search button */}
             <Button
-              display={{ base: 'none', md: 'inline-flex' }}
-              variant="solid"
+              variant="ghost"
               size="sm"
-              leftIcon={<AddIcon />} // Standard 'leftIcon' prop
+              mr={3}
+              onClick={() =>
+                document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))
+              }
             >
-              Create New Pixel Art
+              <Box as={BsSearch} mr={2} />
+              Search{' '}
+              <Kbd ml={2} fontSize="xs">
+                Ctrl+K
+              </Kbd>
             </Button>
-          </RouterLink>
+
+            <RouterLink to="/create">
+              <Button display={{ base: 'none', md: 'inline-flex' }} variant="solid" size="sm">
+                <Box as={BsPlus} mr={2} />
+                Create New Pixel Art
+              </Button>
+            </RouterLink>
+          </Flex>
         </Flex>
       </Flex>
 
       {/* Main Content Area */}
       <Flex as="main" flex={1} overflow="hidden" position="relative">
         {/* Mobile Drawer */}
-        <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
-          <DrawerOverlay />
+        <DrawerRoot open={open} onOpenChange={(isOpen) => (isOpen ? onOpen() : onClose())}>
+          <DrawerBackdrop />
           <DrawerContent bg="gray.75" maxW="280px">
-            <DrawerCloseButton color="white" />
+            <DrawerCloseTrigger color="white" />
             <DrawerHeader borderBottomWidth="1px" borderColor="rgba(81, 123, 102, 0.3)">
               <Heading size="md" fontFamily="heading" color="white">
                 Navigation
@@ -130,37 +155,31 @@ const Layout: React.FC = () => {
             <DrawerBody p={4}>
               <Flex direction="column" mb={6}>
                 {navLinks.map((link) => (
-                  <RouterLink key={link.path} to={link.path}>
-                    <ChakraLink
-                      display="block"
-                      p={3}
-                      my={1}
-                      color={isActive(link.path) ? 'primary.500' : 'text'}
-                      bg={isActive(link.path) ? 'rgba(146, 232, 184, 0.1)' : 'transparent'}
-                      borderRadius="md"
-                      textDecoration="none"
-                      _hover={{ textDecoration: 'none', bg: 'gray.600' }}
-                      onClick={onClose}
-                    >
+                  <Box
+                    key={link.path}
+                    display="block"
+                    p={3}
+                    my={1}
+                    color={isActive(link.path) ? 'primary.500' : 'text'}
+                    bg={isActive(link.path) ? 'rgba(146, 232, 184, 0.1)' : 'transparent'}
+                    borderRadius="md"
+                    _hover={{ textDecoration: 'none', bg: 'gray.600' }}
+                  >
+                    <RouterLink to={link.path} style={{ textDecoration: 'none' }} onClick={onClose}>
                       {link.label}
-                    </ChakraLink>
-                  </RouterLink>
+                    </RouterLink>
+                  </Box>
                 ))}
                 <RouterLink to="/create">
-                  <Button
-                    variant="solid"
-                    w="100%"
-                    mt={4}
-                    leftIcon={<AddIcon />} // Standard 'leftIcon' prop
-                    onClick={onClose}
-                  >
+                  <Button variant="solid" w="100%" mt={4} onClick={onClose}>
+                    <Box as={BsPlus} mr={2} />
                     Create New Pixel Art
                   </Button>
                 </RouterLink>
               </Flex>
             </DrawerBody>
           </DrawerContent>
-        </Drawer>
+        </DrawerRoot>
 
         {/* Desktop Sidebar */}
         <Box
@@ -218,13 +237,13 @@ const Layout: React.FC = () => {
             Pixeletica • Minecraft Pixel Art Converter
           </Heading>
           <Flex display={{ base: 'none', md: 'flex' }} mt={{ base: 2, md: 0 }}>
-            <ChakraLink mr={4} color="muted" href="#">
+            <ChakraLink mr={4} color="muted" href="#" textDecoration="none">
               About
             </ChakraLink>
-            <ChakraLink mr={4} color="muted" href="#">
+            <ChakraLink mr={4} color="muted" href="#" textDecoration="none">
               Privacy
             </ChakraLink>
-            <ChakraLink color="muted" href="#">
+            <ChakraLink color="muted" href="#" textDecoration="none">
               Contact
             </ChakraLink>
           </Flex>

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Pane } from 'evergreen-ui';
+import { Box } from '@chakra-ui/react';
 
 interface MapTileProps {
   url: string;
@@ -24,7 +24,7 @@ const MapTile: React.FC<MapTileProps> = React.memo(({ url, x, y, tileSize, zoom 
   };
 
   return (
-    <Pane
+    <Box
       position="absolute"
       left={x * tileSize}
       top={y * tileSize}
@@ -52,7 +52,7 @@ const MapTile: React.FC<MapTileProps> = React.memo(({ url, x, y, tileSize, zoom 
           }}
         />
       ) : (
-        <Pane
+        <Box
           width={tileSize}
           height={tileSize}
           background="tint2"
@@ -63,9 +63,9 @@ const MapTile: React.FC<MapTileProps> = React.memo(({ url, x, y, tileSize, zoom 
           color="muted"
         >
           ⚠️
-        </Pane>
+        </Box>
       )}
-    </Pane>
+    </Box>
   );
 });
 

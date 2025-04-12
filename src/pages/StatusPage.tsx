@@ -1,25 +1,26 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  Pane,
   Heading,
   Text,
-  Button,
   Spinner,
   Alert,
   Card,
-  TabNavigation,
-  Tab,
+  Tabs,
   IconButton,
-  toaster,
-  SideSheet,
-  Position,
-} from 'evergreen-ui';
+  Link as RouterLink,
+  Box,
+  Drawer,
+  Portal,
+  CloseButton,
+} from '@chakra-ui/react';
 import { conversionApi } from '../services/api';
 import { TaskResponse, TaskStatus, FileInfo } from '../types/api';
 import FileCategoryGroup from '../components/FileCategoryGroup';
 import DownloadPanel from '../components/DownloadPanel';
 import FilePreview from '../components/FilePreview';
+import { toaster } from '@/components/ui/toaster';
+import { LuDownload, LuEye, LuHouse, LuMap, LuX } from 'react-icons/lu';
 
 const POLLING_INTERVAL = 2000; // 2 seconds
 
@@ -96,12 +97,19 @@ const StatusPage: React.FC = () => {
     if (window.confirm('Are you sure you want to cancel this conversion?')) {
       try {
         await conversionApi.deleteConversion(taskId);
-        toaster.notify('Conversion cancelled successfully');
+        toaster.create({
+          title: 'Conversion cancelled successfully',
+          type: 'success',
+        });
+
         navigate('/');
       } catch (err) {
         console.error('Failed to cancel task:', err);
         setError('Failed to cancel conversion. Please try again.');
-        toaster.danger('Failed to cancel conversion');
+        toaster.create({
+          title: 'Failed to cancel conversion',
+          type: 'error',
+        });
       }
     }
   };
@@ -177,36 +185,33 @@ const StatusPage: React.FC = () => {
 
   if (!taskId) {
     return (
-      <Pane>
-        <Alert intent="danger" title="Invalid Task ID">
-          No task ID was provided.
-        </Alert>
-      </Pane>
+      <Box>
+        <Alert.Root title="Invalid Task ID">No task ID was provided.</Alert.Root>
+      </Box>
     );
   }
 
   return (
-    <Pane maxWidth={1000} marginX="auto">
-      <Heading size={700} marginBottom={8}>
+    <Box maxWidth={1000} marginX="auto">
+      <Heading size="md" marginBottom={8}>
         Conversion Status
       </Heading>
-      <Text size={400} color="muted" marginBottom={24}>
+      <Text fontSize="md" color="muted" marginBottom={24}>
         Task ID: {taskId}
       </Text>
 
       {loading && !task ? (
-        <Pane display="flex" alignItems="center" justifyContent="center" height={200}>
+        <Box display="flex" alignItems="center" justifyContent="center" height={200}>
           <Spinner />
-        </Pane>
+        </Box>
       ) : error ? (
-        <Alert intent="danger" title="Error" marginBottom={16}>
+        <Alert.Root title="Error" marginBottom={16}>
           {error}
-        </Alert>
+        </Alert.Root>
       ) : task ? (
-        <Pane>
+        <Box>
           {/* Status Display */}
-          <Card
-            elevation={1}
+          <Card.Root
             background="tint2"
             padding={16}
             marginBottom={24}
@@ -214,26 +219,26 @@ const StatusPage: React.FC = () => {
             flexDirection="column"
             gap={16}
           >
-            <Pane display="flex" alignItems="center">
-              <Heading size={500}>Status: </Heading>
+            <Box display="flex" alignItems="center">
+              <Heading size="md">Status: </Heading>
               <Text
                 color={getStatusProps(task.status).color}
-                size={500}
+                fontSize="md"
                 marginLeft={8}
                 fontWeight={500}
               >
                 {getStatusProps(task.status).label}
               </Text>
 
-              {task.status === 'processing' && <Spinner size={16} marginLeft={8} />}
-            </Pane>
+              {task.status === 'processing' && <Spinner size="md" marginLeft={8} />}
+            </Box>
 
             {task.status === 'processing' && (
-              <Pane>
-                <Text size={300} marginBottom={8}>
+              <Box>
+                <Text fontSize="md" marginBottom={8}>
                   Progress: {task.progress != null ? `${task.progress}%` : 'Initializing...'}
                 </Text>
-                <Pane
+                <Box
                   width="100%"
                   height={8}
                   borderRadius={4}
@@ -241,7 +246,7 @@ const StatusPage: React.FC = () => {
                   position="relative"
                   overflow="hidden"
                 >
-                  <Pane
+                  <Box
                     position="absolute"
                     top={0}
                     left={0}
@@ -251,96 +256,84 @@ const StatusPage: React.FC = () => {
                     borderRadius={4}
                     transition="width 0.3s ease"
                   />
-                </Pane>
-              </Pane>
+                </Box>
+              </Box>
             )}
 
             {task.status === 'failed' && task.error && (
-              <Alert intent="danger" title="Conversion Failed">
-                {task.error}
-              </Alert>
+              <Alert.Root title="Conversion Failed">{task.error}</Alert.Root>
             )}
 
             {task.timestamp && (
-              <Text size={300} color="muted">
+              <Text fontSize="sm" color="muted">
                 Last updated: {new Date(task.timestamp).toLocaleString()}
               </Text>
             )}
-          </Card>
+          </Card.Root>
 
           {/* Completed Task Actions */}
           {task.status === 'completed' && (
-            <Pane marginBottom={24}>
-              <Heading size={500} marginBottom={16}>
+            <Box marginBottom={24}>
+              <Heading size="md" marginBottom={16}>
                 Conversion Completed
               </Heading>
 
               {files.length > 0 ? (
                 <>
-                  <Pane marginBottom={24}>
+                  <Box marginBottom={24}>
                     <Text>
                       Your pixel art has been successfully converted! You can now view it in the
                       interactive map viewer or download the generated files.
                     </Text>
-                  </Pane>
+                  </Box>
 
-                  <Pane display="flex" gap={16} marginBottom={24}>
-                    <Button
-                      appearance="primary"
-                      intent="success"
-                      iconBefore="map"
-                      as={Link}
-                      to={`/map/${taskId}`}
-                    >
-                      View in Map
-                    </Button>
+                  <Box display="flex" gap={16} marginBottom={24}>
+                    <RouterLink href={`/map/${taskId}`}>
+                      <IconButton appearance="primary" as={Link}>
+                        <LuMap size={20} />
+                        View in Map
+                      </IconButton>
+                    </RouterLink>
 
-                    <Button
-                      appearance="default"
-                      iconBefore="download"
-                      is="a"
-                      href={conversionApi.getAllFilesZipUrl(taskId)}
-                      target="_blank"
-                    >
-                      Download All Files
-                    </Button>
+                    <RouterLink href={`/map/${taskId}`}>
+                      <IconButton appearance="primary" marginRight={8}>
+                        <LuDownload size={20} />
+                        Download All Files
+                      </IconButton>
+                    </RouterLink>
 
                     {previewableFile && (
-                      <Button
+                      <IconButton
                         appearance="default"
-                        iconBefore="eye-open"
                         onClick={() => {
                           setPreviewFile(previewableFile);
                           setPreviewSidesheet(true);
                         }}
                       >
+                        <LuEye size={20} />
                         Quick Preview
-                      </Button>
+                      </IconButton>
                     )}
-                  </Pane>
+                  </Box>
 
                   {/* File Browsing Tabs */}
-                  <TabNavigation marginBottom={16}>
-                    <Tab
-                      id="files"
-                      isSelected={selectedTab === 'files'}
-                      onSelect={() => setSelectedTab('files')}
-                    >
+                  <Tabs.Root marginBottom={16}>
+                    <Tabs.Trigger id="files" value="files" onSelect={() => setSelectedTab('files')}>
                       Files
-                    </Tab>
-                    <Tab
+                    </Tabs.Trigger>
+                    <Tabs.Trigger
                       id="preview"
-                      isSelected={selectedTab === 'preview'}
+                      value="preview"
                       onSelect={() => setSelectedTab('preview')}
                       disabled={!previewableFile}
                     >
                       Preview
-                    </Tab>
-                  </TabNavigation>
+                    </Tabs.Trigger>
+                  </Tabs.Root>
 
                   {/* Files Tab Content */}
                   {selectedTab === 'files' && (
-                    <Pane position="relative">
+                    <Box position="relative">
                       {/* Organized File Categories */}
                       {Object.entries(filesByCategory)
                         .sort(([categoryA], [categoryB]) => {
@@ -369,13 +362,12 @@ const StatusPage: React.FC = () => {
                         allFiles={files}
                         onClearSelection={clearSelection}
                       />
-                    </Pane>
+                    </Box>
                   )}
 
                   {/* Preview Tab Content */}
                   {selectedTab === 'preview' && previewableFile && (
-                    <Card
-                      elevation={1}
+                    <Card.Root
                       background="tint2"
                       padding={16}
                       marginY={16}
@@ -383,95 +375,90 @@ const StatusPage: React.FC = () => {
                       display="flex"
                       flexDirection="column"
                     >
-                      <Pane marginBottom={16} display="flex" alignItems="center">
-                        <Heading size={500}>{previewableFile.filename}</Heading>
-                        <Pane flex={1} />
-                        <Button
-                          iconBefore="download"
-                          appearance="minimal"
-                          is="a"
+                      <Box marginBottom={16} display="flex" alignItems="center">
+                        <Heading size="lg">{previewableFile.filename}</Heading>
+                        <Box flex={1} />
+                        <RouterLink
                           href={conversionApi.getFileUrl(taskId ?? '', previewableFile.fileId)}
-                          target="_blank"
-                          download
                         >
-                          Download
-                        </Button>
-                      </Pane>
-                      <Pane flex={1} position="relative">
+                          <IconButton appearance="minimal">Download</IconButton>
+                        </RouterLink>
+                      </Box>
+                      <Box flex={1} position="relative">
                         <FilePreview file={previewableFile} taskId={taskId ?? ''} />
-                      </Pane>
-                    </Card>
+                      </Box>
+                    </Card.Root>
                   )}
                 </>
               ) : (
                 <Text>No files were generated. Please try again with different settings.</Text>
               )}
-            </Pane>
+            </Box>
           )}
 
           {/* Cancel Button (only for in-progress tasks) */}
           {(task.status === 'queued' || task.status === 'processing') && (
-            <Button intent="danger" onClick={handleCancel}>
+            <IconButton onClick={handleCancel}>
+              <LuX size={20} />
               Cancel Conversion
-            </Button>
+            </IconButton>
           )}
 
           {/* Return Home Button */}
           {(task.status === 'completed' || task.status === 'failed') && (
-            <Button as={Link} to="/" marginTop={16}>
-              Return to Home
-            </Button>
+            <RouterLink href="/">
+              <IconButton appearance="primary" marginTop={16}>
+                <LuHouse size={20} />
+                Return to Home
+              </IconButton>
+            </RouterLink>
           )}
-        </Pane>
+        </Box>
       ) : (
-        <Alert intent="warning" title="Not Found">
+        <Alert.Root title="Not Found">
           Task not found. It may have been deleted or the ID is incorrect.
-        </Alert>
+        </Alert.Root>
       )}
 
-      {/* Large Preview Side Sheet */}
-      {previewFile && (
-        <SideSheet
-          position={Position.RIGHT}
-          isShown={previewSidesheet}
-          onCloseComplete={() => {
-            setPreviewSidesheet(false);
-            setPreviewFile(null);
-          }}
-          width="80%"
-          preventBodyScrolling
-        >
-          <Pane padding={16}>
-            <Pane display="flex" alignItems="center" marginBottom={16}>
-              <IconButton
-                icon="arrow-left"
-                marginRight={16}
-                onClick={() => {
-                  setPreviewSidesheet(false);
-                  setPreviewFile(null);
-                }}
-              />
-              <Heading size={600}>{previewFile.filename}</Heading>
-              <Pane flex={1} />
-              <Button
-                iconBefore="download"
-                appearance="primary"
-                is="a"
-                href={conversionApi.getFileUrl(taskId ?? '', previewFile.fileId)}
-                target="_blank"
-                download
-              >
-                Download
-              </Button>
-            </Pane>
-
-            <Pane height="calc(100vh - 120px)">
-              <FilePreview file={previewFile} taskId={taskId ?? ''} />
-            </Pane>
-          </Pane>
-        </SideSheet>
-      )}
-    </Pane>
+      <Drawer.Root
+        open={previewSidesheet}
+        onOpenChange={(e) => {
+          setPreviewSidesheet(e.open);
+          if (!e.open) setPreviewFile(null);
+        }}
+      >
+        <Portal>
+          <Drawer.Backdrop />
+          <Drawer.Positioner>
+            <Drawer.Content>
+              <Drawer.Header>
+                <Drawer.Title>{previewFile?.filename}</Drawer.Title>
+                <RouterLink
+                  href={
+                    previewFile ? conversionApi.getFileUrl(taskId ?? '', previewFile.fileId) : '#'
+                  }
+                >
+                  <IconButton appearance="primary" is="a">
+                    <LuDownload size={20} />
+                    Download
+                  </IconButton>
+                </RouterLink>
+              </Drawer.Header>
+              <Drawer.Body>
+                {previewFile && (
+                  <Box height="calc(100vh - 200px)">
+                    <FilePreview file={previewFile} taskId={taskId ?? ''} />
+                  </Box>
+                )}
+              </Drawer.Body>
+              <Drawer.CloseTrigger asChild>
+                <CloseButton size="sm" position="absolute" top={4} right={4} />
+              </Drawer.CloseTrigger>
+            </Drawer.Content>
+          </Drawer.Positioner>
+        </Portal>
+      </Drawer.Root>
+    </Box>
   );
 };
 

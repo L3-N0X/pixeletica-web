@@ -10,12 +10,13 @@ import {
   Badge,
   Image,
   Flex,
-  useStyleConfig,
+  useRecipe,
 } from '@chakra-ui/react';
-import { StarIcon, DeleteIcon } from '@chakra-ui/icons'; // Use Chakra icons
+import { cardRecipe } from '../theme/recipes/card.recipe';
 import { MapInfo } from '../types/api';
 import useFavorites from '../hooks/useFavorites';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
+import { LuDelete, LuHeart, LuHeartCrack } from 'react-icons/lu';
 
 interface MapCardProps {
   map: MapInfo;
@@ -28,7 +29,7 @@ const MapCard: React.FC<MapCardProps> = ({ map, onDelete }) => {
   const { isMobile } = useResponsiveLayout();
 
   // Get card styles from theme recipe
-  const styles = useStyleConfig('Card', { variant: 'outline' });
+  const styles = useRecipe({ recipe: cardRecipe, variant: 'default' });
 
   // Format the date
   const formattedDate = new Date(map.created).toLocaleDateString(undefined, {
@@ -39,8 +40,8 @@ const MapCard: React.FC<MapCardProps> = ({ map, onDelete }) => {
 
   return (
     <RouterLink to={`/map/${map.id}`} style={{ textDecoration: 'none' }}>
-      <ChakraCard
-        sx={styles} // Apply recipe styles
+      <ChakraCard.Root
+        {...styles}
         overflow="hidden" // Ensure image corners are clipped
         position="relative"
         transition="all 0.2s ease"
@@ -62,10 +63,9 @@ const MapCard: React.FC<MapCardProps> = ({ map, onDelete }) => {
         >
           <IconButton
             aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
-            icon={<StarIcon />}
             colorScheme={isFav ? 'yellow' : 'gray'} // Use colorScheme
             variant="ghost" // Use ghost for minimal appearance
-            isRound // Make it round
+            rounded={'full'}
             size="sm"
             bg="rgba(0,0,0,0.7)"
             color={isFav ? 'yellow.400' : 'white'}
@@ -77,15 +77,16 @@ const MapCard: React.FC<MapCardProps> = ({ map, onDelete }) => {
               e.stopPropagation();
               toggleFavorite(map.id);
             }}
-          />
+          >
+            {isFav ? <LuHeartCrack /> : <LuHeart />}
+          </IconButton>
 
           {onDelete && (
             <IconButton
               aria-label="Delete map"
-              icon={<DeleteIcon />}
               colorScheme="red" // Use colorScheme
               variant="ghost"
-              isRound
+              rounded={'full'}
               size="sm"
               bg="rgba(0,0,0,0.7)"
               color="red.400"
@@ -97,7 +98,9 @@ const MapCard: React.FC<MapCardProps> = ({ map, onDelete }) => {
                 e.stopPropagation();
                 onDelete(map.id);
               }}
-            />
+            >
+              <LuDelete />
+            </IconButton>
           )}
         </Flex>
 
@@ -125,7 +128,7 @@ const MapCard: React.FC<MapCardProps> = ({ map, onDelete }) => {
         <CardBody p={isMobile ? 3 : 4}>
           {' '}
           {/* Use CardBody and responsive padding */}
-          <Heading size="md" mb={2} noOfLines={1} fontFamily="body">
+          <Heading size="md" mb={2} fontFamily="body">
             {' '}
             {/* Use noOfLines */}
             {map.name}
@@ -136,7 +139,6 @@ const MapCard: React.FC<MapCardProps> = ({ map, onDelete }) => {
               fontSize="sm"
               mb={3}
               lineHeight="short" // Use theme line height
-              noOfLines={2} // Limit lines
               title={map.description}
             >
               {map.description}
@@ -155,7 +157,7 @@ const MapCard: React.FC<MapCardProps> = ({ map, onDelete }) => {
             </Badge>
           </Flex>
         </CardBody>
-      </ChakraCard>
+      </ChakraCard.Root>
     </RouterLink>
   );
 };

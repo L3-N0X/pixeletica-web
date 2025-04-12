@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pane, Heading, Text, Card, Badge, Table } from 'evergreen-ui';
+import { Box, Heading, Text, Card, Badge, Table } from '@chakra-ui/react';
 import { MapMetadata, BlockInfo } from '../../hooks/useMapMetadata';
 
 interface BlockInfoPanelProps {
@@ -35,11 +35,11 @@ const BlockInfoPanel: React.FC<BlockInfoPanelProps> = ({
   const blockInfo: BlockInfo | undefined = metadata.blocks?.[blockKey];
 
   return (
-    <Card elevation={2} background="tint2" padding={16} borderRadius={8} width={300}>
-      <Pane display="flex" alignItems="center" marginBottom={16}>
-        <Heading size={500}>Block Information</Heading>
+    <Card.Root background="tint2" padding={16} borderRadius={8} width={300}>
+      <Box display="flex" alignItems="center" marginBottom={16}>
+        <Heading size="lg">Block Information</Heading>
         {blockInfo && (
-          <Pane
+          <Box
             width={24}
             height={24}
             marginLeft={8}
@@ -48,51 +48,51 @@ const BlockInfoPanel: React.FC<BlockInfoPanelProps> = ({
             border="1px solid rgba(0,0,0,0.2)"
           />
         )}
-      </Pane>
+      </Box>
 
-      <Table>
+      <Table.Root>
         <Table.Body>
           <Table.Row>
-            <Table.TextCell>Block Position</Table.TextCell>
-            <Table.TextCell>
+            <Table.Cell>Block Position</Table.Cell>
+            <Table.Cell>
               <Badge color="blue">{blockX}</Badge>, <Badge color="green">{blockY}</Badge>
-            </Table.TextCell>
+            </Table.Cell>
           </Table.Row>
           <Table.Row>
-            <Table.TextCell>Chunk Position</Table.TextCell>
-            <Table.TextCell>
+            <Table.Cell>Chunk Position</Table.Cell>
+            <Table.Cell>
               <Badge color="purple">{chunkX}</Badge>, <Badge color="orange">{chunkY}</Badge>
-            </Table.TextCell>
+            </Table.Cell>
           </Table.Row>
           <Table.Row>
-            <Table.TextCell>World Coordinates</Table.TextCell>
-            <Table.TextCell>
+            <Table.Cell>World Coordinates</Table.Cell>
+            <Table.Cell>
               X: {worldX}, Y: {worldY}, Z: {worldZ}
-            </Table.TextCell>
+            </Table.Cell>
           </Table.Row>
           {blockInfo && (
             <>
               <Table.Row>
-                <Table.TextCell>Block Type</Table.TextCell>
-                <Table.TextCell>{blockInfo.name}</Table.TextCell>
+                <Table.Cell>Block Type</Table.Cell>
+                <Table.Cell>{blockInfo.name}</Table.Cell>
               </Table.Row>
               <Table.Row>
-                <Table.TextCell>Block ID</Table.TextCell>
-                <Table.TextCell>
+                <Table.Cell>Block ID</Table.Cell>
+                <Table.Cell>
                   <Text fontFamily="mono">{blockInfo.id}</Text>
-                </Table.TextCell>
+                </Table.Cell>
               </Table.Row>
             </>
           )}
         </Table.Body>
-      </Table>
+      </Table.Root>
 
       {!blockInfo && (
         <Text color="muted" marginTop={8}>
           No detailed information available for this block
         </Text>
       )}
-    </Card>
+    </Card.Root>
   );
 };
 

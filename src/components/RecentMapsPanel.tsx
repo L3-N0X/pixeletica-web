@@ -28,13 +28,13 @@ const RecentMapsPanel: React.FC<RecentMapsPanelProps> = ({ onSelectMap }) => {
         </Button>
       </Flex>
 
-      <Stack spacing={2} px={2}>
+      <Stack borderSpacing={2} px={2}>
         {recentMaps.map((map) => {
           const date = new Date(map.timestamp);
           const timeAgo = getTimeAgo(date);
 
           return (
-            <Card
+            <Card.Root
               key={map.id}
               p={3}
               bg="gray.75"
@@ -42,22 +42,22 @@ const RecentMapsPanel: React.FC<RecentMapsPanelProps> = ({ onSelectMap }) => {
               my={1}
               _hover={{ shadow: 'md', bg: 'gray.100' }}
               cursor="pointer"
-              as={RouterLink}
-              to={`/map/${map.id}`}
-              onClick={() => onSelectMap?.(map.id)}
-              display="flex"
-              flexDirection="column"
-              textDecoration="none"
             >
               <CardBody p={0}>
-                <Text fontWeight={500} color="text">
-                  {map.name}
-                </Text>
-                <Text fontSize="sm" color="gray.500">
-                  {timeAgo}
-                </Text>
+                <RouterLink
+                  to={`/map/${map.id}`}
+                  onClick={() => onSelectMap?.(map.id)}
+                  style={{ textDecoration: 'none' }}
+                >
+                  <Text fontWeight={500} color="text">
+                    {map.name}
+                  </Text>
+                  <Text fontSize="sm" color="gray.500">
+                    {timeAgo}
+                  </Text>
+                </RouterLink>
               </CardBody>
-            </Card>
+            </Card.Root>
           );
         })}
       </Stack>

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { toaster } from 'evergreen-ui';
 import { conversionApi } from '../services/api';
 
 interface UseFileDownloadReturn {
@@ -31,11 +30,8 @@ export function useFileDownload(): UseFileDownloadReturn {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      toaster.success('File download started');
     } catch (error) {
       console.error('Failed to download file:', error);
-      toaster.danger('Failed to download the file');
     } finally {
       setIsDownloading(false);
     }
@@ -60,11 +56,8 @@ export function useFileDownload(): UseFileDownloadReturn {
       // Clean up
       window.URL.revokeObjectURL(url);
       link.remove();
-
-      toaster.success(`Downloaded ${fileIds.length} files as ZIP`);
     } catch (error) {
       console.error('Failed to download multiple files:', error);
-      toaster.danger('Failed to download files');
     } finally {
       setIsDownloading(false);
     }
@@ -78,10 +71,8 @@ export function useFileDownload(): UseFileDownloadReturn {
     try {
       // For all files, we use the direct download URL
       window.open(conversionApi.getAllFilesZipUrl(taskId), '_blank');
-      toaster.success('Download of all files started');
     } catch (error) {
       console.error('Failed to download all files:', error);
-      toaster.danger('Failed to download files');
     } finally {
       setIsDownloading(false);
     }

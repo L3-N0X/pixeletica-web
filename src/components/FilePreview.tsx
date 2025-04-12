@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pane, Spinner } from 'evergreen-ui';
+import { Box, Spinner } from '@chakra-ui/react';
 import { FileInfo } from '../types/api';
 import { conversionApi } from '../services/api';
 
@@ -31,9 +31,9 @@ const FilePreview: React.FC<FilePreviewProps> = ({ file, taskId }) => {
   };
 
   return (
-    <Pane position="relative" height="100%" width="100%" minHeight={200}>
+    <Box position="relative" height="100%" width="100%" minHeight={200}>
       {loading && (
-        <Pane
+        <Box
           position="absolute"
           top={0}
           left={0}
@@ -46,7 +46,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({ file, taskId }) => {
           zIndex={1}
         >
           <Spinner />
-        </Pane>
+        </Box>
       )}
 
       {isImage && (
@@ -95,7 +95,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({ file, taskId }) => {
       )}
 
       {isSchematic && (
-        <Pane
+        <Box
           display="flex"
           alignItems="center"
           justifyContent="center"
@@ -118,11 +118,11 @@ const FilePreview: React.FC<FilePreviewProps> = ({ file, taskId }) => {
               strokeWidth="0.5"
             />
           </svg>
-        </Pane>
+        </Box>
       )}
 
       {!isImage && !isHtml && !isPdf && !isSchematic && (
-        <Pane
+        <Box
           display="flex"
           alignItems="center"
           justifyContent="center"
@@ -143,9 +143,9 @@ const FilePreview: React.FC<FilePreviewProps> = ({ file, taskId }) => {
               fill="#999999"
             />
           </svg>
-        </Pane>
+        </Box>
       )}
-    </Pane>
+    </Box>
   );
 };
 

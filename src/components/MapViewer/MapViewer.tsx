@@ -1,14 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import { Pane, Spinner, Tooltip, IconButton, toaster } from 'evergreen-ui';
+import { Box, Spinner, IconButton } from '@chakra-ui/react';
 import { MapViewState } from '../../types/mapTypes';
 import { useMapUrlState } from '../../hooks/useMapUrlState';
 import MapTileLayer from './MapTileLayer.tsx';
 import GridOverlay from './GridOverlay';
-import MapInfoPanel from './MapInfoPanel';
-import SharePanel from './SharePanel';
 import { getMapMetadata } from '../../services/mapService';
+import { Tooltip } from '../ui/tooltip.tsx';
+import { LuBookmark, LuGrid2X2, LuRepeat, LuShare, LuZoomIn, LuZoomOut } from 'react-icons/lu';
+import MapInfoBox from './MapInfoPanel.tsx';
+import SharePanel from './SharePanel.tsx';
 
 const MapViewer = () => {
   const { mapId } = useParams<{ mapId: string }>();
@@ -36,8 +38,8 @@ const MapViewer = () => {
   // Current view state
   const [viewState, setViewState] = useState<MapViewState>(getInitialState());
 
-  // Share panel state
-  const [isSharePanelOpen, setIsSharePanelOpen] = useState(false);
+  // Share Boxl state
+  const [isSharePanelOpen, setIsShareBoxOpen] = useState(false);
 
   // Update the viewport size when the component mounts or window resizes
   useEffect(() => {
@@ -115,16 +117,15 @@ const MapViewer = () => {
     [handleViewStateChange]
   );
 
-  // Open share panel
-  const handleOpenSharePanel = useCallback(() => {
-    setIsSharePanelOpen(true);
+  // Open share Boxl
+  const handleOpenShareBoxl = useCallback(() => {
+    setIsShareBoxOpen(true);
   }, []);
 
   // Copy share URL to clipboard
   const handleCopyShareUrl = useCallback(() => {
     const url = getShareableUrl(viewState);
     navigator.clipboard.writeText(url);
-    toaster.success('Share URL copied to clipboard!');
   }, [getShareableUrl, viewState]);
 
   // Bookmark current view
@@ -153,7 +154,6 @@ const MapViewer = () => {
     });
 
     localStorage.setItem('mapBookmarks', JSON.stringify(bookmarks));
-    toaster.success('Bookmark saved!');
   }, [getShareableUrl, mapId, viewState]);
 
   // Reset view to initial position
@@ -173,16 +173,16 @@ const MapViewer = () => {
 
   if (error) {
     return (
-      <Pane display="flex" alignItems="center" justifyContent="center" height="100vh">
+      <Box display="flex" alignItems="center" justifyContent="center" height="100vh">
         <div>{error}</div>
-      </Pane>
+      </Box>
     );
   }
 
   return (
-    <Pane height="100%" position="relative">
+    <Box height="100%" position="relative">
       {isLoading && (
-        <Pane
+        <Box
           position="absolute"
           top={0}
           left={0}
@@ -195,7 +195,7 @@ const MapViewer = () => {
           backgroundColor="rgba(0,0,0,0.5)"
         >
           <Spinner />
-        </Pane>
+        </Box>
       )}
 
       <TransformWrapper
@@ -235,46 +235,36 @@ const MapViewer = () => {
             </TransformComponent>
 
             {/* Controls */}
-            <Pane position="absolute" bottom={16} right={16} display="flex" flexDirection="column">
+            <Box position="absolute" bottom={16} right={16} display="flex" flexDirection="column">
               <Tooltip content="Zoom In">
-                <IconButton
-                  icon="zoom-in"
-                  appearance="minimal"
-                  onClick={() => zoomIn()}
-                  marginBottom={8}
-                />
+                <IconButton appearance="minimal" onClick={() => zoomIn()} marginBottom={8}>
+                  <LuZoomIn size={24} color="white" />
+                </IconButton>
               </Tooltip>
               <Tooltip content="Zoom Out">
-                <IconButton
-                  icon="zoom-out"
-                  appearance="minimal"
-                  onClick={() => zoomOut()}
-                  marginBottom={8}
-                />
+                <IconButton appearance="minimal" onClick={() => zoomOut()} marginBottom={8}>
+                  <LuZoomOut size={24} color="white" />
+                </IconButton>
               </Tooltip>
               <Tooltip content="Reset View">
-                <IconButton
-                  icon="home"
-                  appearance="minimal"
-                  onClick={handleResetView}
-                  marginBottom={8}
-                />
+                <IconButton appearance="minimal" onClick={handleResetView} marginBottom={8}>
+                  <LuRepeat size={24} color="white" />
+                </IconButton>
               </Tooltip>
               <Tooltip content="Share This View">
-                <IconButton
-                  icon="share"
-                  appearance="minimal"
-                  onClick={handleOpenSharePanel}
-                  marginBottom={8}
-                />
+                <IconButton appearance="minimal" onClick={handleOpenShareBoxl} marginBottom={8}>
+                  <LuShare size={24} color="white" />
+                </IconButton>
               </Tooltip>
               <Tooltip content="Bookmark This View">
-                <IconButton icon="bookmark" appearance="minimal" onClick={handleBookmarkView} />
+                <IconButton appearance="minimal" onClick={handleBookmarkView}>
+                  <LuBookmark size={24} color="white" />
+                </IconButton>
               </Tooltip>
-            </Pane>
+            </Box>
 
             {/* Grid controls */}
-            <Pane
+            <Box
               position="absolute"
               bottom={16}
               left={16}
@@ -286,40 +276,41 @@ const MapViewer = () => {
             >
               <Tooltip content="Toggle Block Grid">
                 <IconButton
-                  icon="grid-view"
                   appearance={showBlockGrid ? 'primary' : 'default'}
                   onClick={handleToggleBlockGrid}
-                />
+                >
+                  <LuGrid2X2 size={24} color="white" />
+                </IconButton>
               </Tooltip>
               <Tooltip content="Toggle Chunk Grid">
                 <IconButton
-                  icon="grid-view"
-                  intent="danger"
                   appearance={showChunkGrid ? 'primary' : 'default'}
                   onClick={handleToggleChunkGrid}
-                />
+                >
+                  <LuGrid2X2 size={24} color="white" style={{ transform: 'rotate(45deg)' }} />
+                </IconButton>
               </Tooltip>
-            </Pane>
+            </Box>
           </>
         )}
       </TransformWrapper>
 
-      {/* Info Panel */}
-      <MapInfoPanel
+      {/* Info Boxl */}
+      <MapInfoBox
         mapId={mapId || ''}
         metadata={metadata}
         selectedBlockId={viewState.selectedBlockId}
         selectedChunk={viewState.selectedChunk}
       />
 
-      {/* Share Panel */}
+      {/* Share Boxl */}
       <SharePanel
         isOpen={isSharePanelOpen}
-        onClose={() => setIsSharePanelOpen(false)}
+        onClose={() => setIsShareBoxOpen(false)}
         shareUrl={getShareableUrl(viewState)}
         onCopy={handleCopyShareUrl}
       />
-    </Pane>
+    </Box>
   );
 };
 

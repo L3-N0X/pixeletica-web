@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Pane } from 'evergreen-ui';
+import { Box } from '@chakra-ui/react';
 import MapTile from './MapTile';
 
 interface MapTileLayerProps {
@@ -53,7 +53,7 @@ const MapTileLayer: React.FC<MapTileLayerProps> = ({ mapId, metadata, zoom, onBl
   };
 
   return (
-    <Pane width={metadata?.width || 1024} height={metadata?.height || 1024} position="relative">
+    <Box width={metadata?.width || 1024} height={metadata?.height || 1024} position="relative">
       {tiles.map((tile) => (
         <MapTile
           key={`${tile.zoom}-${tile.x}-${tile.y}`}
@@ -66,7 +66,7 @@ const MapTileLayer: React.FC<MapTileLayerProps> = ({ mapId, metadata, zoom, onBl
       ))}
 
       {/* Add clickable overlay for block selection */}
-      <Pane
+      <Box
         position="absolute"
         top={0}
         left={0}
@@ -85,7 +85,7 @@ const MapTileLayer: React.FC<MapTileLayerProps> = ({ mapId, metadata, zoom, onBl
         }}
         css={{ cursor: 'pointer' }}
       />
-    </Pane>
+    </Box>
   );
 };
 

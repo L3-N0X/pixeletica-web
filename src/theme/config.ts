@@ -1,10 +1,10 @@
-import { defineStyleConfig } from '@chakra-ui/react';
+import { defineConfig } from '@chakra-ui/react';
 import { colors } from './foundations/colors';
 import { typography } from './foundations/typography';
 import { buttonRecipe } from './recipes/button.recipe';
 import { cardRecipe } from './recipes/card.recipe';
 
-export const customConfig = defineStyleConfig({
+export const customConfig = defineConfig({
   // Apply CSS variables to root
   cssVarsRoot: ':where(:root, :host)',
 

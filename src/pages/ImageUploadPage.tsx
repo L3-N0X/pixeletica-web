@@ -1,23 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Pane,
+  Box,
+  Flex,
+  VStack,
+  Stack,
   Heading,
-  FileUploader,
-  TextInputField,
   Button,
-  SelectField,
+  Text,
+  Input,
+  Image,
+  Container,
+  Grid,
   Switch,
-  FormField,
-  Label,
-  Spinner,
-  toaster,
-} from 'evergreen-ui';
+  Card,
+  NumberInput,
+  Field,
+  Select,
+  Fieldset,
+  Portal,
+  createListCollection,
+} from '@chakra-ui/react';
+
 import { startConversion } from '@services/conversionService';
 import type { ConversionSettings } from '@/types';
+import { toaster } from '@/components/ui/toaster';
 
 const ImageUploadPage: React.FC = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -43,14 +54,36 @@ const ImageUploadPage: React.FC = () => {
     },
   });
 
-  const handleFileChange = (files: File[]) => {
-    if (files.length === 0) {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0) {
       setFile(null);
       setImagePreview(null);
       return;
     }
 
-    const selectedFile = files[0];
+    const selectedFile = event.target.files[0];
+    if (!selectedFile.type.startsWith('image/')) {
+      toaster.create({
+        title: 'Invalid file type',
+        description: 'Please select a valid image file.',
+        type: 'warning',
+        duration: 5000,
+        closable: true,
+      });
+      return;
+    }
+
+    if (selectedFile.size > 5 * 1024 * 1024) {
+      toaster.create({
+        title: 'File too large',
+        description: 'Please select an image smaller than 5MB.',
+        type: 'warning',
+        duration: 5000,
+        closable: true,
+      });
+      return;
+    }
+
     setFile(selectedFile);
 
     // Create preview
@@ -76,7 +109,14 @@ const ImageUploadPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file || !imagePreview) {
-      toaster.warning('Please select an image to upload');
+      toaster.create({
+        title: 'No file selected',
+        description: 'Please select an image file to convert.',
+        type: 'warning',
+        duration: 5000,
+        closable: true,
+      });
+
       return;
     }
 
@@ -95,371 +135,470 @@ const ImageUploadPage: React.FC = () => {
           ...settings,
         });
 
-        toaster.success('Image uploaded successfully! Processing started.');
+        toaster.create({
+          title: 'Image uploaded successfully',
+          description: 'Your image is being processed.',
+          type: 'success',
+          duration: 5000,
+          closable: true,
+        });
 
         // Redirect to results page
         navigate(`/results/${response.taskId}`);
       };
     } catch (error) {
       console.error('Error uploading image:', error);
-      toaster.danger('Failed to upload image. Please try again.');
+      toaster.create({
+        title: 'Error uploading image',
+        description: 'There was an error processing your image. Please try again.',
+        type: 'error',
+        duration: 5000,
+        closable: true,
+      });
+
       setLoading(false);
     }
   };
 
   return (
-    <Pane>
-      <Heading size={700} marginBottom={24}>
-        Convert Image to Pixel Art
-      </Heading>
+    <>
+      <Container maxW="container.xl" py={8}>
+        <Heading size="lg" mb={6}>
+          Convert Image to Pixel Art
+        </Heading>
 
-      <Pane display="flex" gap={32}>
-        {/* Left side - Image preview */}
-        <Pane width="40%" minWidth={300}>
-          <Pane
-            height={400}
-            border="1px dashed #666"
-            borderRadius={4}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            marginBottom={16}
-            backgroundColor="#1e1e1e"
-          >
-            {imagePreview ? (
-              <img
-                src={imagePreview}
-                alt="Preview"
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '100%',
-                  objectFit: 'contain',
-                }}
-              />
-            ) : (
-              <Heading size={400} color="#666">
-                Image Preview
-              </Heading>
-            )}
-          </Pane>
+        <Flex direction={{ base: 'column', md: 'row' }} gap={8}>
+          {/* Left side - Image preview */}
+          <Box w={{ base: '100%', md: '40%' }} minW="300px">
+            <Box
+              h="400px"
+              border="1px dashed"
+              borderColor="gray.500"
+              borderRadius="md"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              mb={4}
+              bg="gray.800"
+              position="relative"
+              onClick={() => fileInputRef.current?.click()}
+              cursor="pointer"
+              _hover={{ borderColor: 'blue.400' }}
+              transition="all 0.2s"
+            >
+              {imagePreview ? (
+                <Image
+                  src={imagePreview}
+                  alt="Preview"
+                  maxW="100%"
+                  maxH="100%"
+                  objectFit="contain"
+                />
+              ) : (
+                <VStack gap={2}>
+                  <Text fontSize="lg" color="gray.500">
+                    Drag & Drop your image here
+                  </Text>
+                  <Text fontSize="sm" color="gray.600">
+                    or click to browse
+                  </Text>
+                </VStack>
+              )}
+            </Box>
 
-          <FileUploader
-            onChange={(files: File[]) => {
-              const validFiles = files.filter((file) => file.type.startsWith('image/'));
-              if (validFiles.length !== files.length) {
-                toaster.warning('Only image files are allowed.');
-              }
-              handleFileChange(validFiles);
-            }}
-            maxSizeInBytes={5 * 1024 * 1024}
-            maxFiles={1}
-            width="100%"
-            disabled={loading}
-          />
-        </Pane>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              style={{ display: 'none' }}
+              disabled={loading}
+            />
 
-        {/* Right side - Conversion settings */}
-        <Pane width="60%" is="form" onSubmit={handleSubmit}>
-          <Pane marginBottom={24}>
-            <Heading size={500} marginBottom={8}>
-              Image Settings
-            </Heading>
-            <Pane display="flex" gap={16}>
-              <TextInputField
-                label="Width (optional)"
-                placeholder="Original width"
-                type="number"
-                min={1}
-                width="50%"
-                value={settings.width || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setSettings({
-                    ...settings,
-                    width: e.target.value ? parseInt(e.target.value) : undefined,
-                  })
-                }
-                disabled={loading}
-              />
-              <TextInputField
-                label="Height (optional)"
-                placeholder="Original height"
-                type="number"
-                min={1}
-                width="50%"
-                value={settings.height || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setSettings({
-                    ...settings,
-                    height: e.target.value ? parseInt(e.target.value) : undefined,
-                  })
-                }
-                disabled={loading}
-              />
-            </Pane>
-
-            <SelectField
-              label="Dithering Algorithm"
-              value={settings.algorithm}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setSettings({
-                  ...settings,
-                  algorithm: e.target.value as 'floyd_steinberg' | 'ordered' | 'random',
-                })
-              }
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              w="100%"
+              colorScheme="blue"
+              variant="outline"
               disabled={loading}
             >
-              <option value="floyd_steinberg">Floyd-Steinberg (Default)</option>
-              <option value="ordered">Ordered</option>
-              <option value="random">Random</option>
-            </SelectField>
-          </Pane>
+              Select Image
+            </Button>
 
-          <Pane marginBottom={24}>
-            <Heading size={500} marginBottom={8}>
-              Display Settings
-            </Heading>
+            {file && (
+              <Text mt={2} fontSize="sm" color="gray.400">
+                Selected: {file.name} ({Math.round(file.size / 1024)}KB)
+              </Text>
+            )}
+          </Box>
 
-            <Pane display="flex" gap={16} marginBottom={8}>
-              <TextInputField
-                label="Origin X"
-                type="number"
-                width="33%"
-                value={settings.exportSettings.originX}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setSettings({
-                    ...settings,
-                    exportSettings: {
-                      ...settings.exportSettings,
-                      originX: parseInt(e.target.value) || 0,
-                    },
-                  })
-                }
-                disabled={loading}
-              />
-              <TextInputField
-                label="Origin Y"
-                type="number"
-                width="33%"
-                value={settings.exportSettings.originY}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setSettings({
-                    ...settings,
-                    exportSettings: {
-                      ...settings.exportSettings,
-                      originY: parseInt(e.target.value) || 0,
-                    },
-                  })
-                }
-                disabled={loading}
-              />
-              <TextInputField
-                label="Origin Z"
-                type="number"
-                width="33%"
-                value={settings.exportSettings.originZ}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setSettings({
-                    ...settings,
-                    exportSettings: {
-                      ...settings.exportSettings,
-                      originZ: parseInt(e.target.value) || 0,
-                    },
-                  })
-                }
-                disabled={loading}
-              />
-            </Pane>
-
-            <Pane display="flex" gap={16} marginBottom={8}>
-              <Pane width="50%">
-                <Label>
-                  Draw Chunk Lines
-                  <Switch
-                    checked={settings.exportSettings.drawChunkLines}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setSettings({
-                        ...settings,
-                        exportSettings: {
-                          ...settings.exportSettings,
-                          drawChunkLines: e.target.checked,
-                        },
-                      })
-                    }
-                    disabled={loading}
-                  />
-                </Label>
-                {settings.exportSettings.drawChunkLines && (
-                  <FormField label="Chunk Line Color" marginTop={8}>
-                    <TextInputField
-                      label="Chunk Line Color"
-                      type="text"
-                      value={settings.exportSettings.chunkLineColor}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          {/* Right side - Conversion settings */}
+          <Box w={{ base: '100%', md: '60%' }} as="form" onSubmit={handleSubmit}>
+            <Card.Root variant="outline" mb={6}>
+              <Card.Header pb={0}>
+                <Heading size="md">Image Settings</Heading>
+              </Card.Header>
+              <Card.Body>
+                <Grid templateColumns="repeat(2, 1fr)" gap={4} mb={4}>
+                  <Field.Root>
+                    <Field.Label>Width (optional)</Field.Label>
+                    <NumberInput.Root
+                      min={1}
+                      value={settings.width !== undefined ? String(settings.width) : ''}
+                      onChange={(e: React.FormEvent<HTMLDivElement>) => {
+                        const valueString = (e.target as HTMLInputElement).value;
+                        const value = parseInt(valueString);
                         setSettings({
                           ...settings,
-                          exportSettings: {
-                            ...settings.exportSettings,
-                            chunkLineColor: e.target.value,
-                          },
-                        })
-                      }
+                          width: isNaN(value) ? undefined : value,
+                        });
+                      }}
                       disabled={loading}
-                    />
-                  </FormField>
-                )}
-              </Pane>
+                    >
+                      <NumberInput.Input placeholder="Original width" />
+                    </NumberInput.Root>
+                  </Field.Root>
+                  <Field.Root>
+                    <Field.Label>Height (optional)</Field.Label>
+                    <NumberInput.Root
+                      min={1}
+                      value={settings.height !== undefined ? String(settings.height) : ''}
+                      onChange={(e: React.FormEvent<HTMLDivElement>) => {
+                        const valueString = (e.target as HTMLInputElement).value;
+                        const value = parseInt(valueString);
+                        setSettings({
+                          ...settings,
+                          height: isNaN(value) ? undefined : value,
+                        });
+                      }}
+                      disabled={loading}
+                    >
+                      <NumberInput.Input placeholder="Original height" />
+                    </NumberInput.Root>
+                  </Field.Root>
+                </Grid>
 
-              <Pane width="50%">
-                <Label>
-                  Draw Block Lines
-                  <Switch
-                    checked={settings.exportSettings.drawBlockLines}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                <Field.Root mb={4}>
+                  <Field.Label>Dithering Algorithm</Field.Label>
+                  <Select.Root
+                    value={[settings.algorithm]}
+                    collection={createListCollection({
+                      items: [
+                        { value: 'floyd_steinberg', label: 'Floyd-Steinberg (Default)' },
+                        { value: 'ordered', label: 'Ordered' },
+                        { value: 'random', label: 'Random' },
+                      ],
+                    })}
+                    onValueChange={(details) =>
                       setSettings({
                         ...settings,
-                        exportSettings: {
-                          ...settings.exportSettings,
-                          drawBlockLines: e.target.checked,
-                        },
+                        algorithm: details.value[0] as ConversionSettings['algorithm'],
                       })
                     }
-                    disabled={loading}
-                  />
-                </Label>
-                <TextInputField
-                  label="Block Line Color"
-                  type="text"
-                  value={settings.exportSettings.blockLineColor}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setSettings({
-                      ...settings,
-                      exportSettings: {
-                        ...settings.exportSettings,
-                        blockLineColor: e.target.value,
-                      },
-                    })
-                  }
-                  disabled={loading}
-                />
-              </Pane>
-            </Pane>
+                  >
+                    <Select.Control>
+                      <Select.Trigger>
+                        <Select.ValueText placeholder="Select algorithm" />
+                      </Select.Trigger>
+                      <Select.IndicatorGroup>
+                        <Select.Indicator />
+                      </Select.IndicatorGroup>
+                    </Select.Control>
+                    <Portal>
+                      <Select.Positioner>
+                        <Select.Content>
+                          <Select.Item item="floyd_steinberg">
+                            Floyd-Steinberg (Default)
+                          </Select.Item>
+                          <Select.Item item="ordered">Ordered</Select.Item>
+                          <Select.Item item="random">Random</Select.Item>
+                        </Select.Content>
+                      </Select.Positioner>
+                    </Portal>
+                  </Select.Root>
+                </Field.Root>
+              </Card.Body>
+            </Card.Root>
 
-            <FormField label="Export Formats" marginBottom={16}>
-              <Pane>
-                {[
-                  { label: 'PNG', value: 'png' as const },
-                  { label: 'JPG', value: 'jpg' as const },
-                  { label: 'WebP', value: 'webp' as const },
-                  { label: 'HTML', value: 'html' as const },
-                ].map((option) => (
-                  <Label key={option.value} display="block" marginBottom={8}>
-                    <Switch
-                      checked={settings.exportSettings.exportTypes.includes(option.value)}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const updatedExportTypes = e.target.checked
-                          ? [...settings.exportSettings.exportTypes, option.value]
-                          : settings.exportSettings.exportTypes.filter(
-                              (type) => type !== option.value
-                            );
+            <Card.Root variant="outline" mb={6}>
+              <Card.Header pb={0}>
+                <Heading size="md">Display Settings</Heading>
+              </Card.Header>
+              <Card.Body>
+                <Grid templateColumns="repeat(3, 1fr)" gap={4} mb={4}>
+                  <Field.Root>
+                    <Field.Label>Origin X</Field.Label>
+                    <NumberInput.Root
+                      value={settings.exportSettings.originX.toString()}
+                      onChange={(e: React.FormEvent<HTMLDivElement>) => {
+                        const valueString = (e.target as HTMLInputElement).value;
+                        const value = parseInt(valueString);
                         setSettings({
                           ...settings,
                           exportSettings: {
                             ...settings.exportSettings,
-                            exportTypes: updatedExportTypes as ('html' | 'png' | 'jpg' | 'webp')[],
+                            originX: isNaN(value) ? 0 : value,
                           },
                         });
                       }}
                       disabled={loading}
-                    />
-                    {option.label}
-                  </Label>
-                ))}
-              </Pane>
-            </FormField>
-          </Pane>
+                    >
+                      <NumberInput.Input />
+                    </NumberInput.Root>
+                  </Field.Root>
+                  <Field.Root>
+                    <Field.Label>Origin Y</Field.Label>
+                    <NumberInput.Root
+                      value={settings.exportSettings.originY.toString()}
+                      onChange={(e: React.FormEvent<HTMLDivElement>) => {
+                        const valueString = (e.target as HTMLInputElement).value;
+                        const value = parseInt(valueString);
+                        setSettings({
+                          ...settings,
+                          exportSettings: {
+                            ...settings.exportSettings,
+                            originY: isNaN(value) ? 0 : value,
+                          },
+                        });
+                      }}
+                      disabled={loading}
+                    >
+                      <NumberInput.Input />
+                    </NumberInput.Root>
+                    {/* </Field.Root> */}
+                    <NumberInput.Root
+                      value={settings.exportSettings.originZ.toString()}
+                      onChange={(e: React.FormEvent<HTMLDivElement>) => {
+                        const valueString = (e.target as HTMLInputElement).value;
+                        const value = parseInt(valueString);
+                        setSettings({
+                          ...settings,
+                          exportSettings: {
+                            ...settings.exportSettings,
+                            originZ: isNaN(value) ? 0 : value,
+                          },
+                        });
+                      }}
+                      disabled={loading}
+                    >
+                      <NumberInput.Input />
+                    </NumberInput.Root>
+                  </Field.Root>
+                </Grid>
 
-          <Pane marginBottom={24}>
-            <Heading size={500} marginBottom={8}>
-              <Label>
-                <Switch
-                  checked={settings.schematicSettings.generateSchematic}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      schematicSettings: {
-                        ...settings.schematicSettings,
-                        generateSchematic: e.target.checked,
-                      },
-                    })
-                  }
-                  disabled={loading}
-                />
-                Generate Schematic
-              </Label>
-            </Heading>
+                <Grid templateColumns="repeat(2, 1fr)" gap={6} mb={4}>
+                  <Box>
+                    <Fieldset.Root display="flex" alignItems="center" mb={2}>
+                      <Fieldset.Legend mb="0">Draw Chunk Lines</Fieldset.Legend>
+                      <Switch.Root
+                        id="draw-chunk-lines"
+                        checked={settings.exportSettings.drawChunkLines}
+                        onChange={(event) =>
+                          setSettings({
+                            ...settings,
+                            exportSettings: {
+                              ...settings.exportSettings,
+                              drawChunkLines: (event.target as HTMLInputElement).checked,
+                            },
+                          })
+                        }
+                        disabled={loading}
+                      />
+                    </Fieldset.Root>
+                    {settings.exportSettings.drawChunkLines && (
+                      <Field.Root mt={4}>
+                        <Field.Label>Chunk Line Color</Field.Label>
+                        <Input
+                          type="text"
+                          value={settings.exportSettings.chunkLineColor}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setSettings({
+                              ...settings,
+                              exportSettings: {
+                                ...settings.exportSettings,
+                                chunkLineColor: e.target.value,
+                              },
+                            })
+                          }
+                          disabled={loading}
+                        />
+                      </Field.Root>
+                    )}
+                  </Box>
 
-            {settings.schematicSettings.generateSchematic && (
-              <>
-                <TextInputField
-                  label="Schematic Name"
-                  value={settings.schematicSettings.name || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setSettings({
-                      ...settings,
-                      schematicSettings: {
-                        ...settings.schematicSettings,
-                        name: e.target.value,
-                      },
-                    })
-                  }
-                  disabled={loading}
-                />
-                <TextInputField
-                  label="Author"
-                  value={settings.schematicSettings.author || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setSettings({
-                      ...settings,
-                      schematicSettings: {
-                        ...settings.schematicSettings,
-                        author: e.target.value,
-                      },
-                    })
-                  }
-                  placeholder="Pixeletica User"
-                  disabled={loading}
-                />
-                <TextInputField
-                  label="Description"
-                  value={settings.schematicSettings.description || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setSettings({
-                      ...settings,
-                      schematicSettings: {
-                        ...settings.schematicSettings,
-                        description: e.target.value,
-                      },
-                    })
-                  }
-                  disabled={loading}
-                />
-              </>
-            )}
-          </Pane>
+                  <Box>
+                    <Fieldset.Root display="flex" alignItems="center" mb={2}>
+                      <Fieldset.Legend mb="0">Draw Block Lines</Fieldset.Legend>
+                      <Switch.Root
+                        id="draw-block-lines"
+                        checked={settings.exportSettings.drawBlockLines}
+                        onChange={(event) =>
+                          setSettings({
+                            ...settings,
+                            exportSettings: {
+                              ...settings.exportSettings,
+                              drawBlockLines: (event.target as HTMLInputElement).checked,
+                            },
+                          })
+                        }
+                        disabled={loading}
+                      />
+                    </Fieldset.Root>
+                    <Field.Root mt={4}>
+                      <Field.Label>Block Line Color</Field.Label>
+                      <Input
+                        type="text"
+                        value={settings.exportSettings.blockLineColor}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setSettings({
+                            ...settings,
+                            exportSettings: {
+                              ...settings.exportSettings,
+                              blockLineColor: e.target.value,
+                            },
+                          })
+                        }
+                        disabled={loading}
+                      />
+                    </Field.Root>
+                  </Box>
+                </Grid>
 
-          <Button
-            appearance="primary"
-            type="submit"
-            size="large"
-            width="100%"
-            disabled={!file || loading}
-            iconBefore={loading ? undefined : undefined}
-          >
-            {loading ? <Spinner size={16} /> : 'Convert Image'}
-          </Button>
-        </Pane>
-      </Pane>
-    </Pane>
+                <Field.Root mb={4}>
+                  <Field.Label>Export Formats</Field.Label>
+                  <Stack gap={2}>
+                    {[
+                      { label: 'PNG', value: 'png' as const },
+                      { label: 'JPG', value: 'jpg' as const },
+                      { label: 'WebP', value: 'webp' as const },
+                      { label: 'HTML', value: 'html' as const },
+                    ].map((option) => (
+                      <Fieldset.Root key={option.value} display="flex" alignItems="center">
+                        <Fieldset.Legend mb="0">{option.label}</Fieldset.Legend>
+                        <Switch.Root
+                          id={`format-${option.value}`}
+                          checked={settings.exportSettings.exportTypes.includes(option.value)}
+                          onChange={(event) => {
+                            const updatedExportTypes = (event.target as HTMLInputElement).checked
+                              ? [...settings.exportSettings.exportTypes, option.value]
+                              : settings.exportSettings.exportTypes.filter(
+                                  (type) => type !== option.value
+                                );
+                            setSettings({
+                              ...settings,
+                              exportSettings: {
+                                ...settings.exportSettings,
+                                exportTypes: updatedExportTypes as (
+                                  | 'html'
+                                  | 'png'
+                                  | 'jpg'
+                                  | 'webp'
+                                )[],
+                              },
+                            });
+                          }}
+                          disabled={loading}
+                        />
+                      </Fieldset.Root>
+                    ))}
+                  </Stack>
+                </Field.Root>
+              </Card.Body>
+            </Card.Root>
+
+            <Card.Root variant="outline" mb={6}>
+              <Card.Header pb={0}>
+                <Fieldset.Root display="flex" alignItems="center">
+                  <Fieldset.Legend mb="0">Generate Schematic</Fieldset.Legend>
+                  <Switch.Root
+                    id="generate-schematic"
+                    checked={settings.schematicSettings.generateSchematic}
+                    onChange={(event) => {
+                      const checked = (event.target as HTMLInputElement).checked;
+                      setSettings({
+                        ...settings,
+                        schematicSettings: {
+                          ...settings.schematicSettings,
+                          generateSchematic: checked,
+                        },
+                      });
+                    }}
+                    disabled={loading}
+                  />
+                </Fieldset.Root>
+              </Card.Header>
+              {settings.schematicSettings.generateSchematic && (
+                <Card.Body>
+                  <Stack gap={4}>
+                    <Field.Root>
+                      <Field.Label>Schematic Name</Field.Label>
+                      <Input
+                        value={settings.schematicSettings.name || ''}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setSettings({
+                            ...settings,
+                            schematicSettings: {
+                              ...settings.schematicSettings,
+                              name: e.target.value,
+                            },
+                          })
+                        }
+                        disabled={loading}
+                      />
+                    </Field.Root>
+                    <Field.Root>
+                      <Field.Label>Author</Field.Label>
+                      <Input
+                        value={settings.schematicSettings.author || ''}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setSettings({
+                            ...settings,
+                            schematicSettings: {
+                              ...settings.schematicSettings,
+                              author: e.target.value,
+                            },
+                          })
+                        }
+                        placeholder="Pixeletica User"
+                        disabled={loading}
+                      />
+                    </Field.Root>
+                    <Field.Root>
+                      <Field.Label>Description</Field.Label>
+                      <Input
+                        value={settings.schematicSettings.description || ''}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setSettings({
+                            ...settings,
+                            schematicSettings: {
+                              ...settings.schematicSettings,
+                              description: e.target.value,
+                            },
+                          })
+                        }
+                        disabled={loading}
+                      />
+                    </Field.Root>
+                  </Stack>
+                </Card.Body>
+              )}
+            </Card.Root>
+
+            <Button
+              colorScheme="blue"
+              type="submit"
+              size="lg"
+              width="100%"
+              disabled={!file || loading}
+              loading={loading}
+              loadingText="Converting..."
+            >
+              Convert Image
+            </Button>
+          </Box>
+        </Flex>
+      </Container>
+    </>
   );
 };
 

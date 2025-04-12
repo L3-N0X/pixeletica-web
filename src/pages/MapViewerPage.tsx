@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Pane, Heading, Spinner } from 'evergreen-ui';
+import { Box, Heading, Spinner } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import PixelArtViewer from '@components/PixelArtViewer';
 import DetailsPanel from '@components/DetailsPanel';
@@ -38,41 +38,41 @@ const MapViewerPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Pane display="flex" alignItems="center" justifyContent="center" height="100%">
+      <Box display="flex" alignItems="center" justifyContent="center" height="100%">
         <Spinner />
-      </Pane>
+      </Box>
     );
   }
 
   if (error || !mapName || !metadata) {
     return (
-      <Pane>
-        <Heading size={700} marginBottom={16}>
+      <Box>
+        <Heading size="lg" marginBottom={16}>
           Error
         </Heading>
-        <Pane backgroundColor="#2e2e2e" padding={16} borderRadius={4}>
+        <Box backgroundColor="#2e2e2e" padding={16} borderRadius={4}>
           <p>{error || 'Invalid map name or metadata not available.'}</p>
-        </Pane>
-      </Pane>
+        </Box>
+      </Box>
     );
   }
 
   return (
-    <Pane display="flex" flexDirection="column" height="100%">
-      <Heading size={700} marginBottom={16}>
+    <Box display="flex" flexDirection="column" height="100%">
+      <Heading size="md" marginBottom={16}>
         {metadata.displayName}
       </Heading>
 
-      <Pane display="flex" flex={1} height="calc(100% - 40px)">
-        <Pane flex={1} height="100%" position="relative">
+      <Box display="flex" flex={1} height="calc(100% - 40px)">
+        <Box flex={1} height="100%" position="relative">
           <PixelArtViewer metadata={metadata} mapName={mapName} onBlockSelect={handleBlockSelect} />
-        </Pane>
+        </Box>
 
         {selectedBlock && (
           <DetailsPanel block={selectedBlock} onClose={() => setSelectedBlock(null)} />
         )}
-      </Pane>
-    </Pane>
+      </Box>
+    </Box>
   );
 };
 

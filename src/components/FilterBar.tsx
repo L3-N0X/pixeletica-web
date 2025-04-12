@@ -1,17 +1,6 @@
 import React from 'react';
-import {
-  Box,
-  Flex,
-  Input,
-  InputGroup,
-  InputLeftElement,
-  Select,
-  Tabs,
-  TabList,
-  Tab,
-} from '@chakra-ui/react';
-import { SearchIcon, StarIcon } from '@chakra-ui/icons';
-import { BsFilter, BsFolder } from 'react-icons/bs'; // React Icons for additional icons
+import { Box, Flex, Input, Select, Tabs, createListCollection } from '@chakra-ui/react';
+import { BsFilter, BsFolder, BsStar } from 'react-icons/bs';
 
 // Type exports
 export type SortOption = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
@@ -35,68 +24,75 @@ const FilterBar: React.FC<FilterBarProps> = ({
   setSortOption,
 }) => {
   // Map filterOption to tab index for Chakra Tabs
-  const tabIndex = { all: 0, favorites: 1, recent: 2 }[filterOption];
-
-  // Handle tab change
-  const handleTabChange = (index: number) => {
-    const options: FilterOption[] = ['all', 'favorites', 'recent'];
-    setFilterOption(options[index]);
-  };
+  const filterOptions: FilterOption[] = ['all', 'favorites', 'recent'];
+  const tabIndex = filterOptions.indexOf(filterOption);
 
   return (
-    <Box mb={6}>
-      <Flex align="center" mb={4}>
-        {/* Search Input */}
-        <InputGroup maxW="300px" mr={4}>
-          <InputLeftElement pointerEvents="none">
-            <SearchIcon color="gray.400" />
-          </InputLeftElement>
-          <Input
-            placeholder="Search maps..."
-            value={search}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-          />
-        </InputGroup>
-        <Box flex={1} /> {/* Spacer */}
-        {/* Sort Select */}
-        <Select
-          value={sortOption}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            setSortOption(e.target.value as SortOption)
+    <Box p={4} bg="white" boxShadow="md" borderRadius="md">
+      <Input
+        placeholder="Search maps..."
+        value={search}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+      />
+      <Box flex={1} /> {/* Spacer */}
+      {/* Sort Select */}
+      <Select.Root
+        collection={createListCollection({
+          items: [
+            { value: 'newest', label: 'Newest First' },
+            { value: 'oldest', label: 'Oldest First' },
+            { value: 'name-desc', label: 'Name (Z-A)' },
+          ],
+        })}
+        value={[sortOption]}
+        onValueChange={(details) => {
+          if (details.value[0]) {
+            setSortOption(details.value[0] as SortOption);
           }
-          ml={2}
-          maxW="180px"
-        >
-          <option value="newest">Newest First</option>
-          <option value="oldest">Oldest First</option>
-          <option value="name-asc">Name (A-Z)</option>
-          <option value="name-desc">Name (Z-A)</option>
-        </Select>
-      </Flex>
-
+        }}
+        width="180px"
+      >
+        <Select.Control>
+          <Select.Trigger>
+            <Select.ValueText placeholder="Sort by..." />
+          </Select.Trigger>
+        </Select.Control>
+        <Select.Positioner>
+          <Select.Content>
+            <Select.Item item={{ value: 'newest', label: 'Newest First' }}>
+              Newest First
+            </Select.Item>
+            <Select.Item item={{ value: 'oldest', label: 'Oldest First' }}>
+              Oldest First
+            </Select.Item>
+            <Select.Item item={{ value: 'name-asc', label: 'Name (A-Z)' }}>Name (A-Z)</Select.Item>
+            <Select.Item item={{ value: 'name-desc', label: 'Name (Z-A)' }}>Name (Z-A)</Select.Item>
+          </Select.Content>
+        </Select.Positioner>
+      </Select.Root>
       {/* Filter Tabs */}
-      <Tabs index={tabIndex} onChange={handleTabChange} variant="line">
-        <TabList>
-          <Tab>
+      <Tabs.Root defaultValue={filterOption} tabIndex={tabIndex}>
+        <Tabs.List>
+          <Tabs.Trigger value="all" onClick={() => setFilterOption('all')}>
             <Flex align="center">
               <Box as={BsFilter} mr={2} />
               All Maps
             </Flex>
-          </Tab>
-          <Tab>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="favorites" onClick={() => setFilterOption('favorites')}>
             <Flex align="center">
-              <StarIcon mr={2} />
+              <Box as={BsStar} mr={2} />
               Favorites
             </Flex>
-          </Tab>
-          <Tab>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="recent" onClick={() => setFilterOption('recent')}>
             <Flex align="center">
               <Box as={BsFolder} mr={2} />
               Recent
             </Flex>
-          </Tab>
-        </TabList>
-      </Tabs>
+          </Tabs.Trigger>
+        </Tabs.List>
+      </Tabs.Root>
     </Box>
   );
 };

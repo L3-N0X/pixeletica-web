@@ -1,29 +1,32 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Pane, Heading, Text, Button } from 'evergreen-ui';
+import { Link as RouterLink } from 'react-router-dom';
+import { Box, Heading, Text, Button } from '@chakra-ui/react';
 
 const NotFoundPage: React.FC = () => {
   return (
-    <Pane
+    <Box
       display="flex"
       flexDirection="column"
       alignItems="center"
       justifyContent="center"
       height="60vh"
     >
-      <Heading size={900} marginBottom={16}>
+      <Heading size="xl" marginBottom={16}>
         404
       </Heading>
-      <Heading size={700} marginBottom={8}>
+      <Heading size="lg" marginBottom={8}>
         Page Not Found
       </Heading>
-      <Text size={500} marginBottom={32} color="muted">
+      <Text fontSize="md" marginBottom={32} color="muted">
         The page you're looking for doesn't exist.
       </Text>
-      <Button appearance="primary" as={Link} to="/">
-        Return to Home
-      </Button>
-    </Pane>
+
+      <RouterLink to="/">
+        <Button appearance="primary" size="lg" colorScheme="teal">
+          Return to Home
+        </Button>
+      </RouterLink>
+    </Box>
   );
 };
 

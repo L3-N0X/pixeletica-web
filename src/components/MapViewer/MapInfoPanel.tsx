@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Pane, Card, Heading, Text, Badge, IconButton } from 'evergreen-ui';
+import { Box, Card, Heading, Text, Badge, IconButton } from '@chakra-ui/react';
 import { ChunkCoord } from '../../types/mapTypes';
-import BookmarkPanel from './BookmarkPanel';
 import { MapMetadata } from '../../hooks/useMapMetadata';
+import BookmarkBox from './BookmarkPanel';
+import { LuBookmark } from 'react-icons/lu';
 
 interface MapInfoPanelProps {
   mapId: string;
@@ -11,13 +12,13 @@ interface MapInfoPanelProps {
   selectedChunk?: ChunkCoord;
 }
 
-const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
+const MapInfoBox: React.FC<MapInfoPanelProps> = ({
   mapId,
   metadata,
   selectedBlockId,
   selectedChunk,
 }) => {
-  const [isBookmarkPanelOpen, setIsBookmarkPanelOpen] = useState(false);
+  const [isBookmarkBoxOpen, setIsBookmarkBoxOpen] = useState(false);
 
   // Helper function to get properties safely
   const getSafeProperty = (obj: any, property: string, defaultValue: any = undefined) => {
@@ -25,8 +26,7 @@ const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
   };
 
   return (
-    <Card
-      elevation={2}
+    <Card.Root
       position="absolute"
       top={16}
       left={16}
@@ -35,22 +35,23 @@ const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
       background="rgba(23, 29, 37, 0.85)"
       backdropFilter="blur(10px)"
     >
-      <Pane display="flex" alignItems="center" justifyContent="space-between" marginBottom={16}>
-        <Heading size={600} color="white">
+      <Box display="flex" alignItems="center" justifyContent="space-between" marginBottom={16}>
+        <Heading size="xl" color="white">
           Map Information
         </Heading>
         <IconButton
-          icon="bookmark"
           appearance="minimal"
-          onClick={() => setIsBookmarkPanelOpen(true)}
+          onClick={() => setIsBookmarkBoxOpen(true)}
           title="View bookmarks"
-        />
-      </Pane>
+        >
+          <LuBookmark size={24} color="white" />
+        </IconButton>
+      </Box>
 
       {/* Map metadata */}
       {metadata && (
-        <Pane>
-          <Heading size={500} marginBottom={8}>
+        <Box>
+          <Heading size="md" marginBottom={8}>
             {getSafeProperty(metadata, 'displayName', 'Untitled Map')}
           </Heading>
 
@@ -60,47 +61,47 @@ const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
             </Text>
           )}
 
-          <Pane marginBottom={16}>
+          <Box marginBottom={16}>
             <Badge color="blue" marginRight={8}>
               Size: {metadata.width}x{metadata.height}
             </Badge>
-          </Pane>
-        </Pane>
+          </Box>
+        </Box>
       )}
 
       {/* Selected block info */}
       {selectedBlockId && metadata?.blocks && metadata.blocks[selectedBlockId] && (
-        <Pane marginTop={16} padding={12} background="rgba(255,255,255,0.1)" borderRadius={4}>
-          <Heading size={400} marginBottom={8}>
+        <Box marginTop={16} padding={12} background="rgba(255,255,255,0.1)" borderRadius={4}>
+          <Heading size="md" marginBottom={8}>
             Selected Block
           </Heading>
           <Text>{getSafeProperty(metadata.blocks[selectedBlockId], 'name', 'Unknown Block')}</Text>
           <Badge marginTop={8} color="neutral">
             {selectedBlockId}
           </Badge>
-        </Pane>
+        </Box>
       )}
 
       {/* Selected chunk info */}
       {selectedChunk && (
-        <Pane marginTop={16} padding={12} background="rgba(255,255,255,0.1)" borderRadius={4}>
-          <Heading size={400} marginBottom={8}>
+        <Box marginTop={16} padding={12} background="rgba(255,255,255,0.1)" borderRadius={4}>
+          <Heading size="md" marginBottom={8}>
             Selected Chunk
           </Heading>
           <Text>
             Chunk: {selectedChunk.x}, {selectedChunk.z}
           </Text>
-        </Pane>
+        </Box>
       )}
 
-      {/* Bookmark Panel */}
-      <BookmarkPanel
-        isOpen={isBookmarkPanelOpen}
-        onClose={() => setIsBookmarkPanelOpen(false)}
+      {/* Bookmark Boxl */}
+      <BookmarkBox
+        isOpen={isBookmarkBoxOpen}
+        onClose={() => setIsBookmarkBoxOpen(false)}
         mapId={mapId}
       />
-    </Card>
+    </Card.Root>
   );
 };
 
-export default MapInfoPanel;
+export default MapInfoBox;

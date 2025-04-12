@@ -1,21 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
-  Pane,
+  Box,
   Heading,
   Button,
   Spinner,
   Card,
-  Tab,
-  Tablist,
+  Tabs,
   Text,
   Badge,
   IconButton,
   Table,
-  Tooltip,
-  DownloadIcon,
-  ArrowRightIcon,
-} from 'evergreen-ui';
+} from '@chakra-ui/react';
 import {
   getConversionStatus,
   listConversionFiles,
@@ -24,6 +20,8 @@ import {
   downloadSelectedFiles,
 } from '@services/conversionService';
 import type { TaskResponse, FileInfo } from '@/types';
+import { LuDownload, LuMap } from 'react-icons/lu';
+import { Tooltip } from './../components/ui/tooltip';
 
 const ResultsPage: React.FC = () => {
   const { taskId } = useParams<{ taskId: string }>();
@@ -144,65 +142,60 @@ const ResultsPage: React.FC = () => {
   // Render loading state
   if (loading) {
     return (
-      <Pane display="flex" alignItems="center" justifyContent="center" height="100%">
-        <Pane textAlign="center">
-          <Spinner size={32} marginBottom={16} />
-          <Heading size={500}>
+      <Box display="flex" alignItems="center" justifyContent="center" height="100%">
+        <Box textAlign="center">
+          <Spinner size="lg" marginBottom={16} />
+          <Heading size="md">
             {task?.status === 'processing' && 'Processing...'}
             {task?.status === 'queued' && 'Waiting in queue...'}
             {!task && 'Loading...'}
           </Heading>
           {task?.progress != null && (
-            <Pane marginTop={16} display="flex" flexDirection="column" alignItems="center">
+            <Box marginTop={16} display="flex" flexDirection="column" alignItems="center">
               <Text>{task.progress}% complete</Text>
-              <Pane width={300} height={6} backgroundColor="#2e2e2e" borderRadius={3} marginTop={8}>
-                <Pane
-                  height={6}
-                  width={`${task.progress}%`}
-                  backgroundColor="#00897b"
-                  borderRadius={3}
-                />
-              </Pane>
-            </Pane>
+              <Box width={300} height={6} borderRadius={3} marginTop={8}>
+                <Box height={6} width={`${task.progress}%`} borderRadius={3} />
+              </Box>
+            </Box>
           )}
-        </Pane>
-      </Pane>
+        </Box>
+      </Box>
     );
   }
 
   // Render error state
   if (error || !taskId || (task && task.status === 'failed')) {
     return (
-      <Pane>
-        <Heading size={700} marginBottom={16}>
+      <Box>
+        <Heading size="lg" marginBottom={16}>
           Error
         </Heading>
-        <Card backgroundColor="#2e2e2e" padding={16} marginBottom={24} elevation={1}>
-          <Text color="#ff8a80">{error || task?.error || 'An error occurred.'}</Text>
-        </Card>
+        <Card.Root backgroundColor="#2e2e2e" padding={16} marginBottom={24}>
+          <Text>{error || task?.error || 'An error occurred.'}</Text>
+        </Card.Root>
         <Button appearance="primary" onClick={() => navigate('/upload')}>
           Return to Upload Page
         </Button>
-      </Pane>
+      </Box>
     );
   }
 
   return (
-    <Pane>
-      <Heading size={700} marginBottom={8}>
+    <Box>
+      <Heading size="lg" marginBottom={8}>
         Conversion Results
       </Heading>
       <Text marginBottom={24}>Task ID: {taskId}</Text>
 
-      <Card backgroundColor="#2e2e2e" elevation={1}>
+      <Card.Root>
         {/* Tab navigation */}
-        <Tablist marginBottom={16} flexBasis={240} padding={8}>
+        <Tabs.Root marginBottom={16} flexBasis={240} padding={8}>
           {tabs.map((tab, index) => (
-            <Tab
+            <Tabs.Trigger
               key={tab.name}
               id={tab.name}
+              value={tab.name}
               onSelect={() => setSelectedTab(index)}
-              isSelected={index === selectedTab}
               aria-controls={`panel-${tab.name}`}
               marginRight={8}
               padding={8}
@@ -213,19 +206,13 @@ const ResultsPage: React.FC = () => {
                   ? files.length
                   : files.filter((f) => f.category === tab.name.toLowerCase()).length}
               </Badge>
-            </Tab>
+            </Tabs.Trigger>
           ))}
-        </Tablist>
+        </Tabs.Root>
 
         {/* Action buttons */}
-        <Pane
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          padding={16}
-          borderBottom="1px solid #3e3e3e"
-        >
-          <Pane>
+        <Box display="flex" justifyContent="space-between" alignItems="center" padding={16}>
+          <Box>
             <Button
               marginRight={8}
               onClick={selectAllVisible}
@@ -240,36 +227,33 @@ const ResultsPage: React.FC = () => {
               marginRight={8}
               onClick={handleDownloadSelected}
               disabled={selectedFiles.length === 0 || downloading}
-              iconBefore={downloading ? undefined : DownloadIcon}
             >
-              {downloading ? <Spinner size={16} /> : `Download (${selectedFiles.length})`}
+              <LuDownload size={16} style={{ marginRight: 4 }} />
+              {downloading ? <Spinner size="sm" /> : `Download (${selectedFiles.length})`}
             </Button>
-          </Pane>
+          </Box>
 
           <Tooltip content="Download all files as ZIP">
-            <IconButton
-              icon={DownloadIcon}
-              appearance="default"
-              size="large"
-              is="a"
-              href={taskId ? getAllFilesDownloadUrl(taskId) : '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-            />
+            <RouterLink to={getAllFilesDownloadUrl(taskId)}>
+              <IconButton appearance="default" size="lg" is="a" rel="noopener noreferrer">
+                <LuDownload size={16} style={{ marginRight: 4 }} />
+                Download All Files
+              </IconButton>
+            </RouterLink>
           </Tooltip>
-        </Pane>
+        </Box>
 
         {/* File list */}
-        <Pane maxHeight="60vh" overflow="auto">
-          <Table>
-            <Table.Head>
-              <Table.TextHeaderCell flexBasis={30}>{/* Checkbox column */}</Table.TextHeaderCell>
-              <Table.TextHeaderCell>Filename</Table.TextHeaderCell>
-              <Table.TextHeaderCell>Category</Table.TextHeaderCell>
-              <Table.TextHeaderCell>Type</Table.TextHeaderCell>
-              <Table.TextHeaderCell>Size</Table.TextHeaderCell>
-              <Table.TextHeaderCell flexBasis={100}>Actions</Table.TextHeaderCell>
-            </Table.Head>
+        <Box maxHeight="60vh" overflow="auto">
+          <Table.Root>
+            <Table.Header>
+              <Table.ColumnHeader flexBasis={30}>{/* Checkbox column */}</Table.ColumnHeader>
+              <Table.ColumnHeader>Filename</Table.ColumnHeader>
+              <Table.ColumnHeader>Category</Table.ColumnHeader>
+              <Table.ColumnHeader>Type</Table.ColumnHeader>
+              <Table.ColumnHeader>Size</Table.ColumnHeader>
+              <Table.ColumnHeader flexBasis={100}>Actions</Table.ColumnHeader>
+            </Table.Header>
             <Table.Body>
               {filteredFiles.length === 0 ? (
                 <Table.Row>
@@ -289,43 +273,41 @@ const ResultsPage: React.FC = () => {
                         onChange={() => toggleFileSelection(file.fileId)}
                       />
                     </Table.Cell>
-                    <Table.TextCell>{file.filename}</Table.TextCell>
-                    <Table.TextCell>
+                    <Table.Cell>{file.filename}</Table.Cell>
+                    <Table.Cell>
                       <Badge
                         color={
                           file.category === 'rendered'
                             ? 'green'
                             : file.category === 'dithered'
-                              ? 'blue'
-                              : file.category === 'schematic'
-                                ? 'orange'
-                                : file.category === 'web'
-                                  ? 'purple'
-                                  : 'neutral'
+                            ? 'blue'
+                            : file.category === 'schematic'
+                            ? 'orange'
+                            : file.category === 'web'
+                            ? 'purple'
+                            : 'neutral'
                         }
                       >
                         {file.category}
                       </Badge>
-                    </Table.TextCell>
-                    <Table.TextCell>{file.type}</Table.TextCell>
-                    <Table.TextCell>{formatFileSize(file.size)}</Table.TextCell>
+                    </Table.Cell>
+                    <Table.Cell>{file.type}</Table.Cell>
+                    <Table.Cell>{formatFileSize(file.size)}</Table.Cell>
                     <Table.Cell flexBasis={100}>
                       <Tooltip content="Download">
-                        <IconButton
-                          icon={DownloadIcon}
-                          is="a"
-                          href={taskId ? getFileDownloadUrl(taskId, file.fileId) : '#'}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          marginRight={8}
-                        />
+                        <RouterLink to={getFileDownloadUrl(taskId, file.fileId)}>
+                          <IconButton is="a" rel="noopener noreferrer" marginRight={8}>
+                            <LuDownload size={16} />
+                          </IconButton>
+                        </RouterLink>
                       </Tooltip>
                       {file.category === 'rendered' && (
                         <Tooltip content="View in Map Viewer">
                           <IconButton
-                            icon="map"
                             onClick={() => navigate(`/map/${file.filename.split('.')[0]}`)}
-                          />
+                          >
+                            <LuMap size={16} />
+                          </IconButton>
                         </Tooltip>
                       )}
                     </Table.Cell>
@@ -333,19 +315,18 @@ const ResultsPage: React.FC = () => {
                 ))
               )}
             </Table.Body>
-          </Table>
-        </Pane>
-      </Card>
+          </Table.Root>
+        </Box>
+      </Card.Root>
 
-      <Pane display="flex" justifyContent="space-between" marginTop={24}>
+      <Box display="flex" justifyContent="space-between" marginTop={24}>
         <Button appearance="default" onClick={() => navigate('/upload')}>
           Convert Another Image
         </Button>
 
         {filteredFiles.some((f) => f.category === 'rendered') && (
-          <Button
+          <IconButton
             appearance="primary"
-            iconAfter={<ArrowRightIcon />}
             onClick={() => {
               const renderedFile = filteredFiles.find((f) => f.category === 'rendered');
               if (renderedFile) {
@@ -354,10 +335,11 @@ const ResultsPage: React.FC = () => {
             }}
           >
             Explore in Map Viewer
-          </Button>
+            <LuMap size={16} style={{ marginLeft: 4 }} />
+          </IconButton>
         )}
-      </Pane>
-    </Pane>
+      </Box>
+    </Box>
   );
 };
 

@@ -3,7 +3,6 @@ import { mapsApi, conversionApi } from '../services/api';
 import { MapInfo } from '../types/api';
 import useRecentMaps from './useRecentMaps';
 import useFavorites from './useFavorites';
-import { toaster } from 'evergreen-ui';
 
 /**
  * Hook to manage maps, including loading, sorting, filtering, and deleting
@@ -46,11 +45,9 @@ export default function useMaps() {
     try {
       await conversionApi.deleteConversion(mapId);
       setMaps((prevMaps) => prevMaps.filter((map) => map.id !== mapId));
-      toaster.success('Map deleted successfully');
       return true;
     } catch (err) {
       console.error('Failed to delete map:', err);
-      toaster.danger('Failed to delete the map');
       return false;
     }
   }, []);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import { Pane, Spinner } from 'evergreen-ui';
+import { Box, Spinner } from '@chakra-ui/react';
 
 interface MapTileProps {
   mapId: string;
@@ -93,7 +93,7 @@ const MapTileComponent: React.FC<MapTileProps> = ({
 
   if (loading) {
     return (
-      <Pane
+      <Box
         width={size}
         height={size}
         display="flex"
@@ -101,14 +101,14 @@ const MapTileComponent: React.FC<MapTileProps> = ({
         justifyContent="center"
         backgroundColor="rgba(0, 0, 0, 0.1)"
       >
-        <Spinner size={16} />
-      </Pane>
+        <Spinner size="sm" />
+      </Box>
     );
   }
 
   if (error || !imageUrl) {
     return (
-      <Pane
+      <Box
         width={size}
         height={size}
         display="flex"
@@ -117,7 +117,7 @@ const MapTileComponent: React.FC<MapTileProps> = ({
         backgroundColor="rgba(255, 0, 0, 0.1)"
       >
         ⚠️
-      </Pane>
+      </Box>
     );
   }
 

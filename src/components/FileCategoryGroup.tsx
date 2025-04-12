@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Pane,
+  Box,
   Card,
   Heading,
   IconButton,
@@ -9,10 +9,11 @@ import {
   Button,
   Dialog,
   Checkbox,
-} from 'evergreen-ui';
+} from '@chakra-ui/react';
 import { FileInfo } from '../types/api';
 import { conversionApi } from '../services/api';
 import FilePreview from './FilePreview';
+import { LuChevronDown, LuChevronUp, LuDownload } from 'react-icons/lu';
 
 interface FileCategoryGroupProps {
   title: string;
@@ -37,22 +38,6 @@ const FileCategoryGroup: React.FC<FileCategoryGroupProps> = ({
   // Sort files by filename
   const sortedFiles = [...files].sort((a, b) => a.filename.localeCompare(b.filename));
 
-  // Get category icon
-  const getCategoryIcon = () => {
-    switch (title.toLowerCase()) {
-      case 'dithered':
-        return 'media';
-      case 'rendered':
-        return 'grid-view';
-      case 'schematic':
-        return 'cube';
-      case 'web':
-        return 'code';
-      default:
-        return 'document';
-    }
-  };
-
   const formatFileSize = (size: number) => {
     if (size < 1024) return `${size} B`;
     if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
@@ -63,15 +48,8 @@ const FileCategoryGroup: React.FC<FileCategoryGroupProps> = ({
   const totalSizeBytes = files.reduce((sum, file) => sum + file.size, 0);
 
   return (
-    <Card
-      elevation={1}
-      background="tint2"
-      marginY={16}
-      padding={0}
-      borderRadius={8}
-      overflow="hidden"
-    >
-      <Pane
+    <Card.Root background="tint2" marginY={16} padding={0} borderRadius={8} overflow="hidden">
+      <Box
         padding={16}
         display="flex"
         alignItems="center"
@@ -79,45 +57,35 @@ const FileCategoryGroup: React.FC<FileCategoryGroupProps> = ({
         borderBottom={expanded ? '1px solid' : 'none'}
         borderColor="default"
       >
-        <IconButton
-          icon={expanded ? 'chevron-down' : 'chevron-right'}
-          appearance="minimal"
-          onClick={() => setExpanded(!expanded)}
-          marginRight={8}
-        />
+        <IconButton appearance="minimal" onClick={() => setExpanded(!expanded)} marginRight={8}>
+          {expanded ? <LuChevronUp /> : <LuChevronDown />}
+        </IconButton>
 
-        <IconButton icon={getCategoryIcon()} appearance="minimal" marginRight={8} />
-
-        <Heading size={500}>{title}</Heading>
+        <Heading size="md">{title}</Heading>
 
         <Badge color="blue" marginLeft={8}>
           {files.length} file{files.length !== 1 ? 's' : ''}
         </Badge>
 
-        <Text marginLeft={16} color="muted" size={300}>
+        <Text marginLeft={16} color="muted" fontSize="lg">
           {formatFileSize(totalSizeBytes)}
         </Text>
 
-        <Pane flex={1} />
+        <Box flex={1} />
 
-        <Checkbox
-          label="Select All"
+        <Checkbox.Root
           checked={files.every((file) => selectedFiles.has(file.fileId))}
-          indeterminate={
-            files.some((file) => selectedFiles.has(file.fileId)) &&
-            !files.every((file) => selectedFiles.has(file.fileId))
-          }
           onChange={(e) => {
-            const isChecked = e.target.checked;
+            const isChecked = (e.target as HTMLInputElement).checked;
             files.forEach((file) => onSelectFile(file.fileId, isChecked));
           }}
         />
-      </Pane>
+      </Box>
 
       {expanded && (
-        <Pane>
+        <Box>
           {sortedFiles.map((file) => (
-            <Pane
+            <Box
               key={file.fileId}
               padding={12}
               display="flex"
@@ -125,52 +93,52 @@ const FileCategoryGroup: React.FC<FileCategoryGroupProps> = ({
               borderBottom="1px solid"
               borderColor="default"
               background="tint2"
-              _hover={{ background: 'tint3' }}
             >
-              <Checkbox
+              <Checkbox.Root
                 checked={selectedFiles.has(file.fileId)}
-                onChange={(e) => onSelectFile(file.fileId, e.target.checked)}
+                onChange={(e) => onSelectFile(file.fileId, (e.target as HTMLInputElement).checked)}
                 marginRight={12}
               />
 
-              <Pane flex={1}>
+              <Box flex={1}>
                 <Text>{file.filename}</Text>
-                <Text size={300} color="muted">
+                <Text fontSize="md" color="muted">
                   {formatFileSize(file.size)} • {file.type}
                 </Text>
-              </Pane>
+              </Box>
 
               <Button appearance="minimal" marginRight={8} onClick={() => setPreviewFile(file)}>
                 Preview
               </Button>
 
               <IconButton
-                icon="download"
                 appearance="minimal"
                 is="a"
-                href={conversionApi.getFileUrl(taskId, file.fileId)}
-                target="_blank"
-                download
-              />
-            </Pane>
+                onClick={async () => {
+                  const downloadRef = await conversionApi.downloadSelectedFiles(taskId, [
+                    file.fileId,
+                  ]);
+                  if (downloadRef) {
+                    window.location.href = downloadRef;
+                  }
+                }}
+              >
+                <LuDownload />
+              </IconButton>
+            </Box>
           ))}
-        </Pane>
+        </Box>
       )}
 
       {previewFile && (
-        <Dialog
-          isShown={previewFile !== null}
-          title={previewFile.filename}
-          width="80%"
-          hasFooter={false}
-          onCloseComplete={() => setPreviewFile(null)}
-        >
-          <Pane height="70vh">
+        <Dialog.Root open={previewFile !== null} onExitComplete={() => setPreviewFile(null)}>
+          <Dialog.Header title="File Preview" />
+          <Box height="70vh">
             <FilePreview file={previewFile} taskId={taskId} />
-          </Pane>
-        </Dialog>
+          </Box>
+        </Dialog.Root>
       )}
-    </Card>
+    </Card.Root>
   );
 };
 

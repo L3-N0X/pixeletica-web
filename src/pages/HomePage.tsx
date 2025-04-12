@@ -1,19 +1,30 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import {
-  Pane,
+  Box,
   Heading,
   Text,
   Button,
   Spinner,
-  Dialog,
-  toaster,
-  EmptyState,
-  PlusIcon,
-  MapMarkerIcon,
-  Card,
   Badge,
-} from 'evergreen-ui';
+  Grid,
+  Flex,
+  Icon,
+  // VStack removed as it's unused
+  Container,
+  // Modal components
+  Dialog, // Changed from Modal
+  DialogContent, // Changed from ModalContent
+  DialogHeader, // Changed from ModalHeader
+  DialogFooter, // Changed from ModalFooter
+  DialogBody, // Changed from ModalBody
+  CloseButton, // Changed from ModalCloseButton
+  useDisclosure,
+  // Card
+  Card,
+  CardBody,
+} from '@chakra-ui/react';
+import { FaPlus, FaMapMarkerAlt } from 'react-icons/fa';
 import { mapsApi, conversionApi } from '../services/api';
 import { MapInfo } from '../types/api';
 import MapCard from '../components/MapCard';
@@ -21,9 +32,11 @@ import FilterBar, { SortOption, FilterOption } from '../components/FilterBar';
 import useFavorites from '../hooks/useFavorites';
 import useRecentMaps from '../hooks/useRecentMaps';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
+import EmptyState from '../components/EmptyState';
 
 const HomePage: React.FC = () => {
   const { isMobile, isTablet } = useResponsiveLayout();
+
   // State
   const [maps, setMaps] = useState<MapInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +46,9 @@ const HomePage: React.FC = () => {
   const [filterOption, setFilterOption] = useState<FilterOption>('all');
   const [mapToDelete, setMapToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Modal disclosure - fixed property name
+  const { open: isOpen, onOpen, onClose } = useDisclosure();
 
   // Custom hooks
   const { isFavorite } = useFavorites();
@@ -60,6 +76,7 @@ const HomePage: React.FC = () => {
   // Handle map deletion
   const handleDeleteMap = (mapId: string) => {
     setMapToDelete(mapId);
+    onOpen();
   };
 
   const confirmDelete = async () => {
@@ -71,23 +88,21 @@ const HomePage: React.FC = () => {
 
       // Remove from state
       setMaps((prevMaps) => prevMaps.filter((map) => map.id !== mapToDelete));
-
-      toaster.success('Map deleted successfully');
     } catch (err) {
       console.error('Failed to delete map:', err);
-      toaster.danger('Failed to delete the map');
     } finally {
       setIsDeleting(false);
       setMapToDelete(null);
+      onClose();
     }
   };
 
   // Filter and sort maps
   const filteredMaps = useMemo(() => {
-    // Apply search filter
-    let result = [...maps];
+    // Make sure maps is an array before using the spread operator
+    let result = Array.isArray(maps) ? [...maps] : [];
 
-    if (search) {
+    if (search && result.length > 0) {
       const searchLower = search.toLowerCase();
       result = result.filter(
         (map) =>
@@ -97,9 +112,9 @@ const HomePage: React.FC = () => {
     }
 
     // Apply category filter
-    if (filterOption === 'favorites') {
+    if (filterOption === 'favorites' && result.length > 0) {
       result = result.filter((map) => isFavorite(map.id));
-    } else if (filterOption === 'recent') {
+    } else if (filterOption === 'recent' && result.length > 0 && recentMaps?.length > 0) {
       const recentIds = new Set(recentMaps.map((r) => r.id));
       result = result.filter((map) => recentIds.has(map.id));
     }
@@ -124,54 +139,42 @@ const HomePage: React.FC = () => {
   }, [maps, search, sortOption, filterOption, isFavorite, recentMaps]);
 
   return (
-    <Pane>
+    <Container maxWidth="container.xl" px={isMobile ? 4 : 8}>
       {/* Hero Section */}
-      <Card
-        elevation={1}
-        background="rgba(17, 34, 24, 0.5)"
-        marginBottom={32}
-        paddingY={isMobile ? 24 : 48}
-        paddingX={isMobile ? 16 : 32}
-        borderRadius={8}
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
+      <Box
+        bg="rgba(17, 34, 24, 0.5)"
+        mb={8}
+        py={isMobile ? 6 : 12}
+        px={isMobile ? 4 : 8}
+        borderRadius="lg"
+        boxShadow="md"
         textAlign="center"
       >
-        <Heading
-          size={900}
-          marginBottom={16}
-          fontFamily="'Merriweather', serif"
-          textAlign="center"
-          color="white"
-        >
+        <Heading as="h1" size="2xl" mb={4} fontFamily="heading" textAlign="center" color="white">
           Welcome to Minecraft Pixel Art Creator
         </Heading>
-        <Text size={500} color="muted" maxWidth={600} marginBottom={24} textAlign="center">
+        <Text
+          fontSize="lg"
+          color="gray.200"
+          maxW="container.md"
+          mx="auto"
+          mb={6}
+          textAlign="center"
+        >
           Convert your favorite images to stunning Minecraft block art with our advanced conversion
           tool
         </Text>
-        <Button
-          appearance="primary"
-          height={48}
-          paddingX={24}
-          as={Link}
-          to="/create"
-          iconBefore={PlusIcon}
-          fontSize={16}
-        >
-          Create New Pixel Art
-        </Button>
-      </Card>
+        {/* Create button */}
+        <RouterLink to="/create" style={{ textDecoration: 'none' }}>
+          <Button height="48px" fontSize="md" fontWeight="medium" transition="all 0.2s ease">
+            <Icon as={FaPlus} mr={2} boxSize={5} />
+            Create New Pixel Art
+          </Button>
+        </RouterLink>
+      </Box>
 
-      {/* Filter Bar in Card */}
-      <Card
-        elevation={1}
-        background="rgba(17, 34, 24, 0.5)"
-        marginBottom={32}
-        padding={16}
-        borderRadius={8}
-      >
+      {/* Filter Bar */}
+      <Box bg="rgba(17, 34, 24, 0.5)" mb={8} p={4} borderRadius="lg" boxShadow="sm">
         <FilterBar
           search={search}
           setSearch={setSearch}
@@ -180,106 +183,131 @@ const HomePage: React.FC = () => {
           filterOption={filterOption}
           setFilterOption={setFilterOption}
         />
-      </Card>
+      </Box>
 
       {loading ? (
-        <Pane display="flex" alignItems="center" justifyContent="center" height={300}>
-          <Spinner />
-        </Pane>
+        <Flex align="center" justify="center" height="300px">
+          {/* Fixed spinner props */}
+          <Spinner size="xl" color="primary.500" />
+        </Flex>
       ) : error ? (
-        <Pane background="redTint" padding={16} borderRadius={4}>
-          <Text color="danger">{error}</Text>
-        </Pane>
+        <Box bg="red.500" color="white" p={4} borderRadius="md">
+          <Text>{error}</Text>
+        </Box>
       ) : filteredMaps.length === 0 ? (
-        <EmptyState
-          background="dark"
-          title={
-            filterOption === 'all'
-              ? 'No maps available'
-              : filterOption === 'favorites'
+        <Box bg="rgba(17, 34, 24, 0.5)" borderRadius="lg" boxShadow="sm">
+          <EmptyState
+            title={
+              filterOption === 'all'
+                ? 'No maps available'
+                : filterOption === 'favorites'
                 ? 'No favorite maps'
                 : 'No recent maps'
-          }
-          orientation="horizontal"
-          icon={<MapMarkerIcon color="#4B9E91" size={40} />}
-          iconBgColor="#1A1A1A"
-          description={
-            filterOption === 'all'
-              ? 'Get started by creating your first pixel art'
-              : filterOption === 'favorites'
+            }
+            orientation="horizontal"
+            icon="bookmark"
+            iconBgColor="#1A1A1A"
+            description={
+              filterOption === 'all'
+                ? 'Get started by creating your first pixel art'
+                : filterOption === 'favorites'
                 ? 'Add maps to your favorites to see them here'
                 : 'Recently viewed maps will appear here'
-          }
-          primaryCta={
-            filterOption === 'all' ? (
-              <Button appearance="primary" as={Link} to="/create">
-                Create New
-              </Button>
-            ) : undefined
-          }
-        />
+            }
+          />
+          {filterOption === 'all' && (
+            <Box textAlign="center" pb={6}>
+              {/* Create button */}
+              <RouterLink to="/create" style={{ textDecoration: 'none' }}>
+                <Button colorScheme="primary" mt={4}>
+                  Create New
+                </Button>
+              </RouterLink>
+            </Box>
+          )}
+        </Box>
       ) : (
-        <Card
-          elevation={1}
-          background="rgba(17, 34, 24, 0.5)"
-          padding={isMobile ? 16 : 24}
-          borderRadius={8}
+        /* Fix the Card implementation */
+        <Card.Root
+          variant="outline"
+          bg="rgba(17, 34, 24, 0.5)"
+          borderRadius="lg"
+          boxShadow="md"
+          borderColor="rgba(81, 123, 102, 0.2)"
         >
-          <Heading
-            size={600}
-            marginBottom={24}
-            fontFamily="'Source Serif Pro', serif"
-            display="flex"
-            alignItems="center"
-          >
-            <MapMarkerIcon color="#92e8b8" marginRight={12} size={18} />
-            {filterOption === 'all'
-              ? 'Available Maps'
-              : filterOption === 'favorites'
-                ? 'Favorite Maps'
-                : 'Recent Maps'}
-            {filteredMaps.length > 0 && (
-              <Badge color="neutral" marginLeft={8}>
-                {filteredMaps.length}
-              </Badge>
-            )}
-          </Heading>
+          <CardBody p={isMobile ? 4 : 6}>
+            <Flex align="center" mb={6}>
+              <Icon as={FaMapMarkerAlt} color="primary.500" mr={3} boxSize={5} />
+              <Heading size="md" fontFamily="body" display="flex" alignItems="center">
+                {filterOption === 'all'
+                  ? 'Available Maps'
+                  : filterOption === 'favorites'
+                  ? 'Favorite Maps'
+                  : 'Recent Maps'}
+                {filteredMaps.length > 0 && (
+                  <Badge
+                    ml={2}
+                    colorScheme="gray"
+                    variant="solid"
+                    fontSize="xs"
+                    borderRadius="full"
+                    px={2}
+                  >
+                    {filteredMaps.length}
+                  </Badge>
+                )}
+              </Heading>
+            </Flex>
 
-          <Pane
-            display="grid"
-            gridTemplateColumns={
-              isMobile
-                ? '1fr'
-                : isTablet
+            <Grid
+              templateColumns={
+                isMobile
+                  ? '1fr'
+                  : isTablet
                   ? 'repeat(2, 1fr)'
                   : 'repeat(auto-fill, minmax(280px, 1fr))'
-            }
-            gap={24}
-          >
-            {filteredMaps.map((map) => (
-              <MapCard
-                key={map.id}
-                map={map}
-                onDelete={filterOption === 'all' ? handleDeleteMap : undefined}
-              />
-            ))}
-          </Pane>
-        </Card>
+              }
+              gap={6}
+            >
+              {filteredMaps.map((map) => (
+                <MapCard
+                  key={map.id}
+                  map={map}
+                  onDelete={filterOption === 'all' ? handleDeleteMap : undefined}
+                />
+              ))}
+            </Grid>
+          </CardBody>
+        </Card.Root>
       )}
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        isShown={mapToDelete !== null}
-        title="Delete Map"
-        intent="danger"
-        onCloseComplete={() => setMapToDelete(null)}
-        onConfirm={confirmDelete}
-        confirmLabel="Delete"
-        isConfirmLoading={isDeleting}
-      >
-        Are you sure you want to delete this map? This action cannot be undone.
-      </Dialog>
-    </Pane>
+      {/* Delete Confirmation Modal - updated to Dialog components */}
+      <Dialog.Root open={isOpen} onExitComplete={onClose}>
+        <Dialog.Trigger asChild>
+          <Button colorScheme="red" variant="outline" onClick={onOpen}>
+            Delete Map
+          </Button>
+        </Dialog.Trigger>
+        <DialogBody bg="blackAlpha.700" backdropFilter="blur(5px)" />
+        <DialogContent bg="gray.75">
+          <DialogHeader color="text">Delete Map</DialogHeader>
+          <CloseButton onClick={onClose} position="absolute" right={3} top={3} />
+          <DialogBody>
+            <Text color="text">
+              Are you sure you want to delete this map? This action cannot be undone.
+            </Text>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="outline" mr={3} onClick={onClose}>
+              Cancel
+            </Button>
+            <Button colorScheme="red" onClick={confirmDelete} disabled={isDeleting}>
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog.Root>
+    </Container>
   );
 };
 

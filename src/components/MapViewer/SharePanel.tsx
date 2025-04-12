@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dialog, Pane, TextInput, IconButton, Text, Heading, toaster } from 'evergreen-ui';
+import { Dialog, Box, Input, IconButton } from '@chakra-ui/react';
+import { LuCopy } from 'react-icons/lu';
 
 interface SharePanelProps {
   isOpen: boolean;
@@ -17,37 +18,23 @@ const SharePanel: React.FC<SharePanelProps> = ({ isOpen, onClose, shareUrl, onCo
       })
       .catch((err) => {
         console.error('Failed to copy URL:', err);
-        toaster.danger('Failed to copy URL to clipboard');
       });
   };
 
   return (
-    <Dialog
-      isShown={isOpen}
-      title="Share this map view"
-      onCloseComplete={onClose}
-      hasFooter={false}
-      width={450}
-    >
-      <Pane>
-        <Heading size={500} marginBottom={8}>
-          Share a link to this exact view
-        </Heading>
-        <Text size={400} marginBottom={16}>
-          Others can view the map exactly as you're seeing it now.
-        </Text>
-
-        <Pane display="flex" marginTop={16}>
-          <TextInput value={shareUrl} readOnly width="100%" marginRight={8} />
-          <IconButton
-            icon="clipboard"
-            appearance="primary"
-            onClick={handleCopyClick}
-            title="Copy to clipboard"
-          />
-        </Pane>
-      </Pane>
-    </Dialog>
+    <Dialog.Root onExitComplete={onClose} open={isOpen}>
+      <Dialog.Header title="Share this view" />
+      <Dialog.Content>
+        <Dialog.Body>
+          <Box display="flex" marginTop={16}>
+            <Input value={shareUrl} readOnly width="100%" marginRight={8} />
+            <IconButton appearance="primary" onClick={handleCopyClick} title="Copy to clipboard">
+              <LuCopy size={16} />
+            </IconButton>
+          </Box>
+        </Dialog.Body>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Pane } from 'evergreen-ui';
+import { Box } from '@chakra-ui/react';
 import { MapMetadata } from '../../hooks/useMapMetadata';
 import { ChunkCoord } from '../../types/mapTypes';
 
@@ -132,9 +132,9 @@ const GridOverlay: React.FC<GridOverlayProps> = ({
   }, [width, height, scale, position, metadata, showBlockGrid, showChunkGrid, selectedChunk]);
 
   return (
-    <Pane position="absolute" top={0} left={0} width={width} height={height} pointerEvents="none">
+    <Box position="absolute" top={0} left={0} width={width} height={height} pointerEvents="none">
       <canvas ref={canvasRef} width={width} height={height} style={{ display: 'block' }} />
-    </Pane>
+    </Box>
   );
 };
 

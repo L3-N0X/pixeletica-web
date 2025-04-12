@@ -4,12 +4,12 @@ import {
   Heading,
   Button,
   Alert,
-  AlertIcon,
   AlertTitle,
   AlertDescription,
   Flex,
   Code, // For displaying error details
 } from '@chakra-ui/react';
+import { LuBadgeAlert } from 'react-icons/lu';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -71,7 +71,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           m={4}
           color="white" // Ensure text is visible on dark background
         >
-          <Alert
+          <Alert.Root
             status="error"
             variant="subtle"
             flexDirection="column"
@@ -83,14 +83,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             borderRadius="md"
             p={4}
           >
-            <AlertIcon boxSize="40px" mr={0} color="red.300" />
+            <LuBadgeAlert size={24} color="red.500" />
             <AlertTitle mt={4} mb={1} fontSize="lg">
               Something went wrong
             </AlertTitle>
             <AlertDescription maxWidth="sm">
               {this.state.error?.message || 'The application encountered an unexpected error.'}
             </AlertDescription>
-          </Alert>
+          </Alert.Root>
 
           <Button variant="solid" colorScheme="red" onClick={this.handleReset} mb={6}>
             Try Again

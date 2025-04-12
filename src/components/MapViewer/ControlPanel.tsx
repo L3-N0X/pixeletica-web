@@ -1,17 +1,7 @@
 import React from 'react';
-import {
-  Pane,
-  IconButton,
-  Button,
-  Checkbox,
-  Tooltip,
-  Card,
-  Position,
-  ShareIcon,
-  ZoomInIcon,
-  ZoomOutIcon,
-  ResetIcon,
-} from 'evergreen-ui';
+import { Box, IconButton, Checkbox, Card } from '@chakra-ui/react';
+import { Tooltip } from '../ui/tooltip';
+import { LuCopy, LuRepeat, LuZoomIn, LuZoomOut } from 'react-icons/lu';
 
 interface ControlPanelProps {
   onZoomIn: () => void;
@@ -39,59 +29,50 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   maxZoom,
 }) => {
   return (
-    <Card
+    <Card.Root
       position="absolute"
       bottom={16}
       left="50%"
       transform="translateX(-50%)"
-      elevation={2}
       background="tint2"
       padding={8}
       display="flex"
       alignItems="center"
       borderRadius={8}
     >
-      <Tooltip content="Zoom In" position={Position.TOP}>
-        <IconButton
-          icon={ZoomInIcon}
-          marginRight={8}
-          onClick={onZoomIn}
-          disabled={currentZoom >= maxZoom}
-        />
+      <Tooltip content="Zoom In">
+        <IconButton marginRight={8} onClick={onZoomIn} disabled={currentZoom >= maxZoom}>
+          <LuZoomIn size={24} />
+        </IconButton>
       </Tooltip>
 
-      <Tooltip content="Zoom Out" position={Position.TOP}>
-        <IconButton icon={ZoomOutIcon} marginRight={8} onClick={onZoomOut} />
+      <Tooltip content="Zoom Out">
+        <IconButton marginRight={8} onClick={onZoomOut}>
+          <LuZoomOut size={24} />
+        </IconButton>
       </Tooltip>
 
-      <Tooltip content="Reset View" position={Position.TOP}>
-        <IconButton icon={ResetIcon} marginRight={16} onClick={onReset} />
+      <Tooltip content="Reset View">
+        <IconButton marginRight={16} onClick={onReset}>
+          <LuRepeat size={24} />
+        </IconButton>
       </Tooltip>
 
-      <Pane borderLeft="1px solid" borderColor="muted" height={24} marginRight={16} />
+      <Box borderLeft="1px solid" borderColor="muted" height={24} marginRight={16} />
 
-      <Checkbox
-        label="Block Grid"
-        checked={showBlockGrid}
-        onChange={onToggleBlockGrid}
-        marginRight={8}
-      />
+      <Checkbox.Root checked={showBlockGrid} onChange={onToggleBlockGrid} marginRight={8} />
 
-      <Checkbox
-        label="Chunk Grid"
-        checked={showChunkGrid}
-        onChange={onToggleChunkGrid}
-        marginRight={16}
-      />
+      <Checkbox.Root checked={showChunkGrid} onChange={onToggleChunkGrid} marginRight={16} />
 
-      <Pane borderLeft="1px solid" borderColor="muted" height={24} marginRight={16} />
+      <Box borderLeft="1px solid" borderColor="muted" height={24} marginRight={16} />
 
-      <Tooltip content="Copy Shareable Link" position={Position.TOP}>
-        <Button iconBefore={ShareIcon} onClick={onCopyLink}>
+      <Tooltip content="Copy Shareable Link">
+        <IconButton onClick={onCopyLink}>
+          <LuCopy size={24} />
           Share
-        </Button>
+        </IconButton>
       </Tooltip>
-    </Card>
+    </Card.Root>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Pane } from 'evergreen-ui';
+import { Box } from '@chakra-ui/react';
 
 interface MapCanvasProps {
   width: number;
@@ -159,8 +159,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   }, []);
 
   return (
-    <Pane position="absolute" top={0} left={0} width={width} height={height} pointerEvents="none">
+    <Box position="absolute" top={0} left={0} width={width} height={height} pointerEvents="none">
       <canvas ref={canvasRef} style={{ display: 'block' }} />
-    </Pane>
+    </Box>
   );
 };

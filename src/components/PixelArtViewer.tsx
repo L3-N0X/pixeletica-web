@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import { Box, Flex, IconButton, Badge, Tooltip } from '@chakra-ui/react';
-import { AddIcon, SmallCloseIcon, RepeatIcon, SettingsIcon } from '@chakra-ui/icons';
+import { Box, Flex, IconButton, Badge } from '@chakra-ui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { getFullImage } from '@services/mapService';
 import { calculateVisibleTiles, getBlockAtPosition } from '@utils/tileUtils';
 import type { PixelArtMetadata, BlockDetails, ImageTile } from '@/types';
+import { LuRepeat, LuSettings, LuZoomIn, LuZoomOut } from 'react-icons/lu';
 
 interface PixelArtViewerProps {
   metadata: PixelArtMetadata;
@@ -313,45 +314,49 @@ const PixelArtViewer: React.FC<PixelArtViewerProps> = ({ metadata, mapName, onBl
                 p={2}
                 borderRadius="md"
               >
-                <Tooltip label="Zoom In">
+                <Tooltip content="Zoom In">
                   <IconButton
                     aria-label="Zoom In"
-                    icon={<AddIcon />}
                     onClick={() => zoomIn()}
                     size="sm"
                     variant="ghost"
                     colorScheme="whiteAlpha"
-                  />
+                  >
+                    <LuZoomIn />
+                  </IconButton>
                 </Tooltip>
-                <Tooltip label="Zoom Out">
+                <Tooltip content="Zoom Out">
                   <IconButton
                     aria-label="Zoom Out"
-                    icon={<SmallCloseIcon />}
                     onClick={() => zoomOut()}
                     size="sm"
                     variant="ghost"
                     colorScheme="whiteAlpha"
-                  />
+                  >
+                    <LuZoomOut />
+                  </IconButton>
                 </Tooltip>
-                <Tooltip label="Reset View">
+                <Tooltip content="Reset View">
                   <IconButton
                     aria-label="Reset View"
-                    icon={<RepeatIcon />}
                     onClick={() => resetTransform()}
                     size="sm"
                     variant="ghost"
                     colorScheme="whiteAlpha"
-                  />
+                  >
+                    <LuRepeat />
+                  </IconButton>
                 </Tooltip>
-                <Tooltip label="Toggle Debug Info">
+                <Tooltip content="Toggle Debug Info">
                   <IconButton
                     aria-label="Toggle Debug"
-                    icon={<SettingsIcon />}
                     onClick={() => setDebug(!debug)}
                     size="sm"
                     variant="ghost"
                     colorScheme="whiteAlpha"
-                  />
+                  >
+                    <LuSettings />
+                  </IconButton>
                 </Tooltip>
               </Flex>
 

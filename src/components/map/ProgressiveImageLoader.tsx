@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Pane } from 'evergreen-ui';
+import { Box } from '@chakra-ui/react';
 
 interface ProgressiveImageLoaderProps {
   mapId: string;
@@ -50,7 +50,7 @@ export const ProgressiveImageLoader: React.FC<ProgressiveImageLoaderProps> = ({
   };
 
   return (
-    <Pane position="relative" width={width} height={height}>
+    <Box position="relative" width={width} height={height}>
       {/* Low res image (loads first) */}
       {!highResLoaded && (
         <img
@@ -93,7 +93,7 @@ export const ProgressiveImageLoader: React.FC<ProgressiveImageLoaderProps> = ({
 
       {/* Error state */}
       {error && !lowResLoaded && !highResLoaded && (
-        <Pane
+        <Box
           display="flex"
           alignItems="center"
           justifyContent="center"
@@ -104,8 +104,8 @@ export const ProgressiveImageLoader: React.FC<ProgressiveImageLoaderProps> = ({
           <span role="img" aria-label="Error loading image" style={{ fontSize: 24 }}>
             ⚠️
           </span>
-        </Pane>
+        </Box>
       )}
-    </Pane>
+    </Box>
   );
 };

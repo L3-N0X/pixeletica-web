@@ -10,10 +10,10 @@
    - `react-zoom-pan-pinch` for zoom/pan functionality
    - `axios` for API requests
    - `react-router-dom` for routing between different pixel art maps
-   - `evergreen-ui` for UI components and theming
+   - `@chakra-ui` for UI components and theming
 
 3. Define a solid dark theme:
-   - Use Evergreen's theming capabilities to create a dark theme with serif fonts
+   - Use chakra-uis theming capabilities to create a dark theme with serif fonts
    - Configure accent colors for a modern aesthetic (e.g., dark teal-greenish main accent, ...)
    - Ensure proper contrast for accessibility
 

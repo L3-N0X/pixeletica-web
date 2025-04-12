@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Pane, Card, Heading, Button, Text, toaster, Spinner } from 'evergreen-ui';
+import { Card, Heading, Button, Text, Spinner, Box, IconButton } from '@chakra-ui/react';
 import { FileInfo } from '../types/api';
 import { conversionApi } from '../services/api';
+import { LuDownload } from 'react-icons/lu';
 
 interface DownloadPanelProps {
   taskId: string;
@@ -70,23 +71,19 @@ const DownloadPanel: React.FC<DownloadPanelProps> = ({
         window.URL.revokeObjectURL(url);
         link.remove();
       }
-
-      toaster.success(`Download initiated for ${selectedFiles.size} file(s)`);
     } catch (error) {
       console.error('Download failed:', error);
-      toaster.danger('Failed to download files');
     } finally {
       setDownloading(false);
     }
   };
 
   return (
-    <Card
+    <Card.Root
       position="sticky"
       bottom={0}
       left={0}
       right={0}
-      elevation={3}
       background="tint2"
       padding={16}
       display="flex"
@@ -95,32 +92,31 @@ const DownloadPanel: React.FC<DownloadPanelProps> = ({
       border="1px solid"
       borderColor="default"
     >
-      <Pane>
-        <Heading size={400}>
+      <Box flex={1} display="flex" alignItems="center">
+        <Heading size="md" marginRight={8}>
           {selectedFiles.size} file{selectedFiles.size !== 1 ? 's' : ''} selected
         </Heading>
-        <Text size={300} color="muted">
+        <Text fontSize="sm" color="muted">
           Total size: {formattedTotalSize}
         </Text>
-      </Pane>
+      </Box>
 
-      <Pane flex={1} />
+      <Box flex={1} />
 
       <Button appearance="minimal" onClick={onClearSelection}>
         Clear Selection
       </Button>
 
-      <Button
+      <IconButton
         appearance="primary"
-        intent="success"
-        iconBefore={downloading ? undefined : 'download'}
         marginLeft={8}
         onClick={downloadSelectedFiles}
         disabled={downloading}
       >
-        {downloading ? <Spinner size={16} /> : 'Download Selected'}
-      </Button>
-    </Card>
+        <LuDownload size={16} />
+        {downloading ? <Spinner size="md" /> : 'Download Selected'}
+      </IconButton>
+    </Card.Root>
   );
 };
 
