@@ -1,5 +1,15 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { Pane, Heading, Button, Text, Alert } from 'evergreen-ui';
+import { Component, ErrorInfo, ReactNode } from 'react';
+import {
+  Box,
+  Heading,
+  Button,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  Flex,
+  Code, // For displaying error details
+} from '@chakra-ui/react';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -24,12 +34,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
-    // Update state so the next render will show the fallback UI.
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log the error to console
     console.error('Error caught by ErrorBoundary:', error, errorInfo);
     this.setState({ error, errorInfo });
   }
@@ -40,60 +48,69 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       error: null,
       errorInfo: null,
     });
-
-    // Call the optional onReset callback
     this.props.onReset?.();
   };
 
   render() {
     if (this.state.hasError) {
-      // Custom fallback UI
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
-      // Default fallback UI
+      // Default fallback UI using Chakra components
       return (
-        <Pane
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          padding={32}
-          background="#1A1A1A"
-          border="1px solid #555"
-          borderRadius={8}
-          margin={16}
+        <Flex
+          direction="column"
+          align="center"
+          justify="center"
+          p={8}
+          bg="gray.800" // Use theme token or specific color
+          border="1px solid"
+          borderColor="gray.600"
+          borderRadius="md"
+          m={4}
+          color="white" // Ensure text is visible on dark background
         >
-          <Alert intent="danger" title="Something went wrong" marginBottom={16} />
+          <Alert
+            status="error"
+            variant="subtle"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            textAlign="center"
+            mb={4}
+            bg="red.900" // Darker red background
+            borderRadius="md"
+            p={4}
+          >
+            <AlertIcon boxSize="40px" mr={0} color="red.300" />
+            <AlertTitle mt={4} mb={1} fontSize="lg">
+              Something went wrong
+            </AlertTitle>
+            <AlertDescription maxWidth="sm">
+              {this.state.error?.message || 'The application encountered an unexpected error.'}
+            </AlertDescription>
+          </Alert>
 
-          <Heading size={600} marginBottom={16}>
-            An error occurred
-          </Heading>
-
-          <Text marginBottom={24}>
-            {this.state.error?.message || 'The application encountered an unexpected error.'}
-          </Text>
-
-          <Button appearance="primary" onClick={this.handleReset}>
+          <Button variant="solid" colorScheme="red" onClick={this.handleReset} mb={6}>
             Try Again
           </Button>
 
           {process.env.NODE_ENV !== 'production' && this.state.errorInfo && (
-            <Pane marginTop={24} width="100%">
-              <Heading size={300} marginBottom={8}>
+            <Box mt={6} width="100%" textAlign="left">
+              <Heading size="sm" mb={2}>
                 Error Details:
               </Heading>
-              <Pane background="#000" padding={12} borderRadius={4} maxHeight={200} overflow="auto">
-                <Text fontFamily="mono" size={300} color="#EEE">
+              <Box bg="blackAlpha.400" p={3} borderRadius="md" maxHeight="200px" overflow="auto">
+                <Code colorScheme="red" fontSize="xs" whiteSpace="pre-wrap">
                   {this.state.error?.toString()}
-                  <br />
+                  {'\n\n'}
                   {this.state.errorInfo.componentStack}
-                </Text>
-              </Pane>
-            </Pane>
+                </Code>
+              </Box>
+            </Box>
           )}
-        </Pane>
+        </Flex>
       );
     }
 

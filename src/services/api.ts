@@ -1,95 +1,146 @@
 import axios from 'axios';
-import {
-  ConversionRequest,
-  TaskResponse,
-  FileListResponse,
-  SelectiveDownloadRequest,
-  MapListResponse,
-} from '../types/api';
+import { API_BASE_URL } from '../utils/environment';
 
-// Create axios instance with base configuration
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+/**
+ * Axios instance for API calls
+ */
+export const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 30000, // 30 seconds
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Conversion endpoints
+// Request interceptor
+apiClient.interceptors.request.use(
+  (config) => {
+    // You can add auth headers or other modifications here
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle API errors here
+    console.error('API Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+/**
+ * API Services for conversion endpoints
+ */
 export const conversionApi = {
-  // Start a new conversion task
-  startConversion: async (request: ConversionRequest): Promise<TaskResponse> => {
-    const response = await api.post('/conversion/start', request);
+  /**
+   * Start a new image conversion
+   */
+  startConversion: async (data: any) => {
+    const response = await apiClient.post('/conversion/start', data);
     return response.data;
   },
 
-  // Get conversion status
-  getConversionStatus: async (taskId: string): Promise<TaskResponse> => {
-    const response = await api.get(`/conversion/${taskId}`);
+  /**
+   * Get conversion task status
+   */
+  getConversionStatus: async (taskId: string) => {
+    const response = await apiClient.get(`/conversion/${taskId}`);
     return response.data;
   },
 
-  // Delete a conversion task
-  deleteConversion: async (taskId: string): Promise<void> => {
-    await api.delete(`/conversion/${taskId}`);
-  },
-
-  // List files for a task
-  listFiles: async (taskId: string, category?: string): Promise<FileListResponse> => {
-    const params = category ? { category } : {};
-    const response = await api.get(`/conversion/${taskId}/files`, { params });
+  /**
+   * List files for a conversion task
+   */
+  listFiles: async (taskId: string, category?: string) => {
+    const params = category ? { category } : undefined;
+    const response = await apiClient.get(`/conversion/${taskId}/files`, { params });
     return response.data;
   },
 
-  // Get file download URL
-  getFileUrl: (taskId: string, fileId: string): string => {
-    return `${api.defaults.baseURL}/conversion/${taskId}/files/${fileId}`;
+  /**
+   * Get file download URL
+   */
+  getFileUrl: (taskId: string, fileId: string) => {
+    return `${API_BASE_URL}/conversion/${taskId}/files/${fileId}`;
   },
 
-  // Get URL for downloading all files as ZIP
-  getAllFilesZipUrl: (taskId: string): string => {
-    return `${api.defaults.baseURL}/conversion/${taskId}/download`;
+  /**
+   * Get all files download URL
+   */
+  getAllFilesZipUrl: (taskId: string) => {
+    return `${API_BASE_URL}/conversion/${taskId}/download`;
   },
 
-  // Download selected files as ZIP
-  downloadSelectedFiles: async (
-    taskId: string,
-    request: SelectiveDownloadRequest
-  ): Promise<Blob> => {
-    const response = await api.post(`/conversion/${taskId}/download`, request, {
-      responseType: 'blob',
-    });
+  /**
+   * Download selected files
+   */
+  downloadSelectedFiles: async (taskId: string, fileIds: string[]) => {
+    const response = await apiClient.post(
+      `/conversion/${taskId}/download`,
+      { fileIds },
+      { responseType: 'blob' }
+    );
+    return response.data;
+  },
+
+  /**
+   * Delete a conversion task
+   */
+  deleteConversion: async (taskId: string) => {
+    const response = await apiClient.delete(`/conversion/${taskId}`);
     return response.data;
   },
 };
 
-// Maps endpoints
+/**
+ * API Services for map endpoints
+ */
 export const mapsApi = {
-  // List all available maps
-  listMaps: async (): Promise<MapListResponse> => {
-    const response = await api.get('/maps.json');
+  /**
+   * List all available maps
+   */
+  listMaps: async () => {
+    const response = await apiClient.get('/api/maps.json');
     return response.data;
   },
 
-  // Get map metadata URL
-  getMapMetadataUrl: (mapId: string): string => {
-    return `/api/map/${mapId}/metadata.json`;
+  /**
+   * Get map metadata
+   */
+  getMapMetadata: async (mapId: string) => {
+    const response = await apiClient.get(`/api/map/${mapId}/metadata.json`);
+    return response.data;
   },
 
-  // Get map full image URL
-  getMapFullImageUrl: (mapId: string): string => {
-    return `/api/map/${mapId}/full-image.jpg`;
+  /**
+   * Get map tile URL
+   */
+  getMapTileUrl: (mapId: string, zoom: number, x: number, y: number) => {
+    return `${API_BASE_URL}/api/map/${mapId}/tiles/${zoom}/${x}/${y}.png`;
   },
 
-  // Get map thumbnail URL
-  getMapThumbnailUrl: (mapId: string): string => {
-    return `/api/map/${mapId}/thumbnail.jpg`;
+  /**
+   * Get full map image URL
+   */
+  getFullMapImageUrl: (mapId: string) => {
+    return `${API_BASE_URL}/api/map/${mapId}/full-image.jpg`;
   },
 
-  // Get map tile URL
-  getMapTileUrl: (mapId: string, zoom: number, x: number, y: number): string => {
-    return `/api/map/${mapId}/tiles/${zoom}/${x}/${y}.png`;
+  /**
+   * Get map thumbnail URL
+   */
+  getMapThumbnailUrl: (mapId: string) => {
+    return `${API_BASE_URL}/api/map/${mapId}/thumbnail.jpg`;
   },
 };
 
-export default api;
+/**
+ * General API for backward compatibility
+ */
+export const api = {
+  ...conversionApi,
+  ...mapsApi,
+};

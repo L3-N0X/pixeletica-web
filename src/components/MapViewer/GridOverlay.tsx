@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Pane } from 'evergreen-ui';
 import { MapMetadata } from '../../hooks/useMapMetadata';
+import { ChunkCoord } from '../../types/mapTypes';
 
 interface GridOverlayProps {
   width: number;
@@ -10,6 +11,8 @@ interface GridOverlayProps {
   metadata: MapMetadata | null;
   showBlockGrid: boolean;
   showChunkGrid: boolean;
+  onChunkSelect?: (x: number, z: number) => void;
+  selectedChunk?: ChunkCoord;
 }
 
 const GridOverlay: React.FC<GridOverlayProps> = ({
@@ -20,6 +23,7 @@ const GridOverlay: React.FC<GridOverlayProps> = ({
   metadata,
   showBlockGrid,
   showChunkGrid,
+  selectedChunk,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -56,7 +60,7 @@ const GridOverlay: React.FC<GridOverlayProps> = ({
     const visibleBottom = position.y + height / 2 / scale;
 
     // Calculate the block range to draw
-    const blockSize = metadata.blockSize;
+    const blockSize = metadata.blockSize || 16;
     const startX = Math.floor(visibleLeft / blockSize) * blockSize;
     const startY = Math.floor(visibleTop / blockSize) * blockSize;
     const endX = Math.ceil(visibleRight / blockSize) * blockSize;
@@ -85,7 +89,7 @@ const GridOverlay: React.FC<GridOverlayProps> = ({
 
     // Draw chunk grid (16x16 blocks)
     if (showChunkGrid) {
-      const chunkSize = metadata.chunkSize * blockSize;
+      const chunkSize = (metadata.chunkSize || 16) * blockSize;
 
       ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
       ctx.lineWidth = 1;
@@ -110,10 +114,22 @@ const GridOverlay: React.FC<GridOverlayProps> = ({
       }
 
       ctx.stroke();
+
+      // Highlight selected chunk if any
+      if (selectedChunk) {
+        const chunkX = selectedChunk.x * chunkSize;
+        const chunkZ = selectedChunk.z * chunkSize;
+
+        ctx.fillStyle = 'rgba(255, 255, 0, 0.2)';
+        ctx.fillRect(chunkX, chunkZ, chunkSize, chunkSize);
+        ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(chunkX, chunkZ, chunkSize, chunkSize);
+      }
     }
 
     ctx.restore();
-  }, [width, height, scale, position, metadata, showBlockGrid, showChunkGrid]);
+  }, [width, height, scale, position, metadata, showBlockGrid, showChunkGrid, selectedChunk]);
 
   return (
     <Pane position="absolute" top={0} left={0} width={width} height={height} pointerEvents="none">

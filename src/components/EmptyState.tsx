@@ -1,47 +1,75 @@
-import React, { ReactNode } from 'react';
-import { Pane, Heading, Text, IconButton } from 'evergreen-ui';
+import React from 'react';
+import { Box, Flex, Heading, Text, Icon } from '@chakra-ui/react';
+import { FaBookmark } from 'react-icons/fa'; // Example using react-icons
 
 interface EmptyStateProps {
   title: string;
   description?: string;
-  icon?: JSX.Element;
-  action?: ReactNode;
+  orientation?: 'vertical' | 'horizontal';
+  iconBgColor?: string;
+  icon?: 'bookmark' | string; // Allow specific icons or potentially others
   height?: number | string;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   description,
+  orientation = 'vertical',
+  iconBgColor = 'gray.100', // Use theme token
   icon,
-  action,
-  height = 300,
+  height = 'auto',
 }) => {
+  // Render the appropriate icon based on the icon prop
+  const renderIcon = () => {
+    if (icon === 'bookmark') {
+      // Use react-icons or Chakra icons
+      return <Icon as={FaBookmark} boxSize={6} color="gray.500" />;
+    }
+    // Add more icon mappings as needed
+    return null; // Return null if no icon specified or matched
+  };
+
+  const iconElement = renderIcon(); // Get the icon element
+
   return (
-    <Pane
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      height={height}
-      padding={32}
-      textAlign="center"
-      borderRadius={8}
-      background="tint2"
+    <Flex
+      direction={orientation === 'horizontal' ? 'row' : 'column'}
+      align="center"
+      justify="center"
+      p={8}
+      bg="gray.75" // Use theme token
+      borderRadius="md" // Use theme token for consistency
+      h={height}
+      textAlign={orientation === 'horizontal' ? 'left' : 'center'}
     >
-      {icon && <Pane marginBottom={16}>{icon}</Pane>}
-
-      <Heading size={600} marginBottom={8}>
-        {title}
-      </Heading>
-
-      {description && (
-        <Text size={400} color="muted" marginBottom={16}>
-          {description}
-        </Text>
+      {iconElement && ( // Render only if iconElement is not null
+        <Flex
+          boxSize="48px" // Use boxSize for square dimensions
+          borderRadius="full" // Use 'full' for circle
+          align="center"
+          justify="center"
+          bg={iconBgColor}
+          mr={orientation === 'horizontal' ? 4 : 0}
+          mb={orientation === 'vertical' ? 4 : 0}
+        >
+          {iconElement}
+        </Flex>
       )}
-
-      {action && <Pane marginTop={8}>{action}</Pane>}
-    </Pane>
+      <Box>
+        <Heading size="lg" mb={2} color="text">
+          {' '}
+          {/* Use theme token */}
+          {title}
+        </Heading>
+        {description && (
+          <Text fontSize="md" color="muted">
+            {' '}
+            {/* Use theme token */}
+            {description}
+          </Text>
+        )}
+      </Box>
+    </Flex>
   );
 };
 

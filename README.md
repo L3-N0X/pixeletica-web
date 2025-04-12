@@ -92,9 +92,31 @@ Example: `http://localhost:3000/map/abc123?x=150&y=-200&zoom=2.5&blockId=block_5
 
 The frontend integrates with a Python backend API that handles image processing and conversion. Check the API documentation in `/backend-api-docs.md`.
 
-## Docker Support
+## Docker Deployment
 
-The application is configured for Docker deployment. See `Dockerfile` and `docker-compose.yml` for details.
+Pixeletica is designed to be easily deployed using Docker. The repository includes:
+
+- `Dockerfile`: Multi-stage build for optimized images
+- `docker-compose.yaml`: Ready-to-use deployment configuration
+- Environment variable support for customization
+
+### Quick Start with Docker
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/yourusername/pixeletica-web.git
+   cd pixeletica-web
+   ```
+
+2. Build and run the Docker container:
+   ```
+   docker-compose up --build
+   ```
+
+3. Access the application in your browser:
+   ```
+   http://localhost:3000
+   ```
 
 ## License
 

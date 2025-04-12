@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { PixelArtMetadata } from '@types';
+import type { PixelArtMetadata } from '@/types';
 
 const API_URL = '/api';
 

@@ -1,37 +1,29 @@
 import React from 'react';
-import { Pane, Spinner, Heading, Text } from 'evergreen-ui';
+import { Flex, Spinner, Heading, Text, Box } from '@chakra-ui/react';
 
 interface LoadingFallbackProps {
   message?: string;
-  size?: number;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
 export const LoadingFallback: React.FC<LoadingFallbackProps> = ({
   message = 'Loading...',
-  size = 32,
+  size = 'xl',
 }) => {
   return (
-    <Pane
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      height="100%"
-      width="100%"
-      padding={32}
-    >
-      <Spinner size={size} marginBottom={16} />
+    <Flex direction="column" align="center" justify="center" h="100%" w="100%" p={8}>
+      <Spinner size={size} mb={4} color="primary.500" />
 
       {message && (
-        <Heading size={500} marginBottom={8}>
+        <Heading size="md" mb={2} textAlign="center">
           {message}
         </Heading>
       )}
 
-      <Text size={300} color="muted">
+      <Text color="gray.200" fontSize="sm">
         Please wait...
       </Text>
-    </Pane>
+    </Flex>
   );
 };
 
@@ -47,35 +39,34 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isLoading, messa
   }
 
   return (
-    <Pane position="relative">
-      <Pane opacity={0.4} position="relative" pointerEvents={isLoading ? 'none' : 'auto'}>
+    <Box position="relative">
+      <Box opacity={0.4} position="relative" pointerEvents={isLoading ? 'none' : 'auto'}>
         {children}
-      </Pane>
+      </Box>
 
-      <Pane
+      <Flex
         position="absolute"
         top={0}
         left={0}
         right={0}
         bottom={0}
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        background="rgba(0, 0, 0, 0.5)"
+        align="center"
+        justify="center"
+        bg="rgba(0, 0, 0, 0.5)"
         zIndex={1000}
       >
-        <Pane
-          background="#1A1A1A"
-          borderRadius={8}
-          padding={24}
+        <Box
+          bg="gray.50"
+          borderRadius="md"
+          p={6}
           display="flex"
           flexDirection="column"
           alignItems="center"
         >
-          <Spinner size={24} marginBottom={16} />
+          <Spinner size="md" mb={4} color="primary.500" />
           <Text color="white">{message || 'Loading...'}</Text>
-        </Pane>
-      </Pane>
-    </Pane>
+        </Box>
+      </Flex>
+    </Box>
   );
 };

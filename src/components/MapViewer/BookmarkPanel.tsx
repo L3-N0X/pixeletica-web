@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, Pane, Table, IconButton, Text, Heading, EmptyState } from 'evergreen-ui';
-import { useNavigate } from 'react-router-dom';
+import { Dialog, Pane, IconButton, Table } from 'evergreen-ui';
+import EmptyState from '../EmptyState';
 
 interface Bookmark {
   name: string;
-  url: string;
   date: string;
+  url: string;
   state: {
     x: number;
     y: number;
@@ -15,10 +15,6 @@ interface Bookmark {
   };
 }
 
-interface BookmarksByMap {
-  [mapId: string]: Bookmark[];
-}
-
 interface BookmarkPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -26,48 +22,52 @@ interface BookmarkPanelProps {
 }
 
 const BookmarkPanel: React.FC<BookmarkPanelProps> = ({ isOpen, onClose, mapId }) => {
-  const navigate = useNavigate();
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
 
-  // Load bookmarks from local storage
+  // Load bookmarks from localStorage when the panel opens
   useEffect(() => {
     if (isOpen) {
-      const allBookmarks: BookmarksByMap = JSON.parse(localStorage.getItem('mapBookmarks') || '{}');
+      const allBookmarks = JSON.parse(localStorage.getItem('mapBookmarks') || '{}');
       setBookmarks(allBookmarks[mapId] || []);
     }
   }, [isOpen, mapId]);
 
-  // Navigate to a bookmark
+  // Format date for display
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return (
+      date.toLocaleDateString() +
+      ' ' +
+      date.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    );
+  };
+
+  // Go to a bookmark
   const handleGoToBookmark = (bookmark: Bookmark) => {
-    navigate(bookmark.url.replace(window.location.origin, ''));
-    onClose();
+    window.location.href = bookmark.url;
   };
 
   // Delete a bookmark
   const handleDeleteBookmark = (index: number) => {
-    const allBookmarks: BookmarksByMap = JSON.parse(localStorage.getItem('mapBookmarks') || '{}');
+    const allBookmarks = JSON.parse(localStorage.getItem('mapBookmarks') || '{}');
     const updatedMapBookmarks = [...(allBookmarks[mapId] || [])];
-
     updatedMapBookmarks.splice(index, 1);
-    allBookmarks[mapId] = updatedMapBookmarks;
 
+    allBookmarks[mapId] = updatedMapBookmarks;
     localStorage.setItem('mapBookmarks', JSON.stringify(allBookmarks));
     setBookmarks(updatedMapBookmarks);
-  };
-
-  // Format date for display
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleString();
   };
 
   return (
     <Dialog
       isShown={isOpen}
-      title="Bookmarked Views"
+      title="Map Bookmarks"
       onCloseComplete={onClose}
       hasFooter={false}
-      width="600px"
+      width={600}
     >
       <Pane>
         {bookmarks.length > 0 ? (
@@ -114,7 +114,6 @@ const BookmarkPanel: React.FC<BookmarkPanelProps> = ({ isOpen, onClose, mapId })
             title="No bookmarks yet"
             orientation="horizontal"
             iconBgColor="#EDEFF5"
-            iconSrc=""
             icon="bookmark"
             description="You haven't saved any bookmarks for this map. Use the bookmark button in the map controls to save interesting views."
           />

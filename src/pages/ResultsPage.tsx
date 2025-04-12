@@ -23,7 +23,7 @@ import {
   getAllFilesDownloadUrl,
   downloadSelectedFiles,
 } from '@services/conversionService';
-import type { TaskResponse, FileInfo } from '@types';
+import type { TaskResponse, FileInfo } from '@/types';
 
 const ResultsPage: React.FC = () => {
   const { taskId } = useParams<{ taskId: string }>();
@@ -152,7 +152,7 @@ const ResultsPage: React.FC = () => {
             {task?.status === 'queued' && 'Waiting in queue...'}
             {!task && 'Loading...'}
           </Heading>
-          {task?.progress !== null && (
+          {task?.progress != null && (
             <Pane marginTop={16} display="flex" flexDirection="column" alignItems="center">
               <Text>{task.progress}% complete</Text>
               <Pane width={300} height={6} backgroundColor="#2e2e2e" borderRadius={3} marginTop={8}>

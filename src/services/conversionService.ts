@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { ConversionSettings, TaskResponse, FileInfo } from '@types';
+import type { ConversionSettings, TaskResponse, FileInfo } from '@/types';
 
 const API_URL = '/api';
 

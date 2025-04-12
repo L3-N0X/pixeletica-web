@@ -13,15 +13,14 @@ import {
   Spinner,
   toaster,
 } from 'evergreen-ui';
-import { startConversion, getConversionStatus } from '@services/conversionService';
-import type { ConversionSettings } from '@types';
+import { startConversion } from '@services/conversionService';
+import type { ConversionSettings } from '@/types';
 
 const ImageUploadPage: React.FC = () => {
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [taskId, setTaskId] = useState<string | null>(null);
 
   const [settings, setSettings] = useState<ConversionSettings>({
     algorithm: 'floyd_steinberg',
@@ -106,28 +105,6 @@ const ImageUploadPage: React.FC = () => {
       toaster.danger('Failed to upload image. Please try again.');
       setLoading(false);
     }
-  };
-
-  const startStatusPolling = async (id: string) => {
-    // Poll for status updates every 2 seconds
-    const interval = setInterval(async () => {
-      try {
-        const status = await getConversionStatus(id);
-
-        if (status.status === 'completed') {
-          clearInterval(interval);
-          toaster.success('Conversion completed! Redirecting to results...');
-          // TODO: Redirect to results page
-        } else if (status.status === 'failed') {
-          clearInterval(interval);
-          toaster.danger(`Conversion failed: ${status.error || 'Unknown error'}`);
-        }
-        // Update progress display if needed
-      } catch (error) {
-        console.error('Error checking status:', error);
-        clearInterval(interval);
-      }
-    }, 2000);
   };
 
   return (
@@ -370,10 +347,10 @@ const ImageUploadPage: React.FC = () => {
             <FormField label="Export Formats" marginBottom={16}>
               <Pane>
                 {[
-                  { label: 'PNG', value: 'png' },
-                  { label: 'JPG', value: 'jpg' },
-                  { label: 'WebP', value: 'webp' },
-                  { label: 'HTML', value: 'html' },
+                  { label: 'PNG', value: 'png' as const },
+                  { label: 'JPG', value: 'jpg' as const },
+                  { label: 'WebP', value: 'webp' as const },
+                  { label: 'HTML', value: 'html' as const },
                 ].map((option) => (
                   <Label key={option.value} display="block" marginBottom={8}>
                     <Switch
@@ -382,13 +359,13 @@ const ImageUploadPage: React.FC = () => {
                         const updatedExportTypes = e.target.checked
                           ? [...settings.exportSettings.exportTypes, option.value]
                           : settings.exportSettings.exportTypes.filter(
-                              (type: string) => type !== option.value
+                              (type) => type !== option.value
                             );
                         setSettings({
                           ...settings,
                           exportSettings: {
                             ...settings.exportSettings,
-                            exportTypes: updatedExportTypes,
+                            exportTypes: updatedExportTypes as ('html' | 'png' | 'jpg' | 'webp')[],
                           },
                         });
                       }}

@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { Pane, IconButton, Card, Text } from 'evergreen-ui';
+import {
+  Box,
+  Flex,
+  IconButton,
+  Card,
+  CardBody,
+  Text,
+  Image,
+  Circle,
+} from '@chakra-ui/react';
+import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
 import { FileInfo } from '../types/api';
 import { conversionApi } from '../services/api';
 
@@ -10,7 +20,8 @@ interface PreviewCarouselProps {
 
 const PreviewCarousel: React.FC<PreviewCarouselProps> = ({ files, taskId }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const [_loadedFiles, setLoadedFiles] = useState<Set<string>>(new Set());
+  const [_errorFiles, setErrorFiles] = useState<Set<string>>(new Set());
 
   // Filter only image files
   const imageFiles = files.filter(
@@ -20,14 +31,12 @@ const PreviewCarousel: React.FC<PreviewCarouselProps> = ({ files, taskId }) => {
   if (imageFiles.length === 0) {
     return (
       <Card
-        background="tint2"
-        padding={16}
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        height={300}
+        bg="gray.100" // Light background for empty state
+        boxShadow="sm"
       >
-        <Text color="muted">No preview files available</Text>
+        <CardBody display="flex" alignItems="center" justifyContent="center" height="300px">
+          <Text color="gray.500">No preview files available</Text>
+        </CardBody>
       </Card>
     );
   }
@@ -45,65 +54,68 @@ const PreviewCarousel: React.FC<PreviewCarouselProps> = ({ files, taskId }) => {
   };
 
   const handleLoad = (fileId: string) => {
-    setLoading((prev) => ({ ...prev, [fileId]: false }));
+    setLoadedFiles((prev) => new Set(prev).add(fileId));
   };
 
   const handleError = (fileId: string) => {
-    setLoading((prev) => ({ ...prev, [fileId]: false }));
+    setErrorFiles((prev) => new Set(prev).add(fileId));
   };
 
   return (
-    <Pane position="relative" height="100%" minHeight={300}>
-      {/* Image Container */}
-      <Pane
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
+    <Box position="relative" height="100%" minH="300px">
+      {/* Image/Preview Container */}
+      <Flex
+        align="center"
+        justify="center"
         height="100%"
-        background="#1A1A1A"
-        borderRadius={4}
+        bg="#1A1A1A"
+        borderRadius="md"
         overflow="hidden"
       >
         {isHtml ? (
-          <iframe
+          <Box as="iframe"
             src={fileUrl}
             title={currentFile.filename}
-            style={{ width: '100%', height: '100%', border: 'none' }}
+            width="100%"
+            height="100%"
+            border="none"
             onLoad={() => handleLoad(currentFile.fileId)}
             onError={() => handleError(currentFile.fileId)}
           />
         ) : (
-          <img
+          <Image
             src={fileUrl}
             alt={currentFile.filename}
-            style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: 'contain',
-            }}
+            maxW="100%"
+            maxH="100%"
+            objectFit="contain"
             onLoad={() => handleLoad(currentFile.fileId)}
             onError={() => handleError(currentFile.fileId)}
           />
         )}
-      </Pane>
+      </Flex>
 
       {/* Navigation Arrows */}
       {imageFiles.length > 1 && (
         <>
           <IconButton
-            icon="chevron-left"
-            appearance="minimal"
+            icon={<ChevronLeftIcon boxSize={6} />}
+            aria-label="Previous image"
+            variant="ghost"
+            colorScheme="blackAlpha"
             position="absolute"
-            left={8}
+            left={2}
             top="50%"
             transform="translateY(-50%)"
             onClick={handlePrev}
           />
           <IconButton
-            icon="chevron-right"
-            appearance="minimal"
+            icon={<ChevronRightIcon boxSize={6} />}
+            aria-label="Next image"
+            variant="ghost"
+            colorScheme="blackAlpha"
             position="absolute"
-            right={8}
+            right={2}
             top="50%"
             transform="translateY(-50%)"
             onClick={handleNext}
@@ -112,39 +124,37 @@ const PreviewCarousel: React.FC<PreviewCarouselProps> = ({ files, taskId }) => {
       )}
 
       {/* Filename and Navigation Dots */}
-      <Pane
+      <Box
         position="absolute"
         bottom={0}
         left={0}
         right={0}
-        background="rgba(0,0,0,0.7)"
-        padding={8}
+        bg="rgba(0,0,0,0.7)"
+        p={2}
         display="flex"
         alignItems="center"
         justifyContent="center"
         flexDirection="column"
       >
-        <Text color="white" size={300}>
+        <Text color="white" fontSize="sm">
           {currentFile.filename}
         </Text>
 
         {imageFiles.length > 1 && (
-          <Pane display="flex" gap={8} marginTop={4}>
+          <Flex gap={2} mt={1}>
             {imageFiles.map((_, idx) => (
-              <Pane
+              <Circle
                 key={idx}
-                width={8}
-                height={8}
-                borderRadius="50%"
-                background={idx === currentIndex ? 'white' : 'rgba(255,255,255,0.5)'}
+                size={2}
+                bg={idx === currentIndex ? 'white' : 'whiteAlpha.500'}
                 cursor="pointer"
                 onClick={() => setCurrentIndex(idx)}
               />
             ))}
-          </Pane>
+          </Flex>
         )}
-      </Pane>
-    </Pane>
+      </Box>
+    </Box>
   );
 };
 

@@ -10,8 +10,9 @@ import {
   toaster,
   EmptyState,
   PlusIcon,
-  TrashIcon,
   MapMarkerIcon,
+  Card,
+  Badge,
 } from 'evergreen-ui';
 import { mapsApi, conversionApi } from '../services/api';
 import { MapInfo } from '../types/api';
@@ -19,8 +20,10 @@ import MapCard from '../components/MapCard';
 import FilterBar, { SortOption, FilterOption } from '../components/FilterBar';
 import useFavorites from '../hooks/useFavorites';
 import useRecentMaps from '../hooks/useRecentMaps';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 const HomePage: React.FC = () => {
+  const { isMobile, isTablet } = useResponsiveLayout();
   // State
   const [maps, setMaps] = useState<MapInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,8 +35,8 @@ const HomePage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Custom hooks
-  const { favorites, isFavorite } = useFavorites();
-  const { recentMaps, addRecentMap } = useRecentMaps();
+  const { isFavorite } = useFavorites();
+  const { recentMaps } = useRecentMaps();
 
   // Load maps from API
   useEffect(() => {
@@ -122,28 +125,62 @@ const HomePage: React.FC = () => {
 
   return (
     <Pane>
-      <Pane display="flex" alignItems="center" marginBottom={24}>
-        <Heading size={900} marginRight={16}>
-          Pixeletica
+      {/* Hero Section */}
+      <Card
+        elevation={1}
+        background="rgba(17, 34, 24, 0.5)"
+        marginBottom={32}
+        paddingY={isMobile ? 24 : 48}
+        paddingX={isMobile ? 16 : 32}
+        borderRadius={8}
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        textAlign="center"
+      >
+        <Heading
+          size={900}
+          marginBottom={16}
+          fontFamily="'Merriweather', serif"
+          textAlign="center"
+          color="white"
+        >
+          Welcome to Minecraft Pixel Art Creator
         </Heading>
-        <Text size={500} color="muted">
-          Convert images to Minecraft block art
+        <Text size={500} color="muted" maxWidth={600} marginBottom={24} textAlign="center">
+          Convert your favorite images to stunning Minecraft block art with our advanced conversion
+          tool
         </Text>
-        <Pane flex={1} />
-        <Button appearance="primary" height={40} as={Link} to="/create" iconBefore={PlusIcon}>
+        <Button
+          appearance="primary"
+          height={48}
+          paddingX={24}
+          as={Link}
+          to="/create"
+          iconBefore={PlusIcon}
+          fontSize={16}
+        >
           Create New Pixel Art
         </Button>
-      </Pane>
+      </Card>
 
-      {/* Filter Bar */}
-      <FilterBar
-        search={search}
-        onSearchChange={setSearch}
-        sortOption={sortOption}
-        onSortChange={setSortOption}
-        filterOption={filterOption}
-        onFilterChange={setFilterOption}
-      />
+      {/* Filter Bar in Card */}
+      <Card
+        elevation={1}
+        background="rgba(17, 34, 24, 0.5)"
+        marginBottom={32}
+        padding={16}
+        borderRadius={8}
+      >
+        <FilterBar
+          search={search}
+          setSearch={setSearch}
+          sortOption={sortOption}
+          setSortOption={setSortOption}
+          filterOption={filterOption}
+          setFilterOption={setFilterOption}
+        />
+      </Card>
 
       {loading ? (
         <Pane display="flex" alignItems="center" justifyContent="center" height={300}>
@@ -173,7 +210,7 @@ const HomePage: React.FC = () => {
                 ? 'Add maps to your favorites to see them here'
                 : 'Recently viewed maps will appear here'
           }
-          primaryAction={
+          primaryCta={
             filterOption === 'all' ? (
               <Button appearance="primary" as={Link} to="/create">
                 Create New
@@ -182,16 +219,43 @@ const HomePage: React.FC = () => {
           }
         />
       ) : (
-        <Pane>
-          <Heading size={600} marginBottom={16}>
+        <Card
+          elevation={1}
+          background="rgba(17, 34, 24, 0.5)"
+          padding={isMobile ? 16 : 24}
+          borderRadius={8}
+        >
+          <Heading
+            size={600}
+            marginBottom={24}
+            fontFamily="'Source Serif Pro', serif"
+            display="flex"
+            alignItems="center"
+          >
+            <MapMarkerIcon color="#92e8b8" marginRight={12} size={18} />
             {filterOption === 'all'
               ? 'Available Maps'
               : filterOption === 'favorites'
                 ? 'Favorite Maps'
                 : 'Recent Maps'}
-            {filteredMaps.length > 0 && ` (${filteredMaps.length})`}
+            {filteredMaps.length > 0 && (
+              <Badge color="neutral" marginLeft={8}>
+                {filteredMaps.length}
+              </Badge>
+            )}
           </Heading>
-          <Pane display="grid" gridTemplateColumns="repeat(auto-fill, minmax(280px, 1fr))" gap={16}>
+
+          <Pane
+            display="grid"
+            gridTemplateColumns={
+              isMobile
+                ? '1fr'
+                : isTablet
+                  ? 'repeat(2, 1fr)'
+                  : 'repeat(auto-fill, minmax(280px, 1fr))'
+            }
+            gap={24}
+          >
             {filteredMaps.map((map) => (
               <MapCard
                 key={map.id}
@@ -200,7 +264,7 @@ const HomePage: React.FC = () => {
               />
             ))}
           </Pane>
-        </Pane>
+        </Card>
       )}
 
       {/* Delete Confirmation Dialog */}

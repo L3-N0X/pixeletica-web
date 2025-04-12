@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import PixelArtViewer from '@components/PixelArtViewer';
 import DetailsPanel from '@components/DetailsPanel';
 import { getMapMetadata } from '@services/mapService';
-import type { PixelArtMetadata, BlockDetails } from '@types';
+import type { PixelArtMetadata, BlockDetails } from '@/types';
 
 const MapViewerPage: React.FC = () => {
   const { mapName } = useParams<{ mapName: string }>();

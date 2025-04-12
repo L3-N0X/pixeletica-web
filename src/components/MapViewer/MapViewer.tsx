@@ -1,20 +1,23 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import { Pane, Spinner, Button, IconButton, Tooltip, toaster } from 'evergreen-ui';
+import { Pane, Spinner, Tooltip, IconButton, toaster } from 'evergreen-ui';
 import { MapViewState } from '../../types/mapTypes';
 import { useMapUrlState } from '../../hooks/useMapUrlState';
-import MapTileLayer from './MapTileLayer';
+import MapTileLayer from './MapTileLayer.tsx';
 import GridOverlay from './GridOverlay';
 import MapInfoPanel from './MapInfoPanel';
 import SharePanel from './SharePanel';
-import { fetchMapMetadata } from '../../services/mapService';
+import { getMapMetadata } from '../../services/mapService';
 
 const MapViewer = () => {
   const { mapId } = useParams<{ mapId: string }>();
-  const [metadata, setMetadata] = useState(null);
+  const [metadata, setMetadata] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showBlockGrid, setShowBlockGrid] = useState(true);
+  const [showChunkGrid, setShowChunkGrid] = useState(true);
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
 
   // Default map state
   const defaultState: MapViewState = {
@@ -36,12 +39,31 @@ const MapViewer = () => {
   // Share panel state
   const [isSharePanelOpen, setIsSharePanelOpen] = useState(false);
 
+  // Update the viewport size when the component mounts or window resizes
+  useEffect(() => {
+    const updateViewportSize = () => {
+      setViewportSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    // Set initial size
+    updateViewportSize();
+
+    // Add resize listener
+    window.addEventListener('resize', updateViewportSize);
+
+    // Clean up
+    return () => window.removeEventListener('resize', updateViewportSize);
+  }, []);
+
   // Load map metadata
   useEffect(() => {
     if (!mapId) return;
 
     setIsLoading(true);
-    fetchMapMetadata(mapId)
+    getMapMetadata(mapId)
       .then((data) => {
         setMetadata(data);
         setIsLoading(false);
@@ -107,6 +129,8 @@ const MapViewer = () => {
 
   // Bookmark current view
   const handleBookmarkView = useCallback(() => {
+    if (!mapId) return;
+
     const url = getShareableUrl(viewState);
     const name = prompt('Enter a name for this bookmark:');
     if (!name) return;
@@ -143,6 +167,10 @@ const MapViewer = () => {
     });
   }, [handleViewStateChange]);
 
+  // Toggle grid visibility
+  const handleToggleBlockGrid = () => setShowBlockGrid((prev) => !prev);
+  const handleToggleChunkGrid = () => setShowChunkGrid((prev) => !prev);
+
   if (error) {
     return (
       <Pane display="flex" alignItems="center" justifyContent="center" height="100vh">
@@ -176,6 +204,8 @@ const MapViewer = () => {
         initialPositionY={viewState.y}
         onTransformed={handleTransformChange}
         limitToBounds={false}
+        minScale={0.1}
+        maxScale={10}
       >
         {({ zoomIn, zoomOut }) => (
           <>
@@ -190,8 +220,13 @@ const MapViewer = () => {
                     selectedBlockId={viewState.selectedBlockId}
                   />
                   <GridOverlay
+                    width={viewportSize.width}
+                    height={viewportSize.height}
+                    scale={viewState.zoom}
+                    position={{ x: viewState.x, y: viewState.y }}
                     metadata={metadata}
-                    zoom={viewState.zoom}
+                    showBlockGrid={showBlockGrid}
+                    showChunkGrid={showChunkGrid}
                     onChunkSelect={handleChunkSelect}
                     selectedChunk={viewState.selectedChunk}
                   />
@@ -235,6 +270,34 @@ const MapViewer = () => {
               </Tooltip>
               <Tooltip content="Bookmark This View">
                 <IconButton icon="bookmark" appearance="minimal" onClick={handleBookmarkView} />
+              </Tooltip>
+            </Pane>
+
+            {/* Grid controls */}
+            <Pane
+              position="absolute"
+              bottom={16}
+              left={16}
+              display="flex"
+              gap={8}
+              background="rgba(23, 29, 37, 0.85)"
+              padding={8}
+              borderRadius={8}
+            >
+              <Tooltip content="Toggle Block Grid">
+                <IconButton
+                  icon="grid-view"
+                  appearance={showBlockGrid ? 'primary' : 'default'}
+                  onClick={handleToggleBlockGrid}
+                />
+              </Tooltip>
+              <Tooltip content="Toggle Chunk Grid">
+                <IconButton
+                  icon="grid-view"
+                  intent="danger"
+                  appearance={showChunkGrid ? 'primary' : 'default'}
+                  onClick={handleToggleChunkGrid}
+                />
               </Tooltip>
             </Pane>
           </>

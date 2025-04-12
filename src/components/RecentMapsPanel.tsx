@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Pane, Heading, Text, Button, Card } from 'evergreen-ui';
+import { Link as RouterLink } from 'react-router-dom';
+import { Box, Flex, Heading, Text, Button, Card, CardBody, Stack } from '@chakra-ui/react';
 import useRecentMaps from '../hooks/useRecentMaps';
 
 interface RecentMapsPanelProps {
@@ -12,23 +12,23 @@ const RecentMapsPanel: React.FC<RecentMapsPanelProps> = ({ onSelectMap }) => {
 
   if (recentMaps.length === 0) {
     return (
-      <Pane padding={16}>
-        <Text color="muted">No recently viewed maps</Text>
-      </Pane>
+      <Box padding={4}>
+        <Text color="gray.500">No recently viewed maps</Text>
+      </Box>
     );
   }
 
   return (
-    <Pane>
-      <Pane display="flex" alignItems="center" padding="8px 16px">
-        <Heading size={400}>Recent Maps</Heading>
-        <Pane flex={1} />
-        <Button appearance="minimal" size="small" onClick={clearRecentMaps}>
+    <Box>
+      <Flex align="center" padding="8px 16px">
+        <Heading size="sm">Recent Maps</Heading>
+        <Box flex={1} />
+        <Button variant="ghost" size="sm" onClick={clearRecentMaps}>
           Clear
         </Button>
-      </Pane>
+      </Flex>
 
-      <Pane>
+      <Stack spacing={2} px={2}>
         {recentMaps.map((map) => {
           const date = new Date(map.timestamp);
           const timeAgo = getTimeAgo(date);
@@ -36,30 +36,32 @@ const RecentMapsPanel: React.FC<RecentMapsPanelProps> = ({ onSelectMap }) => {
           return (
             <Card
               key={map.id}
-              padding={12}
-              background="tint2"
-              marginX={8}
-              marginY={4}
-              hoverElevation={1}
+              p={3}
+              bg="gray.75"
+              mx={2}
+              my={1}
+              _hover={{ shadow: 'md', bg: 'gray.100' }}
               cursor="pointer"
-              as={Link}
+              as={RouterLink}
               to={`/map/${map.id}`}
               onClick={() => onSelectMap?.(map.id)}
               display="flex"
               flexDirection="column"
               textDecoration="none"
             >
-              <Text color="default" fontWeight={500}>
-                {map.name}
-              </Text>
-              <Text size={300} color="muted">
-                {timeAgo}
-              </Text>
+              <CardBody p={0}>
+                <Text fontWeight={500} color="text">
+                  {map.name}
+                </Text>
+                <Text fontSize="sm" color="gray.500">
+                  {timeAgo}
+                </Text>
+              </CardBody>
             </Card>
           );
         })}
-      </Pane>
-    </Pane>
+      </Stack>
+    </Box>
   );
 };
 

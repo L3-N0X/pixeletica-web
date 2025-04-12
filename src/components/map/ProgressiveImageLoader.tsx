@@ -5,7 +5,6 @@ interface ProgressiveImageLoaderProps {
   mapId: string;
   baseUrl: string;
   lowResZoom?: number;
-  highResZoom?: number;
   width: number;
   height: number;
   onLoad?: () => void;
@@ -17,7 +16,6 @@ export const ProgressiveImageLoader: React.FC<ProgressiveImageLoaderProps> = ({
   mapId,
   baseUrl,
   lowResZoom = 0,
-  highResZoom = 2,
   width,
   height,
   onLoad,

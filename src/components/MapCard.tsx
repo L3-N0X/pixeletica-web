@@ -1,8 +1,21 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Card, Pane, Heading, Text, IconButton } from 'evergreen-ui';
+import { Link as RouterLink } from 'react-router-dom';
+import {
+  Box,
+  Card as ChakraCard, // Rename to avoid conflict
+  CardBody,
+  Heading,
+  Text,
+  IconButton,
+  Badge,
+  Image,
+  Flex,
+  useStyleConfig,
+} from '@chakra-ui/react';
+import { StarIcon, DeleteIcon } from '@chakra-ui/icons'; // Use Chakra icons
 import { MapInfo } from '../types/api';
 import useFavorites from '../hooks/useFavorites';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 interface MapCardProps {
   map: MapInfo;
@@ -12,6 +25,10 @@ interface MapCardProps {
 const MapCard: React.FC<MapCardProps> = ({ map, onDelete }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const isFav = isFavorite(map.id);
+  const { isMobile } = useResponsiveLayout();
+
+  // Get card styles from theme recipe
+  const styles = useStyleConfig('Card', { variant: 'outline' });
 
   // Format the date
   const formattedDate = new Date(map.created).toLocaleDateString(undefined, {
@@ -21,103 +38,125 @@ const MapCard: React.FC<MapCardProps> = ({ map, onDelete }) => {
   });
 
   return (
-    <Card
-      elevation={1}
-      background="tint2"
-      padding={0}
-      borderRadius={8}
-      hoverElevation={2}
-      position="relative"
-    >
-      {/* Favorite and Delete buttons */}
-      <Pane
-        position="absolute"
-        top={8}
-        right={8}
-        zIndex={2}
-        display="flex"
-        alignItems="center"
-        gap={4}
+    <RouterLink to={`/map/${map.id}`} style={{ textDecoration: 'none' }}>
+      <ChakraCard
+        sx={styles} // Apply recipe styles
+        overflow="hidden" // Ensure image corners are clipped
+        position="relative"
+        transition="all 0.2s ease"
+        bg="rgba(17, 34, 24, 0.8)"
+        borderColor="rgba(81, 123, 102, 0.3)"
+        _hover={{
+          transform: 'translateY(-4px)',
+          boxShadow: 'lg', // Use theme shadow token
+          borderColor: 'rgba(146, 232, 184, 0.4)',
+        }}
       >
-        <IconButton
-          icon={isFav ? 'star' : 'star-empty'}
-          intent={isFav ? 'warning' : 'none'}
-          appearance="minimal"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleFavorite(map.id);
-          }}
-          background="rgba(0,0,0,0.6)"
-          borderRadius="50%"
-          size="small"
-        />
-
-        {onDelete && (
+        {/* Favorite and Delete buttons */}
+        <Flex
+          position="absolute"
+          top={3} // Adjust position
+          right={3}
+          zIndex={2}
+          gap={2} // Use theme spacing
+        >
           <IconButton
-            icon="trash"
-            intent="danger"
-            appearance="minimal"
-            onClick={(e) => {
+            aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
+            icon={<StarIcon />}
+            colorScheme={isFav ? 'yellow' : 'gray'} // Use colorScheme
+            variant="ghost" // Use ghost for minimal appearance
+            isRound // Make it round
+            size="sm"
+            bg="rgba(0,0,0,0.7)"
+            color={isFav ? 'yellow.400' : 'white'}
+            boxShadow="md"
+            _hover={{ bg: 'rgba(0,0,0,0.9)' }}
+            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+              // Add type for event
               e.preventDefault();
               e.stopPropagation();
-              onDelete(map.id);
+              toggleFavorite(map.id);
             }}
-            background="rgba(0,0,0,0.6)"
-            borderRadius="50%"
-            size="small"
           />
-        )}
-      </Pane>
 
-      {/* Image and Content */}
-      <Link
-        to={`/map/${map.id}`}
-        style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-      >
-        <Pane position="relative">
-          <img
+          {onDelete && (
+            <IconButton
+              aria-label="Delete map"
+              icon={<DeleteIcon />}
+              colorScheme="red" // Use colorScheme
+              variant="ghost"
+              isRound
+              size="sm"
+              bg="rgba(0,0,0,0.7)"
+              color="red.400"
+              boxShadow="md"
+              _hover={{ bg: 'rgba(0,0,0,0.9)' }}
+              onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                // Add type for event
+                e.preventDefault();
+                e.stopPropagation();
+                onDelete(map.id);
+              }}
+            />
+          )}
+        </Flex>
+
+        {/* Image and Content */}
+        <Box position="relative" height="200px" overflow="hidden">
+          <Image
             src={map.thumbnail}
             alt={map.name}
-            style={{
-              width: '100%',
-              height: '180px',
-              objectFit: 'cover',
-              borderTopLeftRadius: '8px',
-              borderTopRightRadius: '8px',
-            }}
+            width="100%"
+            height="100%"
+            objectFit="cover"
             loading="lazy"
           />
-        </Pane>
+          {/* Gradient overlay */}
+          <Box
+            position="absolute"
+            bottom={0}
+            left={0}
+            right={0}
+            height="80px"
+            bgGradient="linear(to-t, rgba(5, 10, 7, 0.8), transparent)"
+          />
+        </Box>
 
-        <Pane padding={16}>
-          <Heading size={500} marginBottom={8} isTruncated>
+        <CardBody p={isMobile ? 3 : 4}>
+          {' '}
+          {/* Use CardBody and responsive padding */}
+          <Heading size="md" mb={2} noOfLines={1} fontFamily="body">
+            {' '}
+            {/* Use noOfLines */}
             {map.name}
           </Heading>
-
           {map.description && (
             <Text
               color="muted"
-              size={300}
-              marginBottom={8}
-              lineHeight={1.4}
-              height={42}
-              overflow="hidden"
-              display="block"
+              fontSize="sm"
+              mb={3}
+              lineHeight="short" // Use theme line height
+              noOfLines={2} // Limit lines
               title={map.description}
             >
-              {map.description.length > 70
-                ? `${map.description.substring(0, 70)}...`
-                : map.description}
+              {map.description}
             </Text>
           )}
-
-          <Text size={300} color="muted" display="block">
-            {formattedDate}
-          </Text>
-        </Pane>
-      </Link>
-    </Card>
+          <Flex align="center" justify="space-between">
+            <Text fontSize="xs" color="muted">
+              {' '}
+              {/* Adjust size */}
+              {formattedDate}
+            </Text>
+            <Badge colorScheme="blue" variant="subtle">
+              {' '}
+              {/* Use colorScheme */}
+              View Map
+            </Badge>
+          </Flex>
+        </CardBody>
+      </ChakraCard>
+    </RouterLink>
   );
 };
 

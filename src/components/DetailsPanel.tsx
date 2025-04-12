@@ -13,8 +13,7 @@ import {
   CrossIcon,
   DownloadIcon,
 } from 'evergreen-ui';
-import type { BlockDetails } from '@types';
-import { getChunkBoundaries } from '@utils/tileUtils';
+import type { BlockDetails } from '@/types';
 
 interface DetailsPanelProps {
   block: BlockDetails;

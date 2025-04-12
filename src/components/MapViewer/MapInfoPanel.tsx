@@ -1,15 +1,28 @@
 import React, { useState } from 'react';
-import { Pane, Card, Heading, Text, Badge, Button, IconButton } from 'evergreen-ui';
+import { Pane, Card, Heading, Text, Badge, IconButton } from 'evergreen-ui';
 import { ChunkCoord } from '../../types/mapTypes';
 import BookmarkPanel from './BookmarkPanel';
+import { MapMetadata } from '../../hooks/useMapMetadata';
 
-// ...existing props and component code...
+interface MapInfoPanelProps {
+  mapId: string;
+  metadata: MapMetadata | null;
+  selectedBlockId?: string;
+  selectedChunk?: ChunkCoord;
+}
 
-const MapInfoPanel = ({ mapId, metadata, selectedBlockId, selectedChunk }) => {
-  // Add state for bookmark panel
+const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
+  mapId,
+  metadata,
+  selectedBlockId,
+  selectedChunk,
+}) => {
   const [isBookmarkPanelOpen, setIsBookmarkPanelOpen] = useState(false);
 
-  // ...existing component code...
+  // Helper function to get properties safely
+  const getSafeProperty = (obj: any, property: string, defaultValue: any = undefined) => {
+    return obj && obj[property] !== undefined ? obj[property] : defaultValue;
+  };
 
   return (
     <Card
@@ -34,7 +47,51 @@ const MapInfoPanel = ({ mapId, metadata, selectedBlockId, selectedChunk }) => {
         />
       </Pane>
 
-      {/* ...existing panel content... */}
+      {/* Map metadata */}
+      {metadata && (
+        <Pane>
+          <Heading size={500} marginBottom={8}>
+            {getSafeProperty(metadata, 'displayName', 'Untitled Map')}
+          </Heading>
+
+          {getSafeProperty(metadata, 'description') && (
+            <Text color="muted" marginBottom={16}>
+              {metadata.description}
+            </Text>
+          )}
+
+          <Pane marginBottom={16}>
+            <Badge color="blue" marginRight={8}>
+              Size: {metadata.width}x{metadata.height}
+            </Badge>
+          </Pane>
+        </Pane>
+      )}
+
+      {/* Selected block info */}
+      {selectedBlockId && metadata?.blocks && metadata.blocks[selectedBlockId] && (
+        <Pane marginTop={16} padding={12} background="rgba(255,255,255,0.1)" borderRadius={4}>
+          <Heading size={400} marginBottom={8}>
+            Selected Block
+          </Heading>
+          <Text>{getSafeProperty(metadata.blocks[selectedBlockId], 'name', 'Unknown Block')}</Text>
+          <Badge marginTop={8} color="neutral">
+            {selectedBlockId}
+          </Badge>
+        </Pane>
+      )}
+
+      {/* Selected chunk info */}
+      {selectedChunk && (
+        <Pane marginTop={16} padding={12} background="rgba(255,255,255,0.1)" borderRadius={4}>
+          <Heading size={400} marginBottom={8}>
+            Selected Chunk
+          </Heading>
+          <Text>
+            Chunk: {selectedChunk.x}, {selectedChunk.z}
+          </Text>
+        </Pane>
+      )}
 
       {/* Bookmark Panel */}
       <BookmarkPanel

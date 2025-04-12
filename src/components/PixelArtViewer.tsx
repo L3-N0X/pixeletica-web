@@ -1,18 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import {
-  Pane,
-  IconButton,
-  Tooltip,
-  Badge,
-  ZoomInIcon,
-  HomeIcon,
-  ZoomOutIcon,
-  ConsoleIcon,
-} from 'evergreen-ui';
+import { Box, Flex, IconButton, Badge, Tooltip } from '@chakra-ui/react';
+import { AddIcon, SmallCloseIcon, RepeatIcon, SettingsIcon } from '@chakra-ui/icons';
 import { getFullImage } from '@services/mapService';
 import { calculateVisibleTiles, getBlockAtPosition } from '@utils/tileUtils';
-import type { PixelArtMetadata, BlockDetails, ImageTile } from '@types';
+import type { PixelArtMetadata, BlockDetails, ImageTile } from '@/types';
 
 interface PixelArtViewerProps {
   metadata: PixelArtMetadata;
@@ -231,7 +223,7 @@ const PixelArtViewer: React.FC<PixelArtViewerProps> = ({ metadata, mapName, onBl
   }, [visibleTiles, zoom]);
 
   return (
-    <Pane height="100%" position="relative">
+    <Box height="100%" position="relative">
       <TransformWrapper
         initialScale={1}
         minScale={0.1}
@@ -241,139 +233,178 @@ const PixelArtViewer: React.FC<PixelArtViewerProps> = ({ metadata, mapName, onBl
         wheel={{ step: 0.2 }}
         doubleClick={{ disabled: true }}
       >
-        {({ zoomIn, zoomOut, resetTransform, state }) => (
-          <React.Fragment>
-            <TransformComponent
-              wrapperStyle={{ width: '100%', height: '100%' }}
-              contentStyle={{ width: '100%', height: '100%' }}
-            >
-              <Pane
-                width="100%"
-                height="100%"
-                position="relative"
-                onMouseMove={(e) => handleMouseMove(e, state)}
-                onClick={handleClick}
+        {({ zoomIn, zoomOut, resetTransform, instance }) => {
+          // Get state from instance instead of directly
+          const state = instance.transformState;
+          return (
+            <React.Fragment>
+              <TransformComponent
+                wrapperStyle={{ width: '100%', height: '100%' }}
+                contentStyle={{ width: '100%', height: '100%' }}
               >
-                {/* Full image at low zoom */}
-                {fullImage && (
-                  <img
-                    src={fullImage}
-                    alt={metadata.displayName}
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      opacity: zoom < 2 ? 1 : 0,
-                      transition: 'opacity 0.3s ease',
-                      position: 'absolute',
-                      imageRendering: 'pixelated',
-                    }}
-                  />
-                )}
+                <Box
+                  width="100%"
+                  height="100%"
+                  position="relative"
+                  onMouseMove={(e: React.MouseEvent<HTMLDivElement, MouseEvent>) =>
+                    handleMouseMove(e, state)
+                  }
+                  onClick={handleClick}
+                >
+                  {/* Full image at low zoom */}
+                  {fullImage && (
+                    <img
+                      src={fullImage}
+                      alt={metadata.displayName}
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        opacity: zoom < 2 ? 1 : 0,
+                        transition: 'opacity 0.3s ease',
+                        position: 'absolute',
+                        imageRendering: 'pixelated',
+                      }}
+                    />
+                  )}
 
-                {/* Tile layer */}
-                {TileGrid}
+                  {/* Tile layer */}
+                  {TileGrid}
 
-                {/* Canvas overlay for grid */}
-                <canvas
-                  ref={canvasRef}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    pointerEvents: 'none',
-                  }}
-                  width={viewport.width}
-                  height={viewport.height}
-                />
-
-                {/* Block hover highlight */}
-                {hoveredBlock && zoom > 3 && (
-                  <div
+                  {/* Canvas overlay for grid */}
+                  <canvas
+                    ref={canvasRef}
                     style={{
                       position: 'absolute',
-                      left: hoveredBlock.x * metadata.tileSize,
-                      top: hoveredBlock.y * metadata.tileSize,
-                      width: metadata.tileSize,
-                      height: metadata.tileSize,
-                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                      border: '1px solid rgba(255, 255, 255, 0.5)',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
                       pointerEvents: 'none',
                     }}
+                    width={viewport.width}
+                    height={viewport.height}
                   />
-                )}
-              </Pane>
-            </TransformComponent>
 
-            {/* Controls */}
-            <Pane
-              position="absolute"
-              bottom={16}
-              left={16}
-              display="flex"
-              gap={8}
-              backgroundColor="rgba(30, 30, 30, 0.7)"
-              padding={8}
-              borderRadius={4}
-            >
-              <Tooltip content="Zoom In">
-                <IconButton icon={<ZoomInIcon />} onClick={() => zoomIn()} />
-              </Tooltip>
-              <Tooltip content="Zoom Out">
-                <IconButton icon={<ZoomOutIcon />} onClick={() => zoomOut()} />
-              </Tooltip>
-              <Tooltip content="Reset View">
-                <IconButton icon={<HomeIcon />} onClick={() => resetTransform()} />
-              </Tooltip>
-              <Tooltip content="Toggle Debug Info">
-                <IconButton icon={<ConsoleIcon />} onClick={() => setDebug(!debug)} />
-              </Tooltip>
-            </Pane>
+                  {/* Block hover highlight */}
+                  {hoveredBlock && zoom > 3 && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        left: hoveredBlock.x * metadata.tileSize,
+                        top: hoveredBlock.y * metadata.tileSize,
+                        width: metadata.tileSize,
+                        height: metadata.tileSize,
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        border: '1px solid rgba(255, 255, 255, 0.5)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  )}
+                </Box>
+              </TransformComponent>
 
-            {/* Debug info */}
-            {debug && (
-              <Pane
+              {/* Controls */}
+              <Flex
                 position="absolute"
-                top={16}
-                right={16}
-                backgroundColor="rgba(30, 30, 30, 0.7)"
-                padding={8}
-                borderRadius={4}
+                bottom={4}
+                left={4}
+                gap={2}
+                bg="blackAlpha.700"
+                p={2}
+                borderRadius="md"
               >
-                <Badge>Zoom: {zoom.toFixed(2)}x</Badge>
-                <Badge marginLeft={8}>Tiles: {visibleTiles.length}</Badge>
-                <Badge marginLeft={8}>
-                  Position: {Math.floor(state.positionX)},{Math.floor(state.positionY)}
-                </Badge>
-              </Pane>
-            )}
+                <Tooltip label="Zoom In">
+                  <IconButton
+                    aria-label="Zoom In"
+                    icon={<AddIcon />}
+                    onClick={() => zoomIn()}
+                    size="sm"
+                    variant="ghost"
+                    colorScheme="whiteAlpha"
+                  />
+                </Tooltip>
+                <Tooltip label="Zoom Out">
+                  <IconButton
+                    aria-label="Zoom Out"
+                    icon={<SmallCloseIcon />}
+                    onClick={() => zoomOut()}
+                    size="sm"
+                    variant="ghost"
+                    colorScheme="whiteAlpha"
+                  />
+                </Tooltip>
+                <Tooltip label="Reset View">
+                  <IconButton
+                    aria-label="Reset View"
+                    icon={<RepeatIcon />}
+                    onClick={() => resetTransform()}
+                    size="sm"
+                    variant="ghost"
+                    colorScheme="whiteAlpha"
+                  />
+                </Tooltip>
+                <Tooltip label="Toggle Debug Info">
+                  <IconButton
+                    aria-label="Toggle Debug"
+                    icon={<SettingsIcon />}
+                    onClick={() => setDebug(!debug)}
+                    size="sm"
+                    variant="ghost"
+                    colorScheme="whiteAlpha"
+                  />
+                </Tooltip>
+              </Flex>
 
-            {/* Hover info */}
-            {hoveredBlock && zoom > 3 && (
-              <Pane
-                position="absolute"
-                top={16}
-                left={16}
-                backgroundColor="rgba(30, 30, 30, 0.9)"
-                padding={8}
-                borderRadius={4}
-                minWidth={200}
-              >
-                <strong>{hoveredBlock.name}</strong>
-                <p>
-                  X: {hoveredBlock.x}, Y: {hoveredBlock.y}, Z: {hoveredBlock.z}
-                </p>
-                <p>
-                  Chunk: {hoveredBlock.chunkX}, {hoveredBlock.chunkZ}
-                </p>
-                <small>Click to view details</small>
-              </Pane>
-            )}
-          </React.Fragment>
-        )}
+              {/* Debug info */}
+              {debug && (
+                <Flex
+                  position="absolute"
+                  top={4}
+                  right={4}
+                  bg="blackAlpha.700"
+                  p={2}
+                  borderRadius="md"
+                  gap={2}
+                >
+                  <Badge colorScheme="blue">Zoom: {zoom.toFixed(2)}x</Badge>
+                  <Badge colorScheme="green">Tiles: {visibleTiles.length}</Badge>
+                  <Badge colorScheme="purple">
+                    Position: {Math.floor(state.positionX)},{Math.floor(state.positionY)}
+                  </Badge>
+                </Flex>
+              )}
+
+              {/* Hover info */}
+              {hoveredBlock && zoom > 3 && (
+                <Box
+                  position="absolute"
+                  top={4}
+                  left={4}
+                  bg="blackAlpha.800"
+                  p={3}
+                  borderRadius="md"
+                  minWidth="200px"
+                  color="white"
+                >
+                  <Box fontWeight="bold" mb={1}>
+                    {hoveredBlock.name}
+                  </Box>
+                  <Box fontSize="sm" mb={1}>
+                    X: {hoveredBlock.x}, Y: {hoveredBlock.y}, Z: {hoveredBlock.z}
+                  </Box>
+                  <Box fontSize="sm" mb={2}>
+                    Chunk: {hoveredBlock.chunkX}, {hoveredBlock.chunkZ}
+                  </Box>
+                  <Box fontSize="xs" opacity={0.8}>
+                    Click to view details
+                  </Box>
+                </Box>
+              )}
+            </React.Fragment>
+          );
+        }}
       </TransformWrapper>
-    </Pane>
+    </Box>
   );
 };
 

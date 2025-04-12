@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Pane,
-  Card,
-  Heading,
-  Button,
-  IconButton,
-  Text,
-  toaster,
-  Badge,
-  Spinner,
-} from 'evergreen-ui';
+import { Pane, Card, Heading, Button, Text, toaster, Spinner } from 'evergreen-ui';
 import { FileInfo } from '../types/api';
 import { conversionApi } from '../services/api';
 
@@ -66,7 +56,7 @@ const DownloadPanel: React.FC<DownloadPanelProps> = ({
         const fileIds = Array.from(selectedFiles);
 
         // For browsers that support Blob downloads
-        const response = await conversionApi.downloadSelectedFiles(taskId, { fileIds });
+        const response = await conversionApi.downloadSelectedFiles(taskId, fileIds);
 
         // Create a download link
         const url = window.URL.createObjectURL(response);

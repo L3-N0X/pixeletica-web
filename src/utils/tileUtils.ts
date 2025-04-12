@@ -1,4 +1,4 @@
-import type { PixelArtMetadata, ImageTile, BlockDetails } from '@types';
+import type { PixelArtMetadata, ImageTile, BlockDetails } from '@/types';
 import { getTileUrl } from '@services/mapService';
 
 /**

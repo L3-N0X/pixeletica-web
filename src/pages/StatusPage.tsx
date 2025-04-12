@@ -4,7 +4,6 @@ import {
   Pane,
   Heading,
   Text,
-  ProgressBar,
   Button,
   Spinner,
   Alert,
@@ -15,7 +14,6 @@ import {
   toaster,
   SideSheet,
   Position,
-  Paragraph,
 } from 'evergreen-ui';
 import { conversionApi } from '../services/api';
 import { TaskResponse, TaskStatus, FileInfo } from '../types/api';
@@ -233,12 +231,27 @@ const StatusPage: React.FC = () => {
             {task.status === 'processing' && (
               <Pane>
                 <Text size={300} marginBottom={8}>
-                  Progress: {task.progress !== null ? `${task.progress}%` : 'Initializing...'}
+                  Progress: {task.progress != null ? `${task.progress}%` : 'Initializing...'}
                 </Text>
-                <ProgressBar
-                  value={task.progress !== null ? task.progress / 100 : 0}
+                <Pane
                   width="100%"
-                />
+                  height={8}
+                  borderRadius={4}
+                  background="tint1"
+                  position="relative"
+                  overflow="hidden"
+                >
+                  <Pane
+                    position="absolute"
+                    top={0}
+                    left={0}
+                    height="100%"
+                    width={task.progress != null ? `${task.progress}%` : '0%'}
+                    background="blue"
+                    borderRadius={4}
+                    transition="width 0.3s ease"
+                  />
+                </Pane>
               </Pane>
             )}
 

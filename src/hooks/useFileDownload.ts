@@ -47,7 +47,7 @@ export function useFileDownload(): UseFileDownloadReturn {
   const downloadMultipleFiles = async (taskId: string, fileIds: string[]) => {
     setIsDownloading(true);
     try {
-      const response = await conversionApi.downloadSelectedFiles(taskId, { fileIds });
+      const response = await conversionApi.downloadSelectedFiles(taskId, fileIds);
 
       // Create a download link
       const url = window.URL.createObjectURL(response);

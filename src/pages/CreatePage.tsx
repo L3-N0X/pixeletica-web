@@ -6,7 +6,6 @@ import {
   FileUploader,
   TextInputField,
   FormField,
-  SegmentedControl,
   Checkbox,
   Button,
   Spinner,
@@ -15,17 +14,98 @@ import {
   Alert,
   Text,
   Card,
-  NumberInputField,
   Paragraph,
+  MimeType,
+  Strong,
 } from 'evergreen-ui';
 import { DitherAlgorithm, ConversionRequest } from '../types/api';
 import { conversionApi } from '../services/api';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 const MAX_FILE_SIZE_MB = 10;
+
+// Custom SegmentedControl component as a replacement
+interface SegmentedControlProps {
+  id?: string;
+  options: Array<{ label: string; value: string }>;
+  value: string;
+  onChange: (value: string) => void;
+  width?: string | number;
+}
+
+const SegmentedControl: React.FC<SegmentedControlProps> = ({ options, value, onChange, width }) => {
+  return (
+    <Pane
+      display="flex"
+      width={width || 'auto'}
+      border="1px solid rgba(81, 123, 102, 0.4)"
+      borderRadius={4}
+      overflow="hidden"
+      background="rgba(5, 10, 7, 0.4)"
+    >
+      {options.map((option) => (
+        <Pane
+          key={option.value}
+          flex={1}
+          padding={12}
+          textAlign="center"
+          cursor="pointer"
+          backgroundColor={value === option.value ? 'rgba(146, 232, 184, 0.2)' : 'transparent'}
+          color={value === option.value ? '#92e8b8' : '#dde9e3'}
+          onClick={() => onChange(option.value)}
+          transition="all 0.2s ease"
+          borderBottom={value === option.value ? '2px solid #92e8b8' : '2px solid transparent'}
+          _hover={{
+            backgroundColor:
+              value === option.value ? 'rgba(146, 232, 184, 0.25)' : 'rgba(81, 123, 102, 0.2)',
+          }}
+          fontSize={14}
+        >
+          {option.label}
+        </Pane>
+      ))}
+    </Pane>
+  );
+};
+
+// Custom NumberInputField component
+interface NumberInputFieldProps {
+  label: string;
+  value: number | string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  min?: number;
+  max?: number;
+  width?: string | number;
+}
+
+const NumberInputField: React.FC<NumberInputFieldProps> = ({
+  label,
+  value,
+  onChange,
+  placeholder,
+  min,
+  max,
+  width,
+}) => {
+  return (
+    <TextInputField
+      label={label}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      type="number"
+      min={min}
+      max={max}
+      width={width}
+    />
+  );
+};
 
 const CreatePage: React.FC = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isMobile } = useResponsiveLayout();
 
   // Form state
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -140,178 +220,287 @@ const CreatePage: React.FC = () => {
   };
 
   return (
-    <Pane maxWidth={800} marginX="auto">
-      <Heading size={700} marginBottom={24}>
-        Create New Pixel Art
-      </Heading>
+    <Pane maxWidth={isMobile ? '100%' : 900} marginX="auto">
+      <Card
+        elevation={1}
+        background="rgba(17, 34, 24, 0.5)"
+        padding={isMobile ? 16 : 24}
+        marginBottom={32}
+        borderRadius={8}
+      >
+        <Heading size={700} marginBottom={24} fontFamily="'Merriweather', serif">
+          Create New Pixel Art
+        </Heading>
 
-      {error && (
-        <Alert intent="danger" title="Error" marginBottom={16}>
-          {error}
-        </Alert>
-      )}
+        <Text size={400} color="muted" marginBottom={32}>
+          Upload an image to convert it into Minecraft blocks. You can configure the conversion
+          process below.
+        </Text>
 
-      <form onSubmit={handleSubmit}>
-        <Pane marginBottom={24}>
-          <FormField label="Upload Image" labelFor="image-upload">
-            <FileUploader
-              label="Select image file"
-              description="Image will be converted to Minecraft blocks"
-              maxSizeInBytes={MAX_FILE_SIZE_MB * 1024 * 1024}
-              acceptedMimeTypes={['image/png', 'image/jpeg', 'image/jpg', 'image/webp']}
-              disabled={loading}
-              onChange={handleFileAccepted}
-              onRejected={handleFileRejected}
-              ref={fileInputRef}
-            />
-          </FormField>
+        {error && (
+          <Alert intent="danger" title="Error" marginBottom={24} appearance="card">
+            {error}
+          </Alert>
+        )}
 
-          {preview && (
-            <Card elevation={1} background="tint2" padding={16} marginTop={16} display="flex">
-              <img
-                src={preview}
-                alt="Preview"
-                style={{
-                  maxHeight: '200px',
-                  maxWidth: '200px',
-                  objectFit: 'contain',
-                  marginRight: '16px',
-                  border: '1px solid #444',
-                }}
-              />
-              <Pane>
-                <Heading size={400} marginBottom={8}>
-                  Image Information
-                </Heading>
-                {imageDimensions && (
-                  <Paragraph>
-                    Original size: {imageDimensions.width} × {imageDimensions.height} pixels
-                  </Paragraph>
-                )}
-                <Paragraph>File: {uploadedFile?.name}</Paragraph>
-                <Paragraph>
-                  Size:{' '}
-                  {(uploadedFile?.size || 0) / 1024 / 1024 < 1
-                    ? `${Math.round((uploadedFile?.size || 0) / 1024)} KB`
-                    : `${((uploadedFile?.size || 0) / 1024 / 1024).toFixed(2)} MB`}
-                </Paragraph>
-              </Pane>
-            </Card>
-          )}
-        </Pane>
-
-        <Pane display="flex" gap={16} marginBottom={24}>
-          <Pane flex={1}>
-            <NumberInputField
-              label="Target Width"
-              placeholder={imageDimensions?.width.toString() || 'Auto'}
-              value={targetWidth || ''}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setTargetWidth(e.target.value ? parseInt(e.target.value) : undefined)
-              }
-              min={1}
-              max={10000}
-              width="100%"
-            />
-          </Pane>
-          <Pane flex={1}>
-            <NumberInputField
-              label="Target Height"
-              placeholder={imageDimensions?.height.toString() || 'Auto'}
-              value={targetHeight || ''}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setTargetHeight(e.target.value ? parseInt(e.target.value) : undefined)
-              }
-              min={1}
-              max={10000}
-              width="100%"
-            />
-          </Pane>
-        </Pane>
-
-        <Pane marginBottom={24}>
-          <Label htmlFor="algorithm" marginBottom={4} display="block">
-            Dithering Algorithm
-          </Label>
-          <SegmentedControl
-            id="algorithm"
-            options={[
-              { label: 'Floyd-Steinberg', value: 'floyd_steinberg' },
-              { label: 'Ordered', value: 'ordered' },
-              { label: 'Random', value: 'random' },
-            ]}
-            value={algorithm}
-            onChange={(value) => setAlgorithm(value as DitherAlgorithm)}
-            width="100%"
-          />
-          <Text size={300} color="muted" marginTop={4}>
-            Different algorithms produce different visual effects when converting the image to
-            Minecraft blocks.
-          </Text>
-        </Pane>
-
-        <Pane marginBottom={24} background="tint2" padding={16} borderRadius={4}>
-          <Heading size={500} marginBottom={16}>
-            Optional Metadata
-          </Heading>
-          <TextInputField
-            label="Name"
-            placeholder="My Awesome Pixel Art"
-            value={name}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-            marginBottom={12}
-          />
-          <TextInputField
-            label="Author"
-            placeholder="Your Name"
-            value={author}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAuthor(e.target.value)}
-            marginBottom={12}
-          />
-          <TextInputField
-            label="Description"
-            placeholder="Description of your pixel art"
-            value={description}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)}
-          />
-        </Pane>
-
-        <Pane marginBottom={24}>
-          <Heading size={500} marginBottom={16}>
-            Export Options
-          </Heading>
-          <Pane display="flex" flexDirection="column" gap={8}>
-            <Checkbox
-              label="Generate Minecraft schematic file"
-              checked={generateSchematic}
-              onChange={(e) => setGenerateSchematic(e.target.checked)}
-            />
-            <Checkbox
-              label="Draw chunk lines (16×16 blocks)"
-              checked={drawChunkLines}
-              onChange={(e) => setDrawChunkLines(e.target.checked)}
-            />
-            <Checkbox
-              label="Draw block lines"
-              checked={drawBlockLines}
-              onChange={(e) => setDrawBlockLines(e.target.checked)}
-            />
-          </Pane>
-        </Pane>
-
-        <Pane display="flex" justifyContent="flex-end" marginTop={32}>
-          <Button
-            appearance="primary"
-            intent="success"
-            height={40}
-            type="submit"
-            disabled={!uploadedFile || loading}
-            iconBefore={loading ? Spinner : undefined}
+        <form onSubmit={handleSubmit}>
+          {/* Step 1: Upload Image */}
+          <Card
+            background="rgba(17, 34, 24, 0.7)"
+            borderRadius={8}
+            padding={isMobile ? 16 : 24}
+            marginBottom={24}
+            border="1px solid rgba(81, 123, 102, 0.3)"
           >
-            {loading ? 'Starting conversion...' : 'Start Conversion'}
-          </Button>
-        </Pane>
-      </form>
+            <Heading size={500} marginBottom={16} fontFamily="'Source Serif Pro', serif">
+              Step 1: Upload Image
+            </Heading>
+
+            <FormField
+              label="Upload Image"
+              labelFor="image-upload"
+              description="Select an image file to convert to Minecraft blocks"
+            >
+              <FileUploader
+                label="Select image file or drag and drop"
+                description={`Supported formats: JPG, PNG, GIF (max ${MAX_FILE_SIZE_MB}MB)`}
+                maxSizeInBytes={MAX_FILE_SIZE_MB * 1024 * 1024}
+                acceptedMimeTypes={[MimeType.jpeg, MimeType.png, MimeType.gif]}
+                disabled={loading}
+                onChange={handleFileAccepted}
+                onRejected={handleFileRejected}
+                ref={fileInputRef}
+                height={120}
+                background="#050a07"
+                border="1px dashed rgba(81, 123, 102, 0.6)"
+                borderRadius={8}
+              />
+            </FormField>
+
+            {preview && (
+              <Card
+                elevation={0}
+                background="rgba(5, 10, 7, 0.4)"
+                padding={16}
+                marginTop={16}
+                display="flex"
+                flexDirection={isMobile ? 'column' : 'row'}
+                alignItems={isMobile ? 'center' : 'flex-start'}
+              >
+                <Pane
+                  width={isMobile ? '100%' : 200}
+                  marginBottom={isMobile ? 16 : 0}
+                  marginRight={isMobile ? 0 : 16}
+                  borderRadius={8}
+                  overflow="hidden"
+                  border="1px solid rgba(81, 123, 102, 0.4)"
+                >
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      maxHeight: '200px',
+                      objectFit: 'contain',
+                      display: 'block',
+                    }}
+                    loading="lazy"
+                  />
+                </Pane>
+                <Pane flex={1}>
+                  <Heading size={400} marginBottom={8} fontFamily="'Source Serif Pro', serif">
+                    Image Information
+                  </Heading>
+                  {imageDimensions && (
+                    <Paragraph>
+                      <Strong>Original size:</Strong> {imageDimensions.width} ×{' '}
+                      {imageDimensions.height} pixels
+                    </Paragraph>
+                  )}
+                  <Paragraph>
+                    <Strong>File:</Strong> {uploadedFile?.name}
+                  </Paragraph>
+                  <Paragraph>
+                    <Strong>Size:</Strong>{' '}
+                    {(uploadedFile?.size || 0) / 1024 / 1024 < 1
+                      ? `${Math.round((uploadedFile?.size || 0) / 1024)} KB`
+                      : `${((uploadedFile?.size || 0) / 1024 / 1024).toFixed(2)} MB`}
+                  </Paragraph>
+                </Pane>
+              </Card>
+            )}
+          </Card>
+
+          {/* Step 2: Configure Output Size */}
+          <Card
+            background="rgba(17, 34, 24, 0.7)"
+            borderRadius={8}
+            padding={isMobile ? 16 : 24}
+            marginBottom={24}
+            border="1px solid rgba(81, 123, 102, 0.3)"
+          >
+            <Heading size={500} marginBottom={16} fontFamily="'Source Serif Pro', serif">
+              Step 2: Configure Output Size
+            </Heading>
+
+            <Pane
+              display="flex"
+              flexDirection={isMobile ? 'column' : 'row'}
+              gap={isMobile ? 12 : 16}
+              marginBottom={24}
+            >
+              <Pane flex={1}>
+                <NumberInputField
+                  label="Target Width"
+                  placeholder={imageDimensions?.width.toString() || 'Auto'}
+                  value={targetWidth || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setTargetWidth(e.target.value ? parseInt(e.target.value) : undefined)
+                  }
+                  min={1}
+                  max={10000}
+                  width="100%"
+                />
+              </Pane>
+              <Pane flex={1}>
+                <NumberInputField
+                  label="Target Height"
+                  placeholder={imageDimensions?.height.toString() || 'Auto'}
+                  value={targetHeight || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setTargetHeight(e.target.value ? parseInt(e.target.value) : undefined)
+                  }
+                  min={1}
+                  max={10000}
+                  width="100%"
+                />
+              </Pane>
+            </Pane>
+
+            <Pane>
+              <Label htmlFor="algorithm" marginBottom={8} display="block" fontWeight={600}>
+                Dithering Algorithm
+              </Label>
+              <SegmentedControl
+                id="algorithm"
+                options={[
+                  { label: 'Floyd-Steinberg', value: 'floyd_steinberg' },
+                  { label: 'Ordered', value: 'ordered' },
+                  { label: 'Random', value: 'random' },
+                ]}
+                value={algorithm}
+                onChange={(value: string) => setAlgorithm(value as DitherAlgorithm)}
+                width="100%"
+              />
+              <Text size={300} color="muted" marginTop={8}>
+                Different algorithms produce different visual effects when converting the image to
+                Minecraft blocks.
+              </Text>
+            </Pane>
+          </Card>
+
+          {/* Step 3: Metadata and Export Options */}
+          <Card
+            background="rgba(17, 34, 24, 0.7)"
+            borderRadius={8}
+            padding={isMobile ? 16 : 24}
+            marginBottom={32}
+            border="1px solid rgba(81, 123, 102, 0.3)"
+          >
+            <Heading size={500} marginBottom={16} fontFamily="'Source Serif Pro', serif">
+              Step 3: Metadata and Export Options
+            </Heading>
+
+            <Pane
+              marginBottom={24}
+              background="rgba(5, 10, 7, 0.3)"
+              padding={16}
+              borderRadius={8}
+              border="1px solid rgba(81, 123, 102, 0.2)"
+            >
+              <Heading size={400} marginBottom={16} fontFamily="'Source Serif Pro', serif">
+                Optional Metadata
+              </Heading>
+              <TextInputField
+                label="Name"
+                placeholder="My Awesome Pixel Art"
+                value={name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+                marginBottom={12}
+              />
+              <TextInputField
+                label="Author"
+                placeholder="Your Name"
+                value={author}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAuthor(e.target.value)}
+                marginBottom={12}
+              />
+              <TextInputField
+                label="Description"
+                placeholder="Description of your pixel art"
+                value={description}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setDescription(e.target.value)
+                }
+              />
+            </Pane>
+
+            <Pane>
+              <Heading size={400} marginBottom={16} fontFamily="'Source Serif Pro', serif">
+                Export Options
+              </Heading>
+              <Pane
+                display="flex"
+                flexDirection="column"
+                gap={12}
+                background="rgba(5, 10, 7, 0.3)"
+                padding={16}
+                borderRadius={8}
+                border="1px solid rgba(81, 123, 102, 0.2)"
+              >
+                <Checkbox
+                  label="Generate Minecraft schematic file"
+                  checked={generateSchematic}
+                  onChange={(e) => setGenerateSchematic(e.target.checked)}
+                />
+                <Checkbox
+                  label="Draw chunk lines (16×16 blocks)"
+                  checked={drawChunkLines}
+                  onChange={(e) => setDrawChunkLines(e.target.checked)}
+                />
+                <Checkbox
+                  label="Draw block lines"
+                  checked={drawBlockLines}
+                  onChange={(e) => setDrawBlockLines(e.target.checked)}
+                />
+              </Pane>
+            </Pane>
+          </Card>
+
+          {/* Submit Button */}
+          <Pane
+            display="flex"
+            justifyContent="center"
+            marginTop={32}
+            paddingTop={24}
+            borderTop="1px solid rgba(81, 123, 102, 0.3)"
+          >
+            <Button
+              appearance="primary"
+              intent="success"
+              height={48}
+              paddingX={32}
+              type="submit"
+              disabled={!uploadedFile || loading}
+              iconBefore={loading ? Spinner : undefined}
+              fontSize={16}
+            >
+              {loading ? 'Starting conversion...' : 'Start Conversion'}
+            </Button>
+          </Pane>
+        </form>
+      </Card>
     </Pane>
   );
 };
