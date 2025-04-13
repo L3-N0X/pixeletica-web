@@ -1,8 +1,8 @@
 export const typography = {
   tokens: {
     fonts: {
-      body: { value: '"Source Serif Pro", serif' },
-      heading: { value: '"Merriweather", serif' },
+      body: { value: '"Satoshi-Medium", sans serif' },
+      heading: { value: '"Zodiak", serif' },
       mono: { value: '"Fira Code", monospace' },
     },
     fontSizes: {

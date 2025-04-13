@@ -1,38 +1,31 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
 import {
-  Box,
-  Heading,
-  Text,
-  Button,
-  Spinner,
   Badge,
-  Grid,
-  Flex,
-  Icon,
-  // VStack removed as it's unused
-  Container,
-  // Modal components
-  Dialog, // Changed from Modal
-  DialogContent, // Changed from ModalContent
-  DialogHeader, // Changed from ModalHeader
-  DialogFooter, // Changed from ModalFooter
-  DialogBody, // Changed from ModalBody
-  CloseButton, // Changed from ModalCloseButton
-  useDisclosure,
-  // Card
+  Box,
   Card,
   CardBody,
+  Container,
+  EmptyState,
+  Flex,
+  Grid,
+  Heading,
+  Highlight,
+  Icon,
+  Spinner,
+  Text,
+  VStack,
 } from '@chakra-ui/react';
-import { FaPlus, FaMapMarkerAlt } from 'react-icons/fa';
-import { mapsApi, conversionApi } from '../services/api';
-import { MapInfo } from '../types/api';
+import { Button } from '../components/ui/button';
+import React, { useEffect, useMemo, useState } from 'react';
+import { FaMapMarkerAlt } from 'react-icons/fa';
+import { LuMap } from 'react-icons/lu';
+import { Link as RouterLink } from 'react-router-dom';
+import FilterBar, { FilterOption, SortOption } from '../components/FilterBar';
 import MapCard from '../components/MapCard';
-import FilterBar, { SortOption, FilterOption } from '../components/FilterBar';
 import useFavorites from '../hooks/useFavorites';
 import useRecentMaps from '../hooks/useRecentMaps';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
-import EmptyState from '../components/EmptyState';
+import { mapsApi } from '../services/api';
+import { MapInfo } from '../types/api';
 
 const HomePage: React.FC = () => {
   const { isMobile, isTablet } = useResponsiveLayout();
@@ -44,11 +37,6 @@ const HomePage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [filterOption, setFilterOption] = useState<FilterOption>('all');
-  const [mapToDelete, setMapToDelete] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  // Modal disclosure - fixed property name
-  const { open: isOpen, onOpen, onClose } = useDisclosure();
 
   // Custom hooks
   const { isFavorite } = useFavorites();
@@ -72,30 +60,6 @@ const HomePage: React.FC = () => {
 
     fetchMaps();
   }, []);
-
-  // Handle map deletion
-  const handleDeleteMap = (mapId: string) => {
-    setMapToDelete(mapId);
-    onOpen();
-  };
-
-  const confirmDelete = async () => {
-    if (!mapToDelete) return;
-
-    try {
-      setIsDeleting(true);
-      await conversionApi.deleteConversion(mapToDelete);
-
-      // Remove from state
-      setMaps((prevMaps) => prevMaps.filter((map) => map.id !== mapToDelete));
-    } catch (err) {
-      console.error('Failed to delete map:', err);
-    } finally {
-      setIsDeleting(false);
-      setMapToDelete(null);
-      onClose();
-    }
-  };
 
   // Filter and sort maps
   const filteredMaps = useMemo(() => {
@@ -142,7 +106,6 @@ const HomePage: React.FC = () => {
     <Container maxWidth="container.xl" px={isMobile ? 4 : 8}>
       {/* Hero Section */}
       <Box
-        bg="rgba(17, 34, 24, 0.5)"
         mb={8}
         py={isMobile ? 6 : 12}
         px={isMobile ? 4 : 8}
@@ -150,31 +113,45 @@ const HomePage: React.FC = () => {
         boxShadow="md"
         textAlign="center"
       >
-        <Heading as="h1" size="2xl" mb={4} fontFamily="heading" textAlign="center" color="white">
-          Welcome to Minecraft Pixel Art Creator
-        </Heading>
-        <Text
-          fontSize="lg"
-          color="gray.200"
-          maxW="container.md"
-          mx="auto"
-          mb={6}
+        <Heading
+          fontSize="9rem"
+          as="h1"
+          fontFamily="heading"
           textAlign="center"
+          color="white"
+          lineHeight="0.97"
+          textTransform="uppercase"
+          fontWeight="extrabold"
+          letterSpacing={{ base: '0', md: '0.1rem' }}
         >
-          Convert your favorite images to stunning Minecraft block art with our advanced conversion
-          tool
-        </Text>
+          <Highlight
+            query="Pixeletica"
+            styles={{
+              color: 'primary.500',
+              background: 'transparent',
+            }}
+          >
+            Welcome to Pixeletica
+          </Highlight>
+          <Text
+            fontSize="4xl"
+            mb={6}
+            color="gray.600"
+            fontWeight="normal"
+            fontFamily={'body'}
+            textTransform={'none'}
+          >
+            Explore and create pixel art maps with ease.
+          </Text>
+        </Heading>
         {/* Create button */}
         <RouterLink to="/create" style={{ textDecoration: 'none' }}>
-          <Button height="48px" fontSize="md" fontWeight="medium" transition="all 0.2s ease">
-            <Icon as={FaPlus} mr={2} boxSize={5} />
-            Create New Pixel Art
-          </Button>
+          <Button size="xl">Create New Pixel Art</Button>
         </RouterLink>
       </Box>
 
       {/* Filter Bar */}
-      <Box bg="rgba(17, 34, 24, 0.5)" mb={8} p={4} borderRadius="lg" boxShadow="sm">
+      <Box mb={8} borderRadius="lg" boxShadow="sm">
         <FilterBar
           search={search}
           setSearch={setSearch}
@@ -195,46 +172,34 @@ const HomePage: React.FC = () => {
           <Text>{error}</Text>
         </Box>
       ) : filteredMaps.length === 0 ? (
-        <Box bg="rgba(17, 34, 24, 0.5)" borderRadius="lg" boxShadow="sm">
-          <EmptyState
-            title={
-              filterOption === 'all'
-                ? 'No maps available'
-                : filterOption === 'favorites'
-                ? 'No favorite maps'
-                : 'No recent maps'
-            }
-            orientation="horizontal"
-            icon="bookmark"
-            iconBgColor="#1A1A1A"
-            description={
-              filterOption === 'all'
-                ? 'Get started by creating your first pixel art'
-                : filterOption === 'favorites'
-                ? 'Add maps to your favorites to see them here'
-                : 'Recently viewed maps will appear here'
-            }
-          />
-          {filterOption === 'all' && (
-            <Box textAlign="center" pb={6}>
-              {/* Create button */}
-              <RouterLink to="/create" style={{ textDecoration: 'none' }}>
-                <Button colorScheme="primary" mt={4}>
-                  Create New
-                </Button>
-              </RouterLink>
-            </Box>
-          )}
-        </Box>
+        <EmptyState.Root>
+          <EmptyState.Content
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            flexDirection="column"
+            textAlign="center"
+            px={8}
+            py={32}
+            bg="gray.50"
+            borderRadius="lg"
+            boxShadow="md"
+          >
+            <EmptyState.Indicator color="gray.500">
+              <LuMap size={72} />
+            </EmptyState.Indicator>
+            <VStack textAlign="center">
+              <EmptyState.Title fontSize="2xl" fontWeight="bold" color="text">
+                No Maps Found
+              </EmptyState.Title>
+              <EmptyState.Description fontSize="lg" color="muted" mt={2} mb={4}>
+                No maps found matching your criteria. Try adjusting your filters or search terms.
+              </EmptyState.Description>
+            </VStack>
+          </EmptyState.Content>
+        </EmptyState.Root>
       ) : (
-        /* Fix the Card implementation */
-        <Card.Root
-          variant="outline"
-          bg="rgba(17, 34, 24, 0.5)"
-          borderRadius="lg"
-          boxShadow="md"
-          borderColor="rgba(81, 123, 102, 0.2)"
-        >
+        <Card.Root variant="outline" borderRadius="lg" boxShadow="md">
           <CardBody p={isMobile ? 4 : 6}>
             <Flex align="center" mb={6}>
               <Icon as={FaMapMarkerAlt} color="primary.500" mr={3} boxSize={5} />
@@ -270,43 +235,12 @@ const HomePage: React.FC = () => {
               gap={6}
             >
               {filteredMaps.map((map) => (
-                <MapCard
-                  key={map.id}
-                  map={map}
-                  onDelete={filterOption === 'all' ? handleDeleteMap : undefined}
-                />
+                <MapCard key={map.id} map={map} />
               ))}
             </Grid>
           </CardBody>
         </Card.Root>
       )}
-
-      {/* Delete Confirmation Modal - updated to Dialog components */}
-      <Dialog.Root open={isOpen} onExitComplete={onClose}>
-        <Dialog.Trigger asChild>
-          <Button colorScheme="red" variant="outline" onClick={onOpen}>
-            Delete Map
-          </Button>
-        </Dialog.Trigger>
-        <DialogBody bg="blackAlpha.700" backdropFilter="blur(5px)" />
-        <DialogContent bg="gray.75">
-          <DialogHeader color="text">Delete Map</DialogHeader>
-          <CloseButton onClick={onClose} position="absolute" right={3} top={3} />
-          <DialogBody>
-            <Text color="text">
-              Are you sure you want to delete this map? This action cannot be undone.
-            </Text>
-          </DialogBody>
-          <DialogFooter>
-            <Button variant="outline" mr={3} onClick={onClose}>
-              Cancel
-            </Button>
-            <Button colorScheme="red" onClick={confirmDelete} disabled={isDeleting}>
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog.Root>
     </Container>
   );
 };

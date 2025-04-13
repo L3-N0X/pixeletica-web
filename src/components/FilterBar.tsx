@@ -29,49 +29,54 @@ const FilterBar: React.FC<FilterBarProps> = ({
 
   return (
     <Box p={4} bg="white" boxShadow="md" borderRadius="md">
-      <Input
-        placeholder="Search maps..."
-        value={search}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-      />
-      <Box flex={1} /> {/* Spacer */}
-      {/* Sort Select */}
-      <Select.Root
-        collection={createListCollection({
-          items: [
-            { value: 'newest', label: 'Newest First' },
-            { value: 'oldest', label: 'Oldest First' },
-            { value: 'name-desc', label: 'Name (Z-A)' },
-          ],
-        })}
-        value={[sortOption]}
-        onValueChange={(details) => {
-          if (details.value[0]) {
-            setSortOption(details.value[0] as SortOption);
-          }
-        }}
-        width="180px"
-      >
-        <Select.Control>
-          <Select.Trigger>
-            <Select.ValueText placeholder="Sort by..." />
-          </Select.Trigger>
-        </Select.Control>
-        <Select.Positioner>
-          <Select.Content>
-            <Select.Item item={{ value: 'newest', label: 'Newest First' }}>
-              Newest First
-            </Select.Item>
-            <Select.Item item={{ value: 'oldest', label: 'Oldest First' }}>
-              Oldest First
-            </Select.Item>
-            <Select.Item item={{ value: 'name-asc', label: 'Name (A-Z)' }}>Name (A-Z)</Select.Item>
-            <Select.Item item={{ value: 'name-desc', label: 'Name (Z-A)' }}>Name (Z-A)</Select.Item>
-          </Select.Content>
-        </Select.Positioner>
-      </Select.Root>
-      {/* Filter Tabs */}
-      <Tabs.Root defaultValue={filterOption} tabIndex={tabIndex}>
+      <Flex direction={{ base: 'column', md: 'row' }} gap={4} align="center">
+        <Input
+          placeholder="Search maps..."
+          value={search}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+        />
+        {/* Sort Select */}
+        <Select.Root
+          collection={createListCollection({
+            items: [
+              { value: 'newest', label: 'Newest First' },
+              { value: 'oldest', label: 'Oldest First' },
+              { value: 'name-desc', label: 'Name (Z-A)' },
+            ],
+          })}
+          value={[sortOption]}
+          onValueChange={(details) => {
+            if (details.value[0]) {
+              setSortOption(details.value[0] as SortOption);
+            }
+          }}
+          width="180px"
+        >
+          <Select.Control>
+            <Select.Trigger>
+              <Select.ValueText placeholder="Sort by..." />
+            </Select.Trigger>
+          </Select.Control>
+          <Select.Positioner>
+            <Select.Content>
+              <Select.Item item={{ value: 'newest', label: 'Newest First' }}>
+                Newest First
+              </Select.Item>
+              <Select.Item item={{ value: 'oldest', label: 'Oldest First' }}>
+                Oldest First
+              </Select.Item>
+              <Select.Item item={{ value: 'name-asc', label: 'Name (A-Z)' }}>
+                Name (A-Z)
+              </Select.Item>
+              <Select.Item item={{ value: 'name-desc', label: 'Name (Z-A)' }}>
+                Name (Z-A)
+              </Select.Item>
+            </Select.Content>
+          </Select.Positioner>
+        </Select.Root>
+      </Flex>
+      {/* Filter Tabs - Added margin-top for better spacing */}
+      <Tabs.Root defaultValue={filterOption} tabIndex={tabIndex} mt={4}>
         <Tabs.List>
           <Tabs.Trigger value="all" onClick={() => setFilterOption('all')}>
             <Flex align="center">

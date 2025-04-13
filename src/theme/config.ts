@@ -1,7 +1,6 @@
 import { defineConfig } from '@chakra-ui/react';
 import { colors } from './foundations/colors';
 import { typography } from './foundations/typography';
-import { buttonRecipe } from './recipes/button.recipe';
 import { cardRecipe } from './recipes/card.recipe';
 
 export const customConfig = defineConfig({
@@ -62,7 +61,6 @@ export const customConfig = defineConfig({
 
     // Define component recipes
     recipes: {
-      button: buttonRecipe,
       card: cardRecipe,
     },
 

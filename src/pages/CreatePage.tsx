@@ -176,7 +176,7 @@ const CreatePage: React.FC = () => {
       {/* Use Card.Root */}
       <Card.Root variant="outline" mb={8}>
         <Card.Header>
-          <Heading size="xl" fontFamily="'Merriweather', serif">
+          <Heading size="xl" fontFamily="'Zodiak', serif">
             Create New Pixel Art
           </Heading>
           <Text color="fg.muted" mt={2}>

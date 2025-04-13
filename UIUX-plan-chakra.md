@@ -71,7 +71,7 @@ Width: 100% of viewport width
 Background: Dark background with subtle gradient (#050a07 to #112218)
 Shadow: Subtle drop shadow to elevate from content
 Content Structure:
-Left: Logo "Pixeletica" in serif font (Merriweather) as the brand identity
+Left: Logo "Pixeletica" in serif font (Zodiak) as the brand identity
 Center: Main navigation with sans-serif font for readability
 Right: Action buttons including primary "Create New Pixel Art" button
 Main Content Area
@@ -92,15 +92,15 @@ Typography System
 Strategic Font Usage
 Serif Fonts:
 
-Merriweather: Used for main branding, page titles, and important headings (H1, H2)
+Zodiak: Used for main branding, page titles, and important headings (H1, H2)
 Source Serif Pro: Used for section headings (H3, H4) and pull quotes
 Sans Serif Fonts:
 
 Used for body text, button labels, navigation, and UI elements
 Improves readability for smaller text and dense information
 Typography Hierarchy
-Page Title: Merriweather, 32px/24px (desktop/mobile), weight 700
-Section Headings: Merriweather, 24px/20px, weight 700
+Page Title: Zodiak, 32px/24px (desktop/mobile), weight 700
+Section Headings: Zodiak, 24px/20px, weight 700
 Subsection Headings: Source Serif Pro, 20px/18px, weight 600
 Card Titles: Source Serif Pro, 18px/16px, weight 600
 Body Text: Sans serif, 16px/14px, weight 400
