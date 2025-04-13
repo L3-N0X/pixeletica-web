@@ -19,63 +19,6 @@ A web application for converting images to Minecraft block art and exploring the
 - Node.js 18+
 - npm or yarn
 
-### Installation
-
-1. Clone the repository:
-   ```
-   git clone https://github.com/yourusername/pixeletica-web.git
-   cd pixeletica-web
-   ```
-
-2. Install dependencies:
-   ```
-   npm install
-   # or
-   yarn
-   ```
-
-3. Start development server:
-   ```
-   npm run dev
-   # or
-   yarn dev
-   ```
-
-4. Open your browser:
-   ```
-   http://localhost:3000
-   ```
-
-## Project Structure
-
-```
-pixeletica-web/
-├── src/
-│   ├── assets/           # Static assets
-│   ├── components/       # React components
-│   ├── hooks/            # Custom React hooks
-│   ├── pages/            # Page components
-│   ├── services/         # API services
-│   ├── types/            # TypeScript types
-│   ├── utils/            # Utility functions
-│   ├── theme/            # Theme configuration
-│   ├── App.tsx           # Main App component
-│   ├── main.tsx          # Application entry point
-│   └── index.css         # Global styles
-├── index.html            # HTML entry point
-├── package.json          # Project dependencies
-├── tsconfig.json         # TypeScript configuration
-└── vite.config.ts        # Vite configuration
-```
-
-## Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Lint code
-- `npm run format` - Format code with Prettier
-
 ## URL Sharing
 
 The application supports sharing specific map views via URL parameters:
@@ -90,7 +33,7 @@ Example: `http://localhost:3000/map/abc123?x=150&y=-200&zoom=2.5&blockId=block_5
 
 ## Backend Integration
 
-The frontend integrates with a Python backend API that handles image processing and conversion. Check the API documentation in `/backend-api-docs.md`.
+The frontend integrates with a Python backend API that handles image processing and conversion.
 
 ## Docker Deployment
 
@@ -103,21 +46,20 @@ Pixeletica is designed to be easily deployed using Docker. The repository includ
 ### Quick Start with Docker
 
 1. Clone the repository:
+
    ```
    git clone https://github.com/yourusername/pixeletica-web.git
    cd pixeletica-web
    ```
 
 2. Build and run the Docker container:
+
    ```
    docker-compose up --build
    ```
 
 3. Access the application in your browser:
+
    ```
    http://localhost:3000
    ```
-
-## License
-
-[MIT](LICENSE)

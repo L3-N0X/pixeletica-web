@@ -6,23 +6,234 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/conversion/preview": {
+      "get": {
+        "tags": ["conversion", "conversion"],
+        "summary": "Generate Quick Preview Image",
+        "description": "Creates a preview of an image with the specified dimensions and dithering algorithm. Returns the result directly as a PNG image. Has a built-in timeout mechanism for large images.",
+        "operationId": "get_preview_conversion_conversion_preview_get",
+        "parameters": [
+          {
+            "name": "width",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Image width in pixels",
+              "title": "Width"
+            },
+            "description": "Image width in pixels"
+          },
+          {
+            "name": "height",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Image height in pixels (minimum: 1)",
+              "title": "Height"
+            },
+            "description": "Image height in pixels (minimum: 1)"
+          },
+          {
+            "name": "algorithm",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/DitherAlgorithm",
+              "description": "Dithering algorithm to apply (floyd_steinberg, ordered, or random)",
+              "default": "floyd_steinberg"
+            },
+            "description": "Dithering algorithm to apply (floyd_steinberg, ordered, or random)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Converted image with dithering applied",
+            "content": { "application/json": { "schema": {} }, "image/png": {} }
+          },
+          "400": {
+            "description": "Bad Request - Invalid dimensions or algorithm",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Image dimensions too large for preview. Please reduce width and/or height."
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Request Timeout - Processing took too long (large image)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Preview generation timed out after 3 seconds. Image may be too large for preview."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": { "example": { "detail": "Error generating preview" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/conversion/start": {
       "post": {
         "tags": ["conversion"],
         "summary": "Start Conversion",
-        "description": "Start a new image conversion task.\n\nThis endpoint accepts an image and configuration parameters,\ncreates a new task, and returns a task ID for status tracking.",
+        "description": "Start a new image conversion task using form data mapped to a Pydantic model.\n\nThis endpoint accepts an image and configuration parameters,\ncreates a new task, and returns a task ID for status tracking.",
         "operationId": "start_conversion_conversion_start_post",
-        "requestBody": {
-          "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/ConversionRequest" } }
+        "parameters": [
+          {
+            "name": "width",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "integer", "exclusiveMinimum": 0, "title": "Width" }
           },
-          "required": true
+          {
+            "name": "height",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "integer", "exclusiveMinimum": 0, "title": "Height" }
+          },
+          {
+            "name": "dithering_algorithm",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/DitherAlgorithm",
+              "default": "floyd_steinberg"
+            }
+          },
+          {
+            "name": "color_palette",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "default": "minecraft", "title": "Color Palette" }
+          },
+          {
+            "name": "origin_x",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 0, "title": "Origin X" }
+          },
+          {
+            "name": "origin_y",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 100, "title": "Origin Y" }
+          },
+          {
+            "name": "origin_z",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 0, "title": "Origin Z" }
+          },
+          {
+            "name": "chunk_line_color",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "default": "#FF0000FF", "title": "Chunk Line Color" }
+          },
+          {
+            "name": "block_line_color",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "default": "#000000FF", "title": "Block Line Color" }
+          },
+          {
+            "name": "image_division",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "default": 1,
+              "title": "Image Division"
+            }
+          },
+          {
+            "name": "generate_schematic",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean", "default": false, "title": "Generate Schematic" }
+          },
+          {
+            "name": "schematic_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Schematic Name"
+            }
+          },
+          {
+            "name": "schematic_author",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "default": "Pixeletica API", "title": "Schematic Author" }
+          },
+          {
+            "name": "schematic_description",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Schematic Description"
+            }
+          },
+          {
+            "name": "generate_web_files",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean", "default": true, "title": "Generate Web Files" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_start_conversion_conversion_start_post"
+              }
+            }
+          }
         },
         "responses": {
           "202": {
-            "description": "Successful Response",
+            "description": "Task created successfully",
             "content": {
-              "application/json": { "schema": { "$ref": "#/components/schemas/TaskResponse" } }
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TaskResponse" },
+                "example": {
+                  "taskId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+                  "status": "queued",
+                  "progress": 0,
+                  "timestamp": "2024-04-13T21:30:00.000Z"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "File too large",
+            "content": {
+              "application/json": {
+                "example": { "detail": "Image size exceeds maximum limit of 10MB" }
+              }
             }
           },
           "422": {
@@ -52,9 +263,45 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Task status retrieved successfully",
             "content": {
-              "application/json": { "schema": { "$ref": "#/components/schemas/TaskResponse" } }
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TaskResponse" },
+                "examples": {
+                  "processing": {
+                    "value": {
+                      "taskId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+                      "status": "processing",
+                      "progress": 45,
+                      "timestamp": "2024-04-13T21:30:00.000Z"
+                    }
+                  },
+                  "completed": {
+                    "value": {
+                      "taskId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+                      "status": "completed",
+                      "progress": 100,
+                      "timestamp": "2024-04-13T21:31:00.000Z"
+                    }
+                  },
+                  "failed": {
+                    "value": {
+                      "taskId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+                      "status": "failed",
+                      "timestamp": "2024-04-13T21:30:30.000Z",
+                      "error": "Failed to process image: Invalid format"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "example": { "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
+              }
             }
           },
           "422": {
@@ -82,8 +329,24 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "description": "Task deletion initiated successfully",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "message": "Task d290f1ee-6c54-4b01-90e6-d701748f0851 deletion initiated",
+                  "success": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "example": { "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -118,9 +381,45 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "List of files for the task",
             "content": {
-              "application/json": { "schema": { "$ref": "#/components/schemas/FileListResponse" } }
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FileListResponse" },
+                "example": {
+                  "taskId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+                  "files": [
+                    {
+                      "fileId": "dithered_image",
+                      "filename": "dithered.png",
+                      "type": "image/png",
+                      "size": 1024567,
+                      "category": "dithered"
+                    },
+                    {
+                      "fileId": "rendered_image",
+                      "filename": "rendered.png",
+                      "type": "image/png",
+                      "size": 2048123,
+                      "category": "rendered"
+                    },
+                    {
+                      "fileId": "schematic",
+                      "filename": "build.litematic",
+                      "type": "application/octet-stream",
+                      "size": 512789,
+                      "category": "schematic"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "example": { "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
+              }
             }
           },
           "422": {
@@ -244,9 +543,29 @@
         "operationId": "list_maps_api_maps_json_get",
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "List of available maps",
             "content": {
-              "application/json": { "schema": { "$ref": "#/components/schemas/MapListResponse" } }
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MapListResponse" },
+                "example": {
+                  "maps": [
+                    {
+                      "id": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+                      "name": "Castle Blueprint",
+                      "created": "2024-04-13T21:30:00.000Z",
+                      "thumbnail": "/api/map/d290f1ee-6c54-4b01-90e6-d701748f0851/thumbnail.png",
+                      "description": "Medieval castle design converted to blocks"
+                    },
+                    {
+                      "id": "7289d334-9a01-45cf-b5cc-8d887c4e9cc2",
+                      "name": "Pixel Art Logo",
+                      "created": "2024-04-13T20:15:00.000Z",
+                      "thumbnail": "/api/map/7289d334-9a01-45cf-b5cc-8d887c4e9cc2/thumbnail.png",
+                      "description": "Company logo converted to minecraft blocks"
+                    }
+                  ]
+                }
+              }
             }
           }
         }
@@ -268,8 +587,34 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "description": "Map metadata",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "id": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+                  "name": "Castle Blueprint",
+                  "width": 1920,
+                  "height": 1080,
+                  "origin_x": 0,
+                  "origin_z": 0,
+                  "created": "2024-04-13T21:30:00.000Z",
+                  "tileSize": 256,
+                  "maxZoom": 4,
+                  "minZoom": 0,
+                  "tileFormat": "png",
+                  "description": "Medieval castle design converted to blocks"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Map not found",
+            "content": {
+              "application/json": {
+                "example": { "detail": "Map not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -282,12 +627,12 @@
         }
       }
     },
-    "/api/map/{map_id}/full-image.jpg": {
+    "/api/map/{map_id}/full-image.png": {
       "get": {
         "tags": ["maps"],
         "summary": "Get Map Full Image",
-        "description": "Get the full image for a map.\n\nArgs:\n    map_id: Map identifier (task ID)\n\nReturns:\n    Full-size JPEG image of the map",
-        "operationId": "get_map_full_image_api_map__map_id__full_image_jpg_get",
+        "description": "Get the full image for a map.\n\nArgs:\n    map_id: Map identifier (task ID)\n\nReturns:\n    Full-size PNG image of the map",
+        "operationId": "get_map_full_image_api_map__map_id__full_image_png_get",
         "parameters": [
           {
             "name": "map_id",
@@ -312,12 +657,12 @@
         }
       }
     },
-    "/api/map/{map_id}/thumbnail.jpg": {
+    "/api/map/{map_id}/thumbnail.png": {
       "get": {
         "tags": ["maps"],
         "summary": "Get Map Thumbnail",
-        "description": "Get a thumbnail for a map.\n\nArgs:\n    map_id: Map identifier (task ID)\n\nReturns:\n    Thumbnail JPEG image of the map",
-        "operationId": "get_map_thumbnail_api_map__map_id__thumbnail_jpg_get",
+        "description": "Get a thumbnail for a map.\n\nArgs:\n    map_id: Map identifier (task ID)\n\nReturns:\n    Thumbnail PNG image of the map",
+        "operationId": "get_map_thumbnail_api_map__map_id__thumbnail_png_get",
         "parameters": [
           {
             "name": "map_id",
@@ -328,8 +673,18 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "description": "Thumbnail image",
+            "content": { "application/json": { "schema": {} }, "image/png": {} }
+          },
+          "404": {
+            "description": "Map not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Image not found for map: d290f1ee-6c54-4b01-90e6-d701748f0851"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -376,8 +731,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "description": "Map tile image",
+            "content": { "application/json": { "schema": {} }, "image/png": {} }
+          },
+          "404": {
+            "description": "Tile not found",
+            "content": {
+              "application/json": { "example": { "detail": "Tile not found: zoom=2, x=3, y=4" } }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -415,121 +776,30 @@
   },
   "components": {
     "schemas": {
-      "ConversionRequest": {
+      "Body_start_conversion_conversion_start_post": {
         "properties": {
-          "image": {
+          "image_file": {
             "type": "string",
-            "title": "Image",
-            "description": "Base64-encoded image data"
+            "format": "binary",
+            "title": "Image File",
+            "description": "Image file to convert"
           },
-          "filename": {
-            "type": "string",
-            "title": "Filename",
-            "description": "Original filename with extension"
-          },
-          "width": {
-            "anyOf": [{ "type": "integer" }, { "type": "null" }],
-            "title": "Width",
-            "description": "Target width (pixels)"
-          },
-          "height": {
-            "anyOf": [{ "type": "integer" }, { "type": "null" }],
-            "title": "Height",
-            "description": "Target height (pixels)"
-          },
-          "algorithm": {
-            "$ref": "#/components/schemas/DitherAlgorithm",
-            "description": "Dithering algorithm to use",
-            "default": "floyd_steinberg"
-          },
-          "exportSettings": {
-            "$ref": "#/components/schemas/ExportSettings",
-            "description": "Output file settings"
-          },
-          "schematicSettings": {
-            "$ref": "#/components/schemas/SchematicSettings",
-            "description": "Schematic generation settings"
+          "line_visibilities": {
+            "items": { "$ref": "#/components/schemas/LineVisibilityOption" },
+            "type": "array",
+            "title": "Line Visibilities",
+            "default": ["chunk_lines_only"]
           }
         },
         "type": "object",
-        "required": ["image", "filename"],
-        "title": "ConversionRequest",
-        "description": "Request model for starting a conversion task."
+        "required": ["image_file"],
+        "title": "Body_start_conversion_conversion_start_post"
       },
       "DitherAlgorithm": {
         "type": "string",
         "enum": ["floyd_steinberg", "ordered", "random"],
         "title": "DitherAlgorithm",
         "description": "Supported dithering algorithms."
-      },
-      "ExportSettings": {
-        "properties": {
-          "exportTypes": {
-            "items": { "type": "string", "enum": ["png", "jpg", "webp", "html"] },
-            "type": "array",
-            "title": "Exporttypes",
-            "description": "Output file formats to generate",
-            "default": ["png"]
-          },
-          "originX": {
-            "type": "integer",
-            "title": "Originx",
-            "description": "X-coordinate origin in Minecraft world",
-            "default": 0
-          },
-          "originY": {
-            "type": "integer",
-            "title": "Originy",
-            "description": "Y-coordinate origin in Minecraft world",
-            "default": 0
-          },
-          "originZ": {
-            "type": "integer",
-            "title": "Originz",
-            "description": "Z-coordinate origin in Minecraft world",
-            "default": 0
-          },
-          "drawChunkLines": {
-            "type": "boolean",
-            "title": "Drawchunklines",
-            "description": "Draw chunk boundary lines",
-            "default": true
-          },
-          "chunkLineColor": {
-            "type": "string",
-            "title": "Chunklinecolor",
-            "description": "Color for chunk lines",
-            "default": "#FF0000"
-          },
-          "drawBlockLines": {
-            "type": "boolean",
-            "title": "Drawblocklines",
-            "description": "Draw block boundary lines",
-            "default": true
-          },
-          "blockLineColor": {
-            "type": "string",
-            "title": "Blocklinecolor",
-            "description": "Color for block lines",
-            "default": "#000000"
-          },
-          "splitCount": {
-            "type": "integer",
-            "title": "Splitcount",
-            "description": "Number of segments to split the image into",
-            "default": 1
-          },
-          "versionOptions": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Versionoptions",
-            "description": "Additional version-specific options",
-            "default": {}
-          }
-        },
-        "type": "object",
-        "title": "ExportSettings",
-        "description": "Settings for exporting the converted image."
       },
       "FileInfo": {
         "properties": {
@@ -578,6 +848,12 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "LineVisibilityOption": {
+        "type": "string",
+        "enum": ["no_lines", "block_grid_only", "chunk_lines_only", "both"],
+        "title": "LineVisibilityOption",
+        "description": "Available options for line visibility in exported images."
+      },
       "MapInfo": {
         "properties": {
           "id": { "type": "string", "title": "Id", "description": "Map identifier (task ID)" },
@@ -616,35 +892,6 @@
         "type": "object",
         "title": "MapListResponse",
         "description": "Response model for the maps list endpoint."
-      },
-      "SchematicSettings": {
-        "properties": {
-          "generateSchematic": {
-            "type": "boolean",
-            "title": "Generateschematic",
-            "description": "Whether to generate a schematic",
-            "default": false
-          },
-          "author": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Author",
-            "description": "Schematic author name",
-            "default": "Pixeletica API"
-          },
-          "name": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Name",
-            "description": "Schematic name"
-          },
-          "description": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Description",
-            "description": "Schematic description"
-          }
-        },
-        "type": "object",
-        "title": "SchematicSettings",
-        "description": "Settings for Litematica schematic generation."
       },
       "SelectiveDownloadRequest": {
         "properties": {

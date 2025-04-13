@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path'; // Import path correctly
 import { fileURLToPath } from 'url'; // Helper for ESM __dirname equivalent
+import tailwindcss from '@tailwindcss/vite';
 
 // ESM equivalent for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -9,7 +10,7 @@ const __dirname = path.dirname(__filename);
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       // Use path.resolve with the derived __dirname
