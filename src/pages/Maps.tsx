@@ -1,5 +1,5 @@
-import React from 'react';
 import { Button } from '@/components/ui/button';
+import { H1, H3, Muted, P } from '@/components/ui/typography';
 
 export default function Maps() {
   // Sample map data - in a real app this would come from an API
@@ -37,10 +37,10 @@ export default function Maps() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-4xl font-bold mb-2">Explore Maps</h1>
-        <p className="text-muted-foreground">
+        <H1 className="mb-2">Explore Maps</H1>
+        <P className="text-muted-foreground">
           Browse community-created pixel art designs for inspiration
-        </p>
+        </P>
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">
@@ -49,9 +49,9 @@ export default function Maps() {
             {sampleMaps.map((map) => (
               <div key={map.id} className="bg-card p-4 rounded-lg border border-border">
                 <div className="aspect-video bg-muted rounded-md mb-3 flex items-center justify-center">
-                  <p className="text-muted-foreground">Map Preview</p>
+                  <Muted>Map Preview</Muted>
                 </div>
-                <h3 className="font-semibold">{map.title}</h3>
+                <H3 className="text-base">{map.title}</H3>
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>by {map.author}</span>
                   <span>{map.dimensions}</span>

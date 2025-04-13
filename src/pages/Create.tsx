@@ -1,17 +1,17 @@
-import React from 'react';
-import { useForm } from 'react-hook-form';
+import { rgbaToHex, startConversion, StartConversionParams } from '@/api/conversion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { H1, P } from '@/components/ui/typography';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ColorPicker } from '@/components/ui/color-picker';
+import { FileDropZone } from '@/components/ui/file-drop-zone';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
-import { Checkbox } from '@/components/ui/checkbox';
-import { HelpTooltip } from '@/components/ui/help-tooltip';
-import { FileDropZone } from '@/components/ui/file-drop-zone';
-import { ColorPicker } from '@/components/ui/color-picker';
+import React from 'react';
+import { useForm } from 'react-hook-form';
 import { FiUpload } from 'react-icons/fi';
-import { rgbaToHex, startConversion, StartConversionParams } from '@/api/conversion';
 import { toast } from 'sonner';
 
 export interface FormValues {
@@ -197,8 +197,8 @@ export default function Create() {
   return (
     <div className="space-y-6 pb-10">
       <div>
-        <h1 className="text-4xl font-bold mb-2">Create Map Art</h1>
-        <p className="text-muted-foreground">Upload an image for conversion</p>
+        <H1 className="mb-2">Create Map Art</H1>
+        <P className="text-muted-foreground">Upload an image for conversion</P>
       </div>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">

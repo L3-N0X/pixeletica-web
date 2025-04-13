@@ -1,0 +1,16 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="128" height="128" fill="#050A07"/>
+<rect x="94" y="56" width="17" height="17" rx="6" fill="#92E8B8"/>
+<rect x="75" y="56" width="17" height="17" rx="5" fill="#6EC89B"/>
+<rect x="56" y="111" width="17" height="17" rx="6" transform="rotate(-90 56 111)" fill="#92E8B8"/>
+<rect x="56" y="92" width="17" height="17" rx="5" transform="rotate(-90 56 92)" fill="#6EC89B"/>
+<rect x="75" y="92" width="17" height="17" rx="6" transform="rotate(-90 75 92)" fill="#92E8B8"/>
+<rect x="94" y="92" width="17" height="17" rx="7" transform="rotate(-90 94 92)" fill="#CCFFE2"/>
+<rect x="75" y="111" width="17" height="17" rx="7" transform="rotate(-90 75 111)" fill="#D0FFE5"/>
+<rect x="94" y="111" width="17" height="17" rx="8.5" transform="rotate(-90 94 111)" fill="white"/>
+<rect x="56" y="73" width="17" height="17" rx="5" transform="rotate(-90 56 73)" fill="#52AF85"/>
+<path d="M24 16C19.5817 16 16 19.5817 16 24V35H35V16H24Z" fill="#21362B"/>
+<path d="M39 16V35H112V24C112 19.5817 108.418 16 104 16H39Z" fill="#196245"/>
+<path d="M35 39H16V104C16 108.418 19.5817 112 24 112H35L35 39Z" fill="#196245"/>
+<path d="M39 112H52V58C52 54.6863 54.6863 52 58 52H112V39H39L39 112Z" fill="#21835D"/>
+</svg>

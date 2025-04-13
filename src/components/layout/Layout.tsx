@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { MdGridView } from 'react-icons/md';
+import { Logo } from '@/components/ui/typography';
+import { LogoIcon } from '@/components/ui/logo';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,12 +13,14 @@ export default function Layout({ children }: LayoutProps) {
     <div className="min-h-svh bg-background text-foreground flex flex-col transition-colors duration-300">
       <header className="border-b border-border sticky top-0 z-10 bg-background">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <MdGridView className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">Pixeletica</span>
-          </div>
+          <Link to="/" className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <LogoIcon className="text-primary" />
+              <Logo>Pixeletica</Logo>
+            </div>
+          </Link>
 
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-6 absolute left-1/2 -translate-x-1/2 ">
             <Link to="/" className="text-foreground hover:text-primary transition-colors">
               Home
             </Link>

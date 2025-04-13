@@ -2,6 +2,11 @@
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
+    fontFamily: {
+      sans: ['"Satoshi-Variable"', 'sans-serif'],
+      satoshi: ['"Satoshi-Variable"', 'sans-serif'],
+      zodiak: ['"Zodiak"', 'serif'],
+    },
     extend: {
       colors: {
         background: 'var(--background)',
