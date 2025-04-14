@@ -1,4 +1,12 @@
-import { rgbaToHex, startConversion, StartConversionParams } from '@/api/conversion';
+import {
+  rgbaToHex,
+  startConversion,
+  StartConversionParams,
+  calculatePollingInterval,
+  pollTaskStatus,
+  getConversionPreview,
+  PreviewConversionParams,
+} from '@/api/conversion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { H1, P } from '@/components/ui/typography';
@@ -9,10 +17,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
+import { LoadingOverlay } from '@/components/ui/loading-overlay';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { FiUpload } from 'react-icons/fi';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 export interface FormValues {
   imageFiles: File[];
@@ -43,6 +53,7 @@ export interface FormValues {
 }
 
 export default function Create() {
+  const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = React.useState<string>('');
   const [imageDimensions, setImageDimensions] = React.useState<{
@@ -50,6 +61,26 @@ export default function Create() {
     height: number;
   } | null>(null);
   const [keepAspectRatio, setKeepAspectRatio] = React.useState<boolean>(true);
+
+  // Loading & conversion state
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [taskProgress, setTaskProgress] = React.useState<number | undefined>(undefined);
+  const [loadingMessage, setLoadingMessage] = React.useState('Processing your image...');
+
+  // Conversion preview state
+  const [previewImage, setPreviewImage] = React.useState<string | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = React.useState(false);
+  const [previewError, setPreviewError] = React.useState<string | null>(null);
+  // Track the last preview request parameters to avoid redundant requests
+  const lastPreviewParamsRef = React.useRef<{
+    width: number;
+    height: number;
+    algorithm: string;
+  } | null>(null);
+
+  // Width/height input blur ref to track when inputs lose focus
+  const widthInputRef = React.useRef<HTMLInputElement>(null);
+  const heightInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -138,6 +169,129 @@ export default function Create() {
     form.setValue('blockGridLineOpacity', opacity);
   };
 
+  // React to changes in algorithm, width, or height
+  React.useEffect(() => {
+    if (selectedFile && form.getValues('width') && form.getValues('height')) {
+      const algorithm = form.watch('ditheringAlgorithm');
+      if (algorithm) {
+        // Update preview when algorithm changes
+        generatePreview();
+      }
+    }
+  }, [form.watch('ditheringAlgorithm')]);
+
+  // Update dimensions inputs to use the refs
+  React.useEffect(() => {
+    // Handle blur events to update preview when input loses focus
+    const handleWidthBlur = () => {
+      if (selectedFile && form.getValues('width') > 0 && form.getValues('height') > 0) {
+        generatePreview();
+      }
+    };
+
+    const handleHeightBlur = () => {
+      if (selectedFile && form.getValues('width') > 0 && form.getValues('height') > 0) {
+        generatePreview();
+      }
+    };
+
+    const widthInput = document.getElementById('width');
+    const heightInput = document.getElementById('height');
+
+    if (widthInput) {
+      widthInput.addEventListener('blur', handleWidthBlur);
+    }
+
+    if (heightInput) {
+      heightInput.addEventListener('blur', handleHeightBlur);
+    }
+
+    return () => {
+      if (widthInput) {
+        widthInput.removeEventListener('blur', handleWidthBlur);
+      }
+      if (heightInput) {
+        heightInput.removeEventListener('blur', handleHeightBlur);
+      }
+    };
+  }, [selectedFile]);
+
+  // Generate preview when file is uploaded
+  React.useEffect(() => {
+    if (selectedFile && form.getValues('width') && form.getValues('height')) {
+      generatePreview();
+    }
+  }, [selectedFile]);
+
+  // Function to generate a preview of the conversion
+  const generatePreview = async () => {
+    if (!selectedFile || !form.getValues('width') || !form.getValues('height')) {
+      return;
+    }
+
+    const width = form.getValues('width');
+    const height = form.getValues('height');
+
+    // Skip preview for large images (> 512x512)
+    if (width * height > 512 * 512) {
+      setPreviewError(
+        'Image dimensions too large for preview. Preview available for images up to 512x512 pixels.'
+      );
+      return;
+    }
+
+    const algorithm =
+      form.getValues('ditheringAlgorithm') === 'floydSteinberg'
+        ? 'floyd_steinberg'
+        : form.getValues('ditheringAlgorithm');
+
+    // Check if the parameters haven't changed since the last preview
+    const currentParams = { width, height, algorithm };
+    if (
+      lastPreviewParamsRef.current &&
+      lastPreviewParamsRef.current.width === currentParams.width &&
+      lastPreviewParamsRef.current.height === currentParams.height &&
+      lastPreviewParamsRef.current.algorithm === currentParams.algorithm
+    ) {
+      return; // Skip if nothing has changed
+    }
+
+    // Update ref with current parameters
+    lastPreviewParamsRef.current = currentParams;
+
+    setPreviewError(null);
+    setIsPreviewLoading(true);
+
+    try {
+      const previewParams: PreviewConversionParams = {
+        imageFile: selectedFile,
+        width,
+        height,
+        algorithm: algorithm as any,
+      };
+
+      const previewBlob = await getConversionPreview(previewParams);
+
+      // Create URL for the preview image
+      if (previewBlob instanceof Blob) {
+        const imageUrl = URL.createObjectURL(previewBlob);
+        setPreviewImage(imageUrl);
+        setPreviewError(null);
+      } else {
+        setPreviewError('Failed to generate preview');
+      }
+    } catch (error) {
+      console.error('Preview generation error:', error);
+      setPreviewError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to generate preview. The server may be busy or the image is too complex.'
+      );
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  };
+
   const onSubmit = async (data: FormValues) => {
     if (!selectedFile) {
       console.error('No image file selected.');
@@ -147,6 +301,11 @@ export default function Create() {
     console.log('Form submitted:', data);
 
     try {
+      // Show loading overlay immediately
+      setIsLoading(true);
+      setTaskProgress(0);
+      setLoadingMessage('Starting conversion...');
+
       const params: StartConversionParams = {
         imageFile: selectedFile,
         width: data.width,
@@ -174,8 +333,36 @@ export default function Create() {
       const taskResponse = await startConversion(params);
       console.log('Conversion started:', taskResponse);
       toast.success('Conversion started successfully!');
+      setLoadingMessage('Converting your image...');
+
+      // Calculate polling interval based on image size
+      const pollingInterval = calculatePollingInterval(data.width, data.height);
+
+      // Start polling for status
+      try {
+        const completedTask = await pollTaskStatus(
+          taskResponse.taskId,
+          (status) => {
+            // Update progress in the UI
+            setTaskProgress(status.progress || undefined);
+
+            if (status.status === 'processing') {
+              setLoadingMessage(`Converting your image... ${status.progress || 0}% complete`);
+            }
+          },
+          pollingInterval
+        );
+
+        // When task is completed, redirect to results page
+        navigate(`/results/${completedTask.taskId}`);
+      } catch (pollingError) {
+        console.error('Error during conversion:', pollingError);
+        setIsLoading(false);
+        toast.error('Conversion failed. Please try again.');
+      }
     } catch (error) {
       console.error('Failed to start conversion:', error);
+      setIsLoading(false);
       toast.error(
         error instanceof Error ? error.message : 'Failed to start conversion. Please try again.'
       );
@@ -196,6 +383,8 @@ export default function Create() {
 
   return (
     <div className="space-y-6 pb-10">
+      {/* Loading overlay */}
+      <LoadingOverlay isOpen={isLoading} message={loadingMessage} progress={taskProgress} />
       <div>
         <H1 className="mb-2">Create Map Art</H1>
         <P className="text-muted-foreground">Upload an image for conversion</P>
@@ -328,6 +517,73 @@ export default function Create() {
                 </Label>
               </div>
             </RadioGroup>
+          </CardContent>
+        </Card>
+
+        {/* Conversion Preview */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Conversion Preview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              This is a preview of how your image will look after conversion with the selected
+              algorithm.
+              <br />
+              <strong>Note:</strong> Preview is only available for images up to 512x512 pixels.
+            </p>
+            <div
+              className="border rounded-md overflow-hidden p-2 flex flex-col bg-card"
+              style={{ minHeight: '300px' }}
+            >
+              {isPreviewLoading ? (
+                <div className="flex flex-col items-center justify-center text-center p-6 flex-grow">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                  <p className="text-sm text-muted-foreground">Generating preview...</p>
+                </div>
+              ) : previewError ? (
+                <div className="flex flex-col items-center justify-center text-center p-6 flex-grow">
+                  <p className="text-red-500 mb-2">⚠️ Preview not available</p>
+                  <p className="text-sm text-muted-foreground">{previewError}</p>
+                </div>
+              ) : previewImage ? (
+                <div className="py-4 px-2 flex justify-center" style={{ minHeight: '280px' }}>
+                  <img
+                    src={previewImage}
+                    alt="Conversion Preview"
+                    style={{
+                      imageRendering: 'pixelated', // Prevent anti-aliasing/interpolation
+                      maxWidth: '100%',
+                      objectFit: 'contain',
+                      /* Auto-scale small pixel art images (if below a certain size) */
+                      ...(form.getValues('width') < 128 && form.getValues('height') < 128
+                        ? {
+                            transform: 'scale(4)',
+                            transformOrigin: 'center center',
+                          }
+                        : {}),
+                    }}
+                  />
+                </div>
+              ) : selectedFile ? (
+                <div className="flex flex-col items-center justify-center text-center p-6">
+                  <Button
+                    onClick={() => generatePreview()}
+                    className="mb-2"
+                    disabled={!selectedFile}
+                  >
+                    Generate Preview
+                  </Button>
+                  <p className="text-sm text-muted-foreground">
+                    Click to see how your image will look in Minecraft
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Upload an image and adjust settings to see a preview
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
 

@@ -7,52 +7,44 @@
   },
   "paths": {
     "/conversion/preview": {
-      "get": {
+      "post": {
         "tags": ["conversion", "conversion"],
         "summary": "Generate Quick Preview Image",
-        "description": "Creates a preview of an image with the specified dimensions and dithering algorithm. Returns the result directly as a PNG image. Has a built-in timeout mechanism for large images.",
-        "operationId": "get_preview_conversion_conversion_preview_get",
-        "parameters": [
-          {
-            "name": "width",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "exclusiveMinimum": 0,
-              "description": "Image width in pixels",
-              "title": "Width"
-            },
-            "description": "Image width in pixels"
+        "description": "Creates a preview of an image with the specified dimensions and dithering algorithm. Accepts an image file upload via multipart form. Returns the result directly as a PNG image. Has a built-in timeout mechanism for large images.",
+        "operationId": "get_preview_conversion_conversion_preview_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_get_preview_conversion_conversion_preview_post",
+                "properties": {
+                  "image_file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Image file to preview (optional - if not provided, a blank image will be used)"
+                  },
+                  "width": { "type": "integer", "description": "Image width in pixels" },
+                  "height": { "type": "integer", "description": "Image height in pixels" },
+                  "algorithm": {
+                    "type": "string",
+                    "enum": ["floyd_steinberg", "ordered", "random"],
+                    "description": "Dithering algorithm to apply"
+                  }
+                },
+                "type": "object",
+                "required": ["width", "height"]
+              }
+            }
           },
-          {
-            "name": "height",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "exclusiveMinimum": 0,
-              "description": "Image height in pixels (minimum: 1)",
-              "title": "Height"
-            },
-            "description": "Image height in pixels (minimum: 1)"
-          },
-          {
-            "name": "algorithm",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/DitherAlgorithm",
-              "description": "Dithering algorithm to apply (floyd_steinberg, ordered, or random)",
-              "default": "floyd_steinberg"
-            },
-            "description": "Dithering algorithm to apply (floyd_steinberg, ordered, or random)"
-          }
-        ],
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "Converted image with dithering applied",
-            "content": { "application/json": { "schema": {} }, "image/png": {} }
+            "content": {
+              "application/json": { "schema": {} },
+              "image/png": { "schema": { "type": "string", "format": "binary" } }
+            }
           },
           "400": {
             "description": "Bad Request - Invalid dimensions or algorithm",
@@ -95,123 +87,31 @@
       "post": {
         "tags": ["conversion"],
         "summary": "Start Conversion",
-        "description": "Start a new image conversion task using form data mapped to a Pydantic model.\n\nThis endpoint accepts an image and configuration parameters,\ncreates a new task, and returns a task ID for status tracking.",
+        "description": "Start a new image conversion task using REST-standard multipart form data.\n\nThis endpoint accepts:\n- An image file in the 'image_file' field\n- A JSON string in the 'metadata' field containing all configuration parameters\n\nThe metadata JSON should follow the schema of the ConversionJSONMetadata model.\n\nExample metadata JSON:\n```json\n{\n  \"width\": 128,\n  \"height\": 128,\n  \"dithering_algorithm\": \"floyd_steinberg\",\n  \"color_palette\": \"minecraft\",\n  \"origin_x\": 0,\n  \"origin_y\": 100,\n  \"origin_z\": 0,\n  \"chunk_line_color\": \"#FF0000FF\",\n  \"block_line_color\": \"#000000FF\",\n  \"line_visibilities\": \"chunk_lines_only\",\n  \"image_division\": 2,\n  \"generate_schematic\": true,\n  \"schematic_name\": \"my_schematic\",\n  \"schematic_author\": \"Pixeletica API\",\n  \"schematic_description\": \"An awesome schematic\",\n  \"generate_web_files\": true\n}\n```\n\nReturns a task ID for status tracking.",
         "operationId": "start_conversion_conversion_start_post",
-        "parameters": [
-          {
-            "name": "width",
-            "in": "query",
-            "required": true,
-            "schema": { "type": "integer", "exclusiveMinimum": 0, "title": "Width" }
-          },
-          {
-            "name": "height",
-            "in": "query",
-            "required": true,
-            "schema": { "type": "integer", "exclusiveMinimum": 0, "title": "Height" }
-          },
-          {
-            "name": "dithering_algorithm",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/DitherAlgorithm",
-              "default": "floyd_steinberg"
-            }
-          },
-          {
-            "name": "color_palette",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "string", "default": "minecraft", "title": "Color Palette" }
-          },
-          {
-            "name": "origin_x",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "integer", "default": 0, "title": "Origin X" }
-          },
-          {
-            "name": "origin_y",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "integer", "default": 100, "title": "Origin Y" }
-          },
-          {
-            "name": "origin_z",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "integer", "default": 0, "title": "Origin Z" }
-          },
-          {
-            "name": "chunk_line_color",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "string", "default": "#FF0000FF", "title": "Chunk Line Color" }
-          },
-          {
-            "name": "block_line_color",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "string", "default": "#000000FF", "title": "Block Line Color" }
-          },
-          {
-            "name": "image_division",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "exclusiveMinimum": 0,
-              "default": 1,
-              "title": "Image Division"
-            }
-          },
-          {
-            "name": "generate_schematic",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "boolean", "default": false, "title": "Generate Schematic" }
-          },
-          {
-            "name": "schematic_name",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "Schematic Name"
-            }
-          },
-          {
-            "name": "schematic_author",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "string", "default": "Pixeletica API", "title": "Schematic Author" }
-          },
-          {
-            "name": "schematic_description",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "Schematic Description"
-            }
-          },
-          {
-            "name": "generate_web_files",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "boolean", "default": true, "title": "Generate Web Files" }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_start_conversion_conversion_start_post"
+                "$ref": "#/components/schemas/Body_start_conversion_conversion_start_post",
+                "properties": {
+                  "image_file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Image file to convert"
+                  },
+                  "metadata": {
+                    "type": "string",
+                    "description": "JSON string containing all metadata for the conversion task",
+                    "example": "{\n  \"width\": 128,\n  \"height\": 128,\n  \"dithering_algorithm\": \"floyd_steinberg\",\n  \"color_palette\": \"minecraft\",\n  \"origin_x\": 0,\n  \"origin_y\": 100,\n  \"origin_z\": 0,\n  \"chunk_line_color\": \"#FF0000FF\",\n  \"block_line_color\": \"#000000FF\",\n  \"line_visibilities\": \"chunk_lines_only\",\n  \"image_division\": 2,\n  \"generate_schematic\": true,\n  \"schematic_name\": \"my_schematic\",\n  \"schematic_author\": \"Pixeletica API\",\n  \"schematic_description\": \"An awesome schematic\",\n  \"generate_web_files\": true\n}"
+                  }
+                },
+                "type": "object",
+                "required": ["image_file", "metadata"]
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "202": {
@@ -226,6 +126,12 @@
                   "timestamp": "2024-04-13T21:30:00.000Z"
                 }
               }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid JSON metadata",
+            "content": {
+              "application/json": { "example": { "detail": "Invalid JSON metadata format" } }
             }
           },
           "413": {
@@ -436,9 +342,9 @@
     "/conversion/{task_id}/files/{file_id}": {
       "get": {
         "tags": ["conversion"],
-        "summary": "Download File",
+        "summary": "Download a specific file",
         "description": "Download a specific file from a conversion task.\n\nReturns the file for direct download.",
-        "operationId": "download_file_conversion__task_id__files__file_id__get",
+        "operationId": "downloadFile",
         "parameters": [
           {
             "name": "task_id",
@@ -455,8 +361,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "description": "File downloaded successfully",
+            "content": {
+              "application/json": { "schema": {} },
+              "application/octet-stream": { "schema": { "type": "string", "format": "binary" } },
+              "image/png": { "schema": { "type": "string", "format": "binary" } },
+              "image/jpeg": { "schema": { "type": "string", "format": "binary" } },
+              "application/zip": { "schema": { "type": "string", "format": "binary" } }
+            }
+          },
+          "404": {
+            "description": "Task or file not found",
+            "content": {
+              "application/json": { "example": { "detail": "File not found: example_file_id" } }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -472,9 +390,9 @@
     "/conversion/{task_id}/download": {
       "get": {
         "tags": ["conversion"],
-        "summary": "Download All Files",
+        "summary": "Download all task files",
         "description": "Download all files from a conversion task as a ZIP archive.",
-        "operationId": "download_all_files_conversion__task_id__download_get",
+        "operationId": "downloadAllFiles",
         "parameters": [
           {
             "name": "task_id",
@@ -485,8 +403,25 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "description": "ZIP file with all task files",
+            "content": {
+              "application/json": { "schema": {} },
+              "application/zip": { "schema": { "type": "string", "format": "binary" } }
+            }
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "example": { "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to create ZIP archive",
+            "content": {
+              "application/json": { "example": { "detail": "Failed to create ZIP archive" } }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -500,9 +435,9 @@
       },
       "post": {
         "tags": ["conversion"],
-        "summary": "Download Selected Files",
+        "summary": "Download selected task files",
         "description": "Download selected files from a conversion task as a ZIP archive.\n\nSpecify file IDs to include in the download.",
-        "operationId": "download_selected_files_conversion__task_id__download_post",
+        "operationId": "downloadSelectedFiles",
         "parameters": [
           {
             "name": "task_id",
@@ -521,8 +456,25 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "description": "ZIP file with selected task files",
+            "content": {
+              "application/json": { "schema": {} },
+              "application/zip": { "schema": { "type": "string", "format": "binary" } }
+            }
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "example": { "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to create ZIP archive",
+            "content": {
+              "application/json": { "example": { "detail": "Failed to create ZIP archive" } }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -776,6 +728,35 @@
   },
   "components": {
     "schemas": {
+      "Body_get_preview_conversion_conversion_preview_post": {
+        "properties": {
+          "width": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Width",
+            "description": "Image width in pixels"
+          },
+          "height": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Height",
+            "description": "Image height in pixels (minimum: 1)"
+          },
+          "algorithm": {
+            "$ref": "#/components/schemas/DitherAlgorithm",
+            "description": "Dithering algorithm to apply (floyd_steinberg, ordered, or random)",
+            "default": "floyd_steinberg"
+          },
+          "image_file": {
+            "anyOf": [{ "type": "string", "format": "binary" }, { "type": "null" }],
+            "title": "Image File",
+            "description": "Image file to preview (optional)"
+          }
+        },
+        "type": "object",
+        "required": ["width", "height"],
+        "title": "Body_get_preview_conversion_conversion_preview_post"
+      },
       "Body_start_conversion_conversion_start_post": {
         "properties": {
           "image_file": {
@@ -784,15 +765,14 @@
             "title": "Image File",
             "description": "Image file to convert"
           },
-          "line_visibilities": {
-            "items": { "$ref": "#/components/schemas/LineVisibilityOption" },
-            "type": "array",
-            "title": "Line Visibilities",
-            "default": ["chunk_lines_only"]
+          "metadata": {
+            "type": "string",
+            "title": "Metadata",
+            "description": "JSON string containing all metadata for the conversion task"
           }
         },
         "type": "object",
-        "required": ["image_file"],
+        "required": ["image_file", "metadata"],
         "title": "Body_start_conversion_conversion_start_post"
       },
       "DitherAlgorithm": {
@@ -800,6 +780,12 @@
         "enum": ["floyd_steinberg", "ordered", "random"],
         "title": "DitherAlgorithm",
         "description": "Supported dithering algorithms."
+      },
+      "FileCategory": {
+        "type": "string",
+        "enum": ["dithered", "rendered", "schematic", "web", "split"],
+        "title": "FileCategory",
+        "description": "Available categories for output files."
       },
       "FileInfo": {
         "properties": {
@@ -812,9 +798,8 @@
           "type": { "type": "string", "title": "Type", "description": "MIME type" },
           "size": { "type": "integer", "title": "Size", "description": "File size in bytes" },
           "category": {
-            "type": "string",
-            "title": "Category",
-            "description": "File category (dithered, rendered, schematic, etc.)"
+            "$ref": "#/components/schemas/FileCategory",
+            "description": "File category (dithered, rendered, schematic, web, split)"
           }
         },
         "type": "object",
@@ -847,12 +832,6 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
-      },
-      "LineVisibilityOption": {
-        "type": "string",
-        "enum": ["no_lines", "block_grid_only", "chunk_lines_only", "both"],
-        "title": "LineVisibilityOption",
-        "description": "Available options for line visibility in exported images."
       },
       "MapInfo": {
         "properties": {

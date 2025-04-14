@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Logo } from '@/components/ui/typography';
 import { LogoIcon } from '@/components/ui/logo';
+import { Toaster } from '../ui/sonner';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -45,6 +46,7 @@ export default function Layout({ children }: LayoutProps) {
           Pixeletica - Minecraft Block Art &copy; {new Date().getFullYear()}
         </div>
       </footer>
+      <Toaster />
     </div>
   );
 }
