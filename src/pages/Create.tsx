@@ -78,10 +78,6 @@ export default function Create() {
     algorithm: string;
   } | null>(null);
 
-  // Width/height input blur ref to track when inputs lose focus
-  const widthInputRef = React.useRef<HTMLInputElement>(null);
-  const heightInputRef = React.useRef<HTMLInputElement>(null);
-
   const form = useForm<FormValues>({
     defaultValues: {
       imageFiles: [],
@@ -332,7 +328,6 @@ export default function Create() {
 
       const taskResponse = await startConversion(params);
       console.log('Conversion started:', taskResponse);
-      toast.success('Conversion started successfully!');
       setLoadingMessage('Converting your image...');
 
       // Calculate polling interval based on image size
@@ -400,15 +395,11 @@ export default function Create() {
             <FileDropZone
               onFilesDrop={handleFilesDrop}
               acceptedFileTypes={['image/jpeg', 'image/png', 'image/gif', 'image/webp']}
-              className="h-64"
+              className="min-h-64"
             >
               {previewUrl ? (
                 <div className="flex items-center justify-center h-full w-full">
-                  <img
-                    src={previewUrl}
-                    alt="Image preview"
-                    className="max-h-full max-w-full object-contain"
-                  />
+                  <img src={previewUrl} alt="Image preview" className="h-full w-full" />
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center text-center">
@@ -545,23 +536,22 @@ export default function Create() {
                 <div className="flex flex-col items-center justify-center text-center p-6 flex-grow">
                   <p className="text-red-500 mb-2">⚠️ Preview not available</p>
                   <p className="text-sm text-muted-foreground">{previewError}</p>
+                  <Button
+                    onClick={() => generatePreview()}
+                    className="mt-4"
+                    disabled={!selectedFile}
+                  >
+                    Retry Conversion
+                  </Button>
                 </div>
               ) : previewImage ? (
                 <div className="py-4 px-2 flex justify-center" style={{ minHeight: '280px' }}>
                   <img
                     src={previewImage}
+                    className="h-full w-full object-fill"
                     alt="Conversion Preview"
                     style={{
                       imageRendering: 'pixelated', // Prevent anti-aliasing/interpolation
-                      maxWidth: '100%',
-                      objectFit: 'contain',
-                      /* Auto-scale small pixel art images (if below a certain size) */
-                      ...(form.getValues('width') < 128 && form.getValues('height') < 128
-                        ? {
-                            transform: 'scale(4)',
-                            transformOrigin: 'center center',
-                          }
-                        : {}),
                     }}
                   />
                 </div>

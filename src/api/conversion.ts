@@ -285,8 +285,8 @@ export const calculatePollingInterval = (width: number, height: number): number 
   // Base interval - 500ms
   const baseInterval = 500;
 
-  // Maximum interval - 3000ms (3 seconds)
-  const maxInterval = 3000;
+  // Maximum interval - 36000ms (36 seconds)
+  const maxInterval = 36000;
 
   // Calculate a factor based on image size (width * height)
   // For large images (> 1 million pixels), use longer intervals

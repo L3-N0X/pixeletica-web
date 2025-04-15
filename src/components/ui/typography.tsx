@@ -95,7 +95,7 @@ export function Muted({ children, className, ...props }: TypographyProps) {
 
 export function Logo({ children, className, ...props }: TypographyProps) {
   return (
-    <h1 className={cn('font-zodiak font-extrabold text-4xl', className)} {...props}>
+    <h1 className={cn('font-zodiak font-extrabold text-3xl ', className)} {...props}>
       {children}
     </h1>
   );

@@ -15,7 +15,7 @@ export function LoadingOverlay({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+    <div className="fixed inset-0 w-full h-full min-h-screen bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
       <div className="bg-card border rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
         <div className="flex flex-col items-center text-center space-y-4">
           <div className="relative">

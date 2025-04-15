@@ -61,7 +61,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "detail": "Preview generation timed out after 3 seconds. Image may be too large for preview."
+                  "detail": "Preview generation timed out after a few seconds. Image may be too large for preview."
                 }
               }
             }
