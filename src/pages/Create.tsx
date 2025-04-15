@@ -1,28 +1,28 @@
 import {
+  calculatePollingInterval,
+  getConversionPreview,
+  pollTaskStatus,
+  PreviewConversionParams,
   rgbaToHex,
   startConversion,
   StartConversionParams,
-  calculatePollingInterval,
-  pollTaskStatus,
-  getConversionPreview,
-  PreviewConversionParams,
 } from '@/api/conversion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { H1, P } from '@/components/ui/typography';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { FileDropZone } from '@/components/ui/file-drop-zone';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LoadingOverlay } from '@/components/ui/loading-overlay';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
-import { LoadingOverlay } from '@/components/ui/loading-overlay';
+import { H1, P } from '@/components/ui/typography';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { FiUpload } from 'react-icons/fi';
-import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export interface FormValues {
   imageFiles: File[];
@@ -541,7 +541,7 @@ export default function Create() {
                     className="mt-4"
                     disabled={!selectedFile}
                   >
-                    Retry Conversion
+                    Reload Preview
                   </Button>
                 </div>
               ) : previewImage ? (
