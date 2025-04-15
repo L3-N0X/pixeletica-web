@@ -39,6 +39,7 @@ export default function Results() {
   const [loadingFiles, setLoadingFiles] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<FileInfo[]>([]);
+  const [fileListResponse, setFileListResponse] = useState<{ [category: string]: FileInfo[] }>({});
 
   // State for file selection
   const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set());
@@ -170,8 +171,16 @@ export default function Results() {
           // Status is completed, now fetch the files
           setLoadingFiles(true);
           try {
-            const filesResponse = await getTaskFiles(taskId);
-            setFiles(filesResponse.files);
+            const filesResponse = await getTaskFiles(taskId, { includeWeb: false });
+            // Store the categorized files response
+            setFileListResponse(filesResponse.categories);
+
+            // Convert the categorized structure to a flat array for compatibility with existing code
+            const allFiles: FileInfo[] = [];
+            Object.values(filesResponse.categories).forEach((categoryFiles) => {
+              allFiles.push(...categoryFiles);
+            });
+            setFiles(allFiles);
           } catch (err) {
             toast.error('Could not load file list');
             console.error('Error loading file list:', err);
@@ -247,7 +256,7 @@ export default function Results() {
       </div>
 
       {/* Selection controls */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden border-2 border-primary/10 shadow-md">
         <CardHeader className="bg-muted/50 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -292,7 +301,7 @@ export default function Results() {
           {/* Main Download Options */}
           <div className="grid gap-4 md:grid-cols-2">
             {mainRenderedImage && (
-              <Card className="overflow-hidden border-2 border-primary/10 shadow-md">
+              <Card className="overflow-hidden border-2 border-primary/10 shadow-md flex flex-col">
                 <CardHeader className="pb-0">
                   <div className="flex items-center justify-between">
                     <div className="flex gap-2 items-start">
@@ -315,27 +324,17 @@ export default function Results() {
                     />
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 pt-4">
+                <CardContent className="p-4 pt-4 flex-grow">
                   <div className="bg-muted/30 rounded-lg p-2 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm">
                       <span>{mainRenderedImage.filename}</span>
-                      <span className="text-muted-foreground">
+                      <span className="text-muted-foreground  whitespace-nowrap">
                         ({formatFileSize(mainRenderedImage.size)})
                       </span>
                     </div>
-                    <Button
-                      onClick={() =>
-                        handleDownloadSingle(mainRenderedImage.fileId, mainRenderedImage.filename)
-                      }
-                      variant="ghost"
-                      size="sm"
-                      className="hover:bg-primary/10"
-                    >
-                      <DownloadIcon className="h-4 w-4" />
-                    </Button>
                   </div>
                 </CardContent>
-                <CardFooter className="bg-muted/10 pt-1 pb-3">
+                <CardFooter className="bg-muted/10 pt-1 pb-6 mt-auto">
                   <Button
                     variant="default"
                     className="w-full flex gap-2 items-center"
@@ -350,7 +349,7 @@ export default function Results() {
             )}
 
             {schematicFile && (
-              <Card className="overflow-hidden border-2 border-primary/10 shadow-md">
+              <Card className="overflow-hidden border-2 border-primary/10 shadow-md flex flex-col">
                 <CardHeader className="pb-0">
                   <div className="flex items-center justify-between">
                     <div className="flex gap-2 items-start">
@@ -371,27 +370,17 @@ export default function Results() {
                     />
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 pt-4">
+                <CardContent className="p-4 pt-4 flex-grow">
                   <div className="bg-muted/30 rounded-lg p-2 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm">
                       <span>{schematicFile.filename}</span>
-                      <span className="text-muted-foreground">
+                      <span className="text-muted-foreground whitespace-nowrap">
                         ({formatFileSize(schematicFile.size)})
                       </span>
                     </div>
-                    <Button
-                      onClick={() =>
-                        handleDownloadSingle(schematicFile.fileId, schematicFile.filename)
-                      }
-                      variant="ghost"
-                      size="sm"
-                      className="hover:bg-primary/10"
-                    >
-                      <DownloadIcon className="h-4 w-4" />
-                    </Button>
                   </div>
                 </CardContent>
-                <CardFooter className="bg-muted/10 pt-1 pb-3">
+                <CardFooter className="bg-muted/10 pt-1 pb-6 mt-auto">
                   <Button
                     variant="default"
                     className="w-full flex gap-2 items-center"
@@ -408,14 +397,17 @@ export default function Results() {
 
           {/* Additional Image Files Section */}
           {imageFiles.length > 0 && (
-            <Card className="overflow-hidden">
-              <CardHeader className="pb-2 border-b">
+            <Card className="overflow-hidden border-2 border-primary/10 shadow-md">
+              <CardHeader className="pb-4 border-b border-primary/30">
                 <CardTitle className="flex gap-2 items-center">
                   <ImageIcon className="h-5 w-5" /> Additional Image Files
                 </CardTitle>
+                <CardDescription className="text-sm text-muted-foreground">
+                  Here you can download additional image files generated during the conversion.
+                </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="divide-y">
+                <div className="divide-y divide-primary/10">
                   {imageFiles.map((file) => (
                     <div key={file.fileId} className="flex items-center p-3 hover:bg-muted/30">
                       <Checkbox
@@ -450,7 +442,7 @@ export default function Results() {
 
           {/* Web Files Section */}
           {webFiles.length > 0 && (
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden border-2 border-primary/10 shadow-md">
               <CardHeader className="pb-2 border-b">
                 <CardTitle className="flex gap-2 items-center">
                   <FileTextIcon className="h-5 w-5" /> Web Files
@@ -492,7 +484,7 @@ export default function Results() {
 
           {/* Other Files */}
           {otherFiles.length > 0 && (
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden border-2 border-primary/10 shadow-md">
               <CardHeader className="pb-2 border-b">
                 <CardTitle className="flex gap-2 items-center">
                   <FileIcon className="h-5 w-5" /> Other Files

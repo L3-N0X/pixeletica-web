@@ -23,12 +23,23 @@
                     "format": "binary",
                     "description": "Image file to preview (optional - if not provided, a blank image will be used)"
                   },
-                  "width": { "type": "integer", "description": "Image width in pixels" },
-                  "height": { "type": "integer", "description": "Image height in pixels" },
+                  "width": {
+                    "type": "integer",
+                    "description": "Image width in pixels"
+                  },
+                  "height": {
+                    "type": "integer",
+                    "description": "Image height in pixels"
+                  },
                   "algorithm": {
                     "type": "string",
                     "enum": ["floyd_steinberg", "ordered", "random"],
                     "description": "Dithering algorithm to apply"
+                  },
+                  "color_palette": {
+                    "type": "string",
+                    "enum": ["minecraft", "minecraft-2024"],
+                    "description": "Color palette to use for block mapping"
                   }
                 },
                 "type": "object",
@@ -42,8 +53,15 @@
           "200": {
             "description": "Converted image with dithering applied",
             "content": {
-              "application/json": { "schema": {} },
-              "image/png": { "schema": { "type": "string", "format": "binary" } }
+              "application/json": {
+                "schema": {}
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
             }
           },
           "400": {
@@ -61,7 +79,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "detail": "Preview generation timed out after a few seconds. Image may be too large for preview."
+                  "detail": "Preview generation timed out after 3 seconds. Image may be too large for preview."
                 }
               }
             }
@@ -69,14 +87,20 @@
           "500": {
             "description": "Internal Server Error",
             "content": {
-              "application/json": { "example": { "detail": "Error generating preview" } }
+              "application/json": {
+                "example": {
+                  "detail": "Error generating preview"
+                }
+              }
             }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -87,7 +111,7 @@
       "post": {
         "tags": ["conversion"],
         "summary": "Start Conversion",
-        "description": "Start a new image conversion task using REST-standard multipart form data.\n\nThis endpoint accepts:\n- An image file in the 'image_file' field\n- A JSON string in the 'metadata' field containing all configuration parameters\n\nThe metadata JSON should follow the schema of the ConversionJSONMetadata model.\n\nExample metadata JSON:\n```json\n{\n  \"width\": 128,\n  \"height\": 128,\n  \"dithering_algorithm\": \"floyd_steinberg\",\n  \"color_palette\": \"minecraft\",\n  \"origin_x\": 0,\n  \"origin_y\": 100,\n  \"origin_z\": 0,\n  \"chunk_line_color\": \"#FF0000FF\",\n  \"block_line_color\": \"#000000FF\",\n  \"line_visibilities\": \"chunk_lines_only\",\n  \"image_division\": 2,\n  \"generate_schematic\": true,\n  \"schematic_name\": \"my_schematic\",\n  \"schematic_author\": \"Pixeletica API\",\n  \"schematic_description\": \"An awesome schematic\",\n  \"generate_web_files\": true\n}\n```\n\nReturns a task ID for status tracking.",
+        "description": "Start a new image conversion task using REST-standard multipart form data.\n\nThis endpoint accepts:\n- An image file in the 'image_file' field\n- A JSON string in the 'metadata' field containing all configuration parameters\n\nThe metadata JSON should follow the schema of the ConversionJSONMetadata model.\n\nExample metadata JSON:\n```json\n{\n  \"width\": 128,\n  \"height\": 128,\n  \"dithering_algorithm\": \"floyd_steinberg\",\n  \"color_palette\": \"minecraft\",\n  \"origin_x\": 0,\n  \"origin_y\": 100,\n  \"origin_z\": 0,\n  \"chunk_line_color\": \"#FF0000FF\",\n  \"block_line_color\": \"#000000FF\",\n  \"line_visibilities\": [\"chunk_lines_only\"],\n  \"image_division\": 2,\n  \"generate_schematic\": true,\n  \"schematic_name\": \"my_schematic\",\n  \"schematic_author\": \"Pixeletica API\",\n  \"schematic_description\": \"An awesome schematic\",\n  \"generate_web_files\": true\n}\n```\n\nReturns a task ID for status tracking.",
         "operationId": "start_conversion_conversion_start_post",
         "requestBody": {
           "content": {
@@ -103,7 +127,7 @@
                   "metadata": {
                     "type": "string",
                     "description": "JSON string containing all metadata for the conversion task",
-                    "example": "{\n  \"width\": 128,\n  \"height\": 128,\n  \"dithering_algorithm\": \"floyd_steinberg\",\n  \"color_palette\": \"minecraft\",\n  \"origin_x\": 0,\n  \"origin_y\": 100,\n  \"origin_z\": 0,\n  \"chunk_line_color\": \"#FF0000FF\",\n  \"block_line_color\": \"#000000FF\",\n  \"line_visibilities\": \"chunk_lines_only\",\n  \"image_division\": 2,\n  \"generate_schematic\": true,\n  \"schematic_name\": \"my_schematic\",\n  \"schematic_author\": \"Pixeletica API\",\n  \"schematic_description\": \"An awesome schematic\",\n  \"generate_web_files\": true\n}"
+                    "example": "{\n  \"width\": 128,\n  \"height\": 128,\n  \"dithering_algorithm\": \"floyd_steinberg\",\n  \"color_palette\": \"minecraft\",\n  \"origin_x\": 0,\n  \"origin_y\": 100,\n  \"origin_z\": 0,\n  \"chunk_line_color\": \"#FF0000FF\",\n  \"block_line_color\": \"#000000FF\",\n  \"line_visibilities\": [\n    \"chunk_lines_only\"\n  ],\n  \"image_division\": 2,\n  \"generate_schematic\": true,\n  \"schematic_name\": \"my_schematic\",\n  \"schematic_author\": \"Pixeletica API\",\n  \"schematic_description\": \"An awesome schematic\",\n  \"generate_web_files\": true\n}"
                   }
                 },
                 "type": "object",
@@ -118,7 +142,9 @@
             "description": "Task created successfully",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/TaskResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                },
                 "example": {
                   "taskId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
                   "status": "queued",
@@ -131,14 +157,20 @@
           "400": {
             "description": "Bad Request - Invalid JSON metadata",
             "content": {
-              "application/json": { "example": { "detail": "Invalid JSON metadata format" } }
+              "application/json": {
+                "example": {
+                  "detail": "Invalid JSON metadata format"
+                }
+              }
             }
           },
           "413": {
             "description": "File too large",
             "content": {
               "application/json": {
-                "example": { "detail": "Image size exceeds maximum limit of 10MB" }
+                "example": {
+                  "detail": "Image size exceeds maximum limit of 10MB"
+                }
               }
             }
           },
@@ -146,7 +178,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -164,7 +198,10 @@
             "name": "task_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "title": "Task Id" }
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
           }
         ],
         "responses": {
@@ -172,7 +209,9 @@
             "description": "Task status retrieved successfully",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/TaskResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                },
                 "examples": {
                   "processing": {
                     "value": {
@@ -206,7 +245,9 @@
             "description": "Task not found",
             "content": {
               "application/json": {
-                "example": { "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
+                "example": {
+                  "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851"
+                }
               }
             }
           },
@@ -214,7 +255,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -230,7 +273,10 @@
             "name": "task_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "title": "Task Id" }
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
           }
         ],
         "responses": {
@@ -250,7 +296,9 @@
             "description": "Task not found",
             "content": {
               "application/json": {
-                "example": { "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
+                "example": {
+                  "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851"
+                }
               }
             }
           },
@@ -258,7 +306,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -269,53 +319,84 @@
       "get": {
         "tags": ["conversion"],
         "summary": "List Files",
-        "description": "List files generated for a task.\n\nOptionally filter by category (dithered, rendered, schematic, web).",
+        "description": "List files generated for a task, grouped by category.\n\nFiles are automatically organized by their categories in the response.\n\nArgs:\n    task_id: The unique task identifier\n    include_web: Whether to include web files in the response (default: False)\n    category: Optionally filter to only include files from a specific category",
         "operationId": "list_files_conversion__task_id__files_get",
         "parameters": [
           {
             "name": "task_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "title": "Task Id" }
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          },
+          {
+            "name": "include_web",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Web"
+            }
           },
           {
             "name": "category",
             "in": "query",
             "required": false,
-            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Category" }
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "List of files for the task",
+            "description": "List of files for the task, grouped by category",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/FileListResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/FileListResponse"
+                },
                 "example": {
                   "taskId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
-                  "files": [
-                    {
-                      "fileId": "dithered_image",
-                      "filename": "dithered.png",
-                      "type": "image/png",
-                      "size": 1024567,
-                      "category": "dithered"
-                    },
-                    {
-                      "fileId": "rendered_image",
-                      "filename": "rendered.png",
-                      "type": "image/png",
-                      "size": 2048123,
-                      "category": "rendered"
-                    },
-                    {
-                      "fileId": "schematic",
-                      "filename": "build.litematic",
-                      "type": "application/octet-stream",
-                      "size": 512789,
-                      "category": "schematic"
-                    }
-                  ]
+                  "categories": {
+                    "dithered": [
+                      {
+                        "fileId": "dithered_image",
+                        "filename": "dithered.png",
+                        "type": "image/png",
+                        "size": 1024567,
+                        "category": "dithered"
+                      }
+                    ],
+                    "rendered": [
+                      {
+                        "fileId": "rendered_image",
+                        "filename": "rendered.png",
+                        "type": "image/png",
+                        "size": 2048123,
+                        "category": "rendered"
+                      }
+                    ],
+                    "schematic": [
+                      {
+                        "fileId": "schematic",
+                        "filename": "build.litematic",
+                        "type": "application/octet-stream",
+                        "size": 512789,
+                        "category": "schematic"
+                      }
+                    ]
+                  }
                 }
               }
             }
@@ -324,7 +405,9 @@
             "description": "Task not found",
             "content": {
               "application/json": {
-                "example": { "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
+                "example": {
+                  "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851"
+                }
               }
             }
           },
@@ -332,7 +415,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -340,6 +425,52 @@
       }
     },
     "/conversion/{task_id}/files/{file_id}": {
+      "options": {
+        "tags": ["conversion"],
+        "summary": "Options Download File",
+        "description": "Handle OPTIONS requests for the file download endpoint to support CORS preflight requests.",
+        "operationId": "options_download_file_conversion__task_id__files__file_id__options",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          },
+          {
+            "name": "file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "File Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "get": {
         "tags": ["conversion"],
         "summary": "Download a specific file",
@@ -350,37 +481,71 @@
             "name": "task_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "title": "Task Id" }
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
           },
           {
             "name": "file_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "title": "File Id" }
+            "schema": {
+              "type": "string",
+              "title": "File Id"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "File downloaded successfully",
             "content": {
-              "application/json": { "schema": {} },
-              "application/octet-stream": { "schema": { "type": "string", "format": "binary" } },
-              "image/png": { "schema": { "type": "string", "format": "binary" } },
-              "image/jpeg": { "schema": { "type": "string", "format": "binary" } },
-              "application/zip": { "schema": { "type": "string", "format": "binary" } }
+              "application/json": {
+                "schema": {}
+              },
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
             }
           },
           "404": {
             "description": "Task or file not found",
             "content": {
-              "application/json": { "example": { "detail": "File not found: example_file_id" } }
+              "application/json": {
+                "example": {
+                  "detail": "File not found: example_file_id"
+                }
+              }
             }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -388,6 +553,43 @@
       }
     },
     "/conversion/{task_id}/download": {
+      "options": {
+        "tags": ["conversion"],
+        "summary": "Options Download All Files",
+        "description": "Handle OPTIONS requests for the bulk download endpoint to support CORS preflight requests.",
+        "operationId": "options_download_all_files_conversion__task_id__download_options",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "get": {
         "tags": ["conversion"],
         "summary": "Download all task files",
@@ -398,36 +600,54 @@
             "name": "task_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "title": "Task Id" }
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "ZIP file with all task files",
             "content": {
-              "application/json": { "schema": {} },
-              "application/zip": { "schema": { "type": "string", "format": "binary" } }
+              "application/json": {
+                "schema": {}
+              },
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
             }
           },
           "404": {
             "description": "Task not found",
             "content": {
               "application/json": {
-                "example": { "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
+                "example": {
+                  "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851"
+                }
               }
             }
           },
           "500": {
             "description": "Failed to create ZIP archive",
             "content": {
-              "application/json": { "example": { "detail": "Failed to create ZIP archive" } }
+              "application/json": {
+                "example": {
+                  "detail": "Failed to create ZIP archive"
+                }
+              }
             }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -443,14 +663,19 @@
             "name": "task_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "title": "Task Id" }
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
           }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/SelectiveDownloadRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/SelectiveDownloadRequest"
+              }
             }
           }
         },
@@ -458,29 +683,44 @@
           "200": {
             "description": "ZIP file with selected task files",
             "content": {
-              "application/json": { "schema": {} },
-              "application/zip": { "schema": { "type": "string", "format": "binary" } }
+              "application/json": {
+                "schema": {}
+              },
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
             }
           },
           "404": {
             "description": "Task not found",
             "content": {
               "application/json": {
-                "example": { "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
+                "example": {
+                  "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851"
+                }
               }
             }
           },
           "500": {
             "description": "Failed to create ZIP archive",
             "content": {
-              "application/json": { "example": { "detail": "Failed to create ZIP archive" } }
+              "application/json": {
+                "example": {
+                  "detail": "Failed to create ZIP archive"
+                }
+              }
             }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -498,7 +738,9 @@
             "description": "List of available maps",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/MapListResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/MapListResponse"
+                },
                 "example": {
                   "maps": [
                     {
@@ -534,7 +776,10 @@
             "name": "map_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "title": "Map Id" }
+            "schema": {
+              "type": "string",
+              "title": "Map Id"
+            }
           }
         ],
         "responses": {
@@ -564,7 +809,9 @@
             "description": "Map not found",
             "content": {
               "application/json": {
-                "example": { "detail": "Map not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
+                "example": {
+                  "detail": "Map not found: d290f1ee-6c54-4b01-90e6-d701748f0851"
+                }
               }
             }
           },
@@ -572,7 +819,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -590,19 +839,28 @@
             "name": "map_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "title": "Map Id" }
+            "schema": {
+              "type": "string",
+              "title": "Map Id"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -620,13 +878,21 @@
             "name": "map_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "title": "Map Id" }
+            "schema": {
+              "type": "string",
+              "title": "Map Id"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "Thumbnail image",
-            "content": { "application/json": { "schema": {} }, "image/png": {} }
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "image/png": {}
+            }
           },
           "404": {
             "description": "Map not found",
@@ -642,7 +908,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -660,43 +928,66 @@
             "name": "map_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "title": "Map Id" }
+            "schema": {
+              "type": "string",
+              "title": "Map Id"
+            }
           },
           {
             "name": "zoom",
             "in": "path",
             "required": true,
-            "schema": { "type": "integer", "title": "Zoom" }
+            "schema": {
+              "type": "integer",
+              "title": "Zoom"
+            }
           },
           {
             "name": "x",
             "in": "path",
             "required": true,
-            "schema": { "type": "integer", "title": "X" }
+            "schema": {
+              "type": "integer",
+              "title": "X"
+            }
           },
           {
             "name": "y",
             "in": "path",
             "required": true,
-            "schema": { "type": "integer", "title": "Y" }
+            "schema": {
+              "type": "integer",
+              "title": "Y"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "Map tile image",
-            "content": { "application/json": { "schema": {} }, "image/png": {} }
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "image/png": {}
+            }
           },
           "404": {
             "description": "Tile not found",
             "content": {
-              "application/json": { "example": { "detail": "Tile not found: zoom=2, x=3, y=4" } }
+              "application/json": {
+                "example": {
+                  "detail": "Tile not found: zoom=2, x=3, y=4"
+                }
+              }
             }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -705,9 +996,9 @@
     },
     "/": {
       "get": {
-        "tags": ["health"],
+        "tags": ["Health"],
         "summary": "Root",
-        "description": "Root endpoint for health checks.\n\nReturns:\n    Dictionary with API name, version, and status.",
+        "description": "Root endpoint for health checking the API.\n\nReturns:\n    Dictionary with API name, version, status.",
         "operationId": "root__get",
         "responses": {
           "200": {
@@ -732,13 +1023,13 @@
         "properties": {
           "width": {
             "type": "integer",
-            "exclusiveMinimum": 0.0,
+            "exclusiveMinimum": 0,
             "title": "Width",
             "description": "Image width in pixels"
           },
           "height": {
             "type": "integer",
-            "exclusiveMinimum": 0.0,
+            "exclusiveMinimum": 0,
             "title": "Height",
             "description": "Image height in pixels (minimum: 1)"
           },
@@ -747,8 +1038,22 @@
             "description": "Dithering algorithm to apply (floyd_steinberg, ordered, or random)",
             "default": "floyd_steinberg"
           },
+          "color_palette": {
+            "type": "string",
+            "title": "Color Palette",
+            "description": "Color palette to use for block mapping (default: minecraft)",
+            "default": "minecraft"
+          },
           "image_file": {
-            "anyOf": [{ "type": "string", "format": "binary" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "binary"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Image File",
             "description": "Image file to preview (optional)"
           }
@@ -794,9 +1099,21 @@
             "title": "Fileid",
             "description": "Unique file identifier"
           },
-          "filename": { "type": "string", "title": "Filename", "description": "Original filename" },
-          "type": { "type": "string", "title": "Type", "description": "MIME type" },
-          "size": { "type": "integer", "title": "Size", "description": "File size in bytes" },
+          "filename": {
+            "type": "string",
+            "title": "Filename",
+            "description": "Original filename"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "description": "MIME type"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size",
+            "description": "File size in bytes"
+          },
           "category": {
             "$ref": "#/components/schemas/FileCategory",
             "description": "File category (dithered, rendered, schematic, web, split)"
@@ -809,23 +1126,34 @@
       },
       "FileListResponse": {
         "properties": {
-          "taskId": { "type": "string", "title": "Taskid", "description": "Task identifier" },
-          "files": {
-            "items": { "$ref": "#/components/schemas/FileInfo" },
-            "type": "array",
-            "title": "Files",
-            "description": "Available files"
+          "taskId": {
+            "type": "string",
+            "title": "Taskid",
+            "description": "Task identifier"
+          },
+          "categories": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/FileInfo"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Categories",
+            "description": "Files grouped by category"
           }
         },
         "type": "object",
         "required": ["taskId"],
         "title": "FileListResponse",
-        "description": "Response model listing available files for a task."
+        "description": "Response model listing available files for a task, grouped by category."
       },
       "HTTPValidationError": {
         "properties": {
           "detail": {
-            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
             "type": "array",
             "title": "Detail"
           }
@@ -835,8 +1163,16 @@
       },
       "MapInfo": {
         "properties": {
-          "id": { "type": "string", "title": "Id", "description": "Map identifier (task ID)" },
-          "name": { "type": "string", "title": "Name", "description": "Human-readable map name" },
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Map identifier (task ID)"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable map name"
+          },
           "created": {
             "type": "string",
             "format": "date-time",
@@ -849,9 +1185,40 @@
             "description": "URL to thumbnail image"
           },
           "description": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Description",
             "description": "Map description"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width",
+            "description": "Map width in blocks"
+          },
+          "height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height",
+            "description": "Map height in blocks"
           }
         },
         "type": "object",
@@ -862,7 +1229,9 @@
       "MapListResponse": {
         "properties": {
           "maps": {
-            "items": { "$ref": "#/components/schemas/MapInfo" },
+            "items": {
+              "$ref": "#/components/schemas/MapInfo"
+            },
             "type": "array",
             "title": "Maps",
             "description": "Available maps"
@@ -875,7 +1244,9 @@
       "SelectiveDownloadRequest": {
         "properties": {
           "fileIds": {
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "type": "array",
             "title": "Fileids",
             "description": "IDs of files to include in download"
@@ -898,7 +1269,14 @@
             "description": "Current task status"
           },
           "progress": {
-            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Progress",
             "description": "Progress percentage (0-100)"
           },
@@ -909,7 +1287,14 @@
             "description": "Last status update time"
           },
           "error": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Error",
             "description": "Error message if task failed"
           }
@@ -928,12 +1313,27 @@
       "ValidationError": {
         "properties": {
           "loc": {
-            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
             "type": "array",
             "title": "Location"
           },
-          "msg": { "type": "string", "title": "Message" },
-          "type": { "type": "string", "title": "Error Type" }
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
         },
         "type": "object",
         "required": ["loc", "msg", "type"],

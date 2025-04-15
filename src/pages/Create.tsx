@@ -55,6 +55,8 @@ export interface FormValues {
 export default function Create() {
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+  const [customFileName, setCustomFileName] = React.useState<string>('');
+  const [fileExtension, setFileExtension] = React.useState<string>('');
   const [previewUrl, setPreviewUrl] = React.useState<string>('');
   const [imageDimensions, setImageDimensions] = React.useState<{
     width: number;
@@ -108,10 +110,28 @@ export default function Create() {
     },
   });
 
+  // Helper function to extract filename without extension and the extension
+  const extractFileNameAndExtension = (filename: string): { name: string; extension: string } => {
+    const lastDotIndex = filename.lastIndexOf('.');
+    if (lastDotIndex === -1) {
+      // No extension found
+      return { name: filename, extension: '' };
+    }
+    return {
+      name: filename.substring(0, lastDotIndex),
+      extension: filename.substring(lastDotIndex),
+    };
+  };
+
   const handleFilesDrop = (files: File[]) => {
     if (files.length > 0) {
       const file = files[0];
       setSelectedFile(file);
+
+      // Extract the filename without extension and the extension
+      const { name, extension } = extractFileNameAndExtension(file.name);
+      setCustomFileName(name);
+      setFileExtension(extension);
 
       // Create preview URL
       const objectUrl = URL.createObjectURL(file);
@@ -259,8 +279,15 @@ export default function Create() {
     setIsPreviewLoading(true);
 
     try {
+      // Create a new File object with the custom name + extension
+      let fileToPreview = selectedFile;
+      const fullFileName = customFileName + fileExtension;
+      if (fullFileName !== selectedFile.name) {
+        fileToPreview = new File([selectedFile], fullFileName, { type: selectedFile.type });
+      }
+
       const previewParams: PreviewConversionParams = {
-        imageFile: selectedFile,
+        imageFile: fileToPreview,
         width,
         height,
         algorithm: algorithm as any,
@@ -302,8 +329,15 @@ export default function Create() {
       setTaskProgress(0);
       setLoadingMessage('Starting conversion...');
 
+      // Create a new File object with the custom name + extension
+      let fileToSubmit = selectedFile;
+      const fullFileName = customFileName + fileExtension;
+      if (fullFileName !== selectedFile.name) {
+        fileToSubmit = new File([selectedFile], fullFileName, { type: selectedFile.type });
+      }
+
       const params: StartConversionParams = {
-        imageFile: selectedFile,
+        imageFile: fileToSubmit,
         width: data.width,
         height: data.height,
         ditheringAlgorithm:
@@ -414,6 +448,22 @@ export default function Create() {
                 </div>
               )}
             </FileDropZone>
+
+            {selectedFile && (
+              <div className="mt-4">
+                <Label htmlFor="customFileName">Name</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="customFileName"
+                    type="text"
+                    value={customFileName}
+                    onChange={(e) => setCustomFileName(e.target.value)}
+                    className="mt-1 flex-grow"
+                  />
+                  <span className="mt-1 text-muted-foreground">{fileExtension}</span>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

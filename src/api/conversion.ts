@@ -23,10 +23,12 @@ export interface FileInfo {
   category: FileCategory;
 }
 
-// Interface for the file list response
+// Interface for the file list response with files grouped by category
 export interface FileListResponse {
   taskId: string;
-  files: FileInfo[];
+  categories: {
+    [category: string]: FileInfo[];
+  };
 }
 
 // Updated parameters interface based on OpenAPI spec
@@ -334,13 +336,24 @@ export const pollTaskStatus = async (
 // Function to get the list of files for a task
 export const getTaskFiles = async (
   taskId: string,
-  category?: string
+  options?: { category?: string; includeWeb?: boolean }
 ): Promise<FileListResponse> => {
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
   let apiUrl = `${BACKEND_URL}/conversion/${taskId}/files`;
 
-  if (category) {
-    apiUrl += `?category=${category}`;
+  const queryParams = new URLSearchParams();
+
+  if (options?.category) {
+    queryParams.append('category', options.category);
+  }
+
+  if (options?.includeWeb) {
+    queryParams.append('include_web', 'true');
+  }
+
+  const queryString = queryParams.toString();
+  if (queryString) {
+    apiUrl += `?${queryString}`;
   }
 
   try {
