@@ -336,7 +336,12 @@ export const pollTaskStatus = async (
 // Function to get the list of files for a task
 export const getTaskFiles = async (
   taskId: string,
-  options?: { category?: string; includeWeb?: boolean }
+  options?: {
+    category?: string;
+    includeWeb?: boolean;
+    lineType?: 'no_lines' | 'block_lines' | 'chunk_lines' | 'both_lines';
+    parts?: 1 | 2 | 4 | 9;
+  }
 ): Promise<FileListResponse> => {
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
   let apiUrl = `${BACKEND_URL}/conversion/${taskId}/files`;
@@ -349,6 +354,14 @@ export const getTaskFiles = async (
 
   if (options?.includeWeb) {
     queryParams.append('include_web', 'true');
+  }
+
+  if (options?.lineType) {
+    queryParams.append('line_type', options.lineType);
+  }
+
+  if (options?.parts) {
+    queryParams.append('parts', options.parts.toString());
   }
 
   const queryString = queryParams.toString();

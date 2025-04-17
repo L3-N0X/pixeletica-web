@@ -39,7 +39,7 @@
                   "color_palette": {
                     "type": "string",
                     "enum": ["minecraft", "minecraft-2024"],
-                    "description": "Color palette to use for block mapping"
+                    "description": "Color palette to use for block mapping (minecraft = 2025 palette, minecraft-2024 = 2024 palette)"
                   }
                 },
                 "type": "object",
@@ -319,7 +319,7 @@
       "get": {
         "tags": ["conversion"],
         "summary": "List Files",
-        "description": "List files generated for a task, grouped by category.\n\nFiles are automatically organized by their categories in the response.\n\nArgs:\n    task_id: The unique task identifier\n    include_web: Whether to include web files in the response (default: False)\n    category: Optionally filter to only include files from a specific category",
+        "description": "List files generated for a task, grouped by category.\n\nFiles are automatically organized by their categories in the response.\n\nArgs:\n    task_id: The unique task identifier\n    include_web: Whether to include web files in the response (default: False)\n    category: Optionally filter to only include files from a specific category\n    line_type: Optionally filter rendered files by line type (no_lines, block_lines, chunk_lines, both_lines)\n    parts: Optionally filter by image division parts",
         "operationId": "list_files_conversion__task_id__files_get",
         "parameters": [
           {
@@ -355,6 +355,40 @@
                 }
               ],
               "title": "Category"
+            }
+          },
+          {
+            "name": "line_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": ["no_lines", "block_lines", "chunk_lines", "both_lines"]
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Line Type"
+            }
+          },
+          {
+            "name": "parts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "enum": [1, 2, 4, 9]
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Parts"
             }
           }
         ],
@@ -826,25 +860,12 @@
             }
           }
         }
-      }
-    },
-    "/api/map/{map_id}/full-image.png": {
-      "get": {
+      },
+      "options": {
         "tags": ["maps"],
-        "summary": "Get Map Full Image",
-        "description": "Get the full image for a map.\n\nArgs:\n    map_id: Map identifier (task ID)\n\nReturns:\n    Full-size PNG image of the map",
-        "operationId": "get_map_full_image_api_map__map_id__full_image_png_get",
-        "parameters": [
-          {
-            "name": "map_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Map Id"
-            }
-          }
-        ],
+        "summary": "Options Map Endpoints",
+        "description": "Handle OPTIONS requests for map endpoints to support CORS preflight requests.",
+        "operationId": "options_map_endpoints_api_map__map_id__metadata_json_options",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -853,71 +874,27 @@
                 "schema": {}
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/map/{map_id}/thumbnail.png": {
-      "get": {
-        "tags": ["maps"],
-        "summary": "Get Map Thumbnail",
-        "description": "Get a thumbnail for a map.\n\nArgs:\n    map_id: Map identifier (task ID)\n\nReturns:\n    Thumbnail PNG image of the map",
-        "operationId": "get_map_thumbnail_api_map__map_id__thumbnail_png_get",
-        "parameters": [
-          {
-            "name": "map_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Map Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Thumbnail image",
-            "content": {
-              "application/json": {
-                "schema": {}
-              },
-              "image/png": {}
-            }
-          },
-          "404": {
-            "description": "Map not found",
-            "content": {
-              "application/json": {
-                "example": {
-                  "detail": "Image not found for map: d290f1ee-6c54-4b01-90e6-d701748f0851"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
         }
       }
     },
     "/api/map/{map_id}/tiles/{zoom}/{x}/{y}.png": {
+      "options": {
+        "tags": ["maps"],
+        "summary": "Options Map Endpoints",
+        "description": "Handle OPTIONS requests for map endpoints to support CORS preflight requests.",
+        "operationId": "options_map_endpoints_api_map__map_id__tiles__zoom___x___y__png_options",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
       "get": {
         "tags": ["maps"],
         "summary": "Get Map Tile",
@@ -994,6 +971,127 @@
         }
       }
     },
+    "/api/map/{map_id}/thumbnail.png": {
+      "options": {
+        "tags": ["maps"],
+        "summary": "Options Map Endpoints",
+        "description": "Handle OPTIONS requests for map endpoints to support CORS preflight requests.",
+        "operationId": "options_map_endpoints_api_map__map_id__thumbnail_png_options",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["maps"],
+        "summary": "Get Map Thumbnail",
+        "description": "Get a thumbnail for a map.\n\nArgs:\n    map_id: Map identifier (task ID)\n\nReturns:\n    Thumbnail PNG image of the map",
+        "operationId": "get_map_thumbnail_api_map__map_id__thumbnail_png_get",
+        "parameters": [
+          {
+            "name": "map_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Map Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thumbnail image",
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "image/png": {}
+            }
+          },
+          "404": {
+            "description": "Map not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Image not found for map: d290f1ee-6c54-4b01-90e6-d701748f0851"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/map/{map_id}/full-image.png": {
+      "options": {
+        "tags": ["maps"],
+        "summary": "Options Map Endpoints",
+        "description": "Handle OPTIONS requests for map endpoints to support CORS preflight requests.",
+        "operationId": "options_map_endpoints_api_map__map_id__full_image_png_options",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["maps"],
+        "summary": "Get Map Full Image",
+        "description": "Get the full image for a map.\n\nArgs:\n    map_id: Map identifier (task ID)\n\nReturns:\n    Full-size PNG image of the map",
+        "operationId": "get_map_full_image_api_map__map_id__full_image_png_get",
+        "parameters": [
+          {
+            "name": "map_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Map Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "tags": ["Health"],
@@ -1041,7 +1139,7 @@
           "color_palette": {
             "type": "string",
             "title": "Color Palette",
-            "description": "Color palette to use for block mapping (default: minecraft)",
+            "description": "Color palette to use for block mapping (default: minecraft - uses 2025 palette)",
             "default": "minecraft"
           },
           "image_file": {

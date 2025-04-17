@@ -46,10 +46,27 @@ export default function Results() {
   const [isDownloading, setIsDownloading] = useState(false);
 
   // Get main files (rendered image and schematic)
-  const mainRenderedImage = files.find(
-    (file) => file.category === 'rendered' && !file.filename.includes('thumbnail')
-  );
+  // Try to find a rendered image with the selected line type, or fall back to any rendered image
+  const mainRenderedImage =
+    files.find(
+      (file) =>
+        file.category === 'rendered' &&
+        !file.filename.includes('thumbnail') &&
+        (file.fileId.includes('chunk_lines') ||
+          file.fileId.includes('block_lines') ||
+          file.fileId.includes('no_lines') ||
+          file.fileId.includes('both_lines'))
+    ) || files.find((file) => file.category === 'rendered' && !file.filename.includes('thumbnail'));
   const schematicFile = files.find((file) => file.category === 'schematic');
+
+  // Helper function to get line type from file ID
+  const getLineType = (fileId: string): string | null => {
+    if (fileId.includes('no_lines')) return 'No Lines';
+    if (fileId.includes('block_lines')) return 'Block Grid Lines';
+    if (fileId.includes('chunk_lines')) return 'Chunk Lines';
+    if (fileId.includes('both_lines')) return 'Both Lines';
+    return null;
+  };
 
   // Group files by category
   const imageFiles = files.filter(
@@ -171,7 +188,8 @@ export default function Results() {
           // Status is completed, now fetch the files
           setLoadingFiles(true);
           try {
-            const filesResponse = await getTaskFiles(taskId, { includeWeb: false });
+            // Fetch all files, including different line types
+            const filesResponse = await getTaskFiles(taskId, { includeWeb: true });
             // Store the categorized files response
             setFileListResponse(filesResponse.categories);
 
@@ -328,8 +346,13 @@ export default function Results() {
                   <div className="bg-muted/30 rounded-lg p-2 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm">
                       <span>{mainRenderedImage.filename}</span>
-                      <span className="text-muted-foreground  whitespace-nowrap">
+                      <span className="text-muted-foreground whitespace-nowrap">
                         ({formatFileSize(mainRenderedImage.size)})
+                        {getLineType(mainRenderedImage.fileId) && (
+                          <span className="ml-2 px-1.5 py-0.5 bg-primary/10 text-xs rounded">
+                            {getLineType(mainRenderedImage.fileId)}
+                          </span>
+                        )}
                       </span>
                     </div>
                   </div>
@@ -398,7 +421,7 @@ export default function Results() {
           {/* Additional Image Files Section */}
           {imageFiles.length > 0 && (
             <Card className="overflow-hidden border-2 border-primary/10 shadow-md">
-              <CardHeader className="pb-4 border-b border-primary/30">
+              <CardHeader className="pb-4 border-b border-primary/10">
                 <CardTitle className="flex gap-2 items-center">
                   <ImageIcon className="h-5 w-5" /> Additional Image Files
                 </CardTitle>
@@ -423,6 +446,11 @@ export default function Results() {
                         <span className="ml-2">{file.filename}</span>
                         <span className="ml-2 text-muted-foreground text-sm">
                           ({formatFileSize(file.size)})
+                          {file.category === 'rendered' && getLineType(file.fileId) && (
+                            <span className="ml-2 px-1.5 py-0.5 bg-primary/10 text-xs rounded">
+                              {getLineType(file.fileId)}
+                            </span>
+                          )}
                         </span>
                       </div>
                       <Button
