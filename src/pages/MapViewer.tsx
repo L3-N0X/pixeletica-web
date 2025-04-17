@@ -37,7 +37,9 @@ interface BlockInfo {
 interface HoverInfoProps {
   pixelCoords: PixelCoords | null;
   blockInfo: BlockInfo | null;
+  chunkCoords: { x: number; y: number } | null;
   visible: boolean;
+  isActive: boolean;
 }
 
 interface GridOverlayProps {
@@ -50,8 +52,10 @@ interface TileLayerManagerProps {
   mapData: MapMetadata;
 }
 
+// Updated MouseTrackerProps to support click
 interface MouseTrackerProps {
   onMouseMove: (coords: PixelCoords | null) => void;
+  onClick: (coords: PixelCoords | null) => void;
 }
 
 // Custom hook for tracking the current zoom level
@@ -74,16 +78,22 @@ function useZoomLevel(initialZoom = 0) {
 }
 
 // Custom component to show hover information
-function HoverInfo({ pixelCoords, blockInfo, visible }: HoverInfoProps) {
+function HoverInfo({ pixelCoords, blockInfo, chunkCoords, visible, isActive }: HoverInfoProps) {
   if (!visible || !pixelCoords) return null;
 
   return (
     <div className="absolute bottom-4 left-4 bg-card border shadow-md p-3 rounded-md z-[1000] text-sm">
-      <div className="font-semibold mb-1">Cursor Position</div>
+      <div className="font-semibold mb-1">{isActive ? 'Active Block' : 'Cursor Position'}</div>
       <div className="flex gap-2">
-        <span className="text-muted-foreground">X:</span> {pixelCoords.x}
-        <span className="text-muted-foreground ml-2">Y:</span> {pixelCoords.y}
+        <span className="text-muted-foreground">Block X:</span> {pixelCoords.x}
+        <span className="text-muted-foreground ml-2">Block Y:</span> {pixelCoords.y}
       </div>
+      {chunkCoords && (
+        <div className="flex gap-2 mt-1">
+          <span className="text-muted-foreground">Chunk X:</span> {chunkCoords.x}
+          <span className="text-muted-foreground ml-2">Chunk Y:</span> {chunkCoords.y}
+        </div>
+      )}
       {blockInfo && (
         <div className="mt-2">
           <div className="font-semibold mb-1">Block</div>
@@ -279,15 +289,30 @@ function ZoomOutButton() {
   );
 }
 
-// Custom component to track mouse position
-function MouseTracker({ onMouseMove }: MouseTrackerProps) {
+// Custom component to track mouse position and handle clicks
+function MouseTracker({
+  onMouseMove,
+  onClick,
+  zoomLevel,
+  minActiveZoom,
+}: MouseTrackerProps & { zoomLevel: number; minActiveZoom: number }) {
   useMapEvents({
     mousemove: (e: L.LeafletMouseEvent) => {
-      const { lat, lng } = e.latlng;
-      onMouseMove({ x: Math.floor(lng), y: Math.floor(lat) });
+      if (zoomLevel >= minActiveZoom) {
+        const { lat, lng } = e.latlng;
+        onMouseMove({ x: Math.floor(lng), y: Math.floor(lat) });
+      } else {
+        onMouseMove(null);
+      }
     },
     mouseout: () => {
       onMouseMove(null);
+    },
+    click: (e: L.LeafletMouseEvent) => {
+      if (zoomLevel >= minActiveZoom) {
+        const { lat, lng } = e.latlng;
+        onClick({ x: Math.floor(lng), y: Math.floor(lat) });
+      }
     },
   });
 
@@ -301,6 +326,34 @@ export default function MapViewer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mapData, setMapData] = useState<MapMetadata | null>(null);
+
+  // All hooks must be called before any early return!
+  const { zoomLevel, ZoomListener } = useZoomLevel(0);
+  const [showBlockGrid, setShowBlockGrid] = useState(false);
+  const [showChunkGrid, setShowChunkGrid] = useState(false);
+  const [showInfo, setShowInfo] = useState(true);
+  const [hoverCoords, setHoverCoords] = useState<PixelCoords | null>(null);
+  const [activeBlock, setActiveBlock] = useState<PixelCoords | null>(null);
+
+  // Calculate the bounds based on the image dimensions
+  // Moved up to ensure hooks are called unconditionally
+  const bounds = useMemo<L.LatLngBoundsLiteral>(() => {
+    if (!mapData)
+      return [
+        [0, 0],
+        [100, 100], // Default bounds if mapData is not yet loaded
+      ];
+    return [
+      [0, 0],
+      [mapData.height, mapData.width],
+    ];
+  }, [mapData]);
+
+  // Define the CRS (Coordinate Reference System) that matches our pixel coordinates
+  // Moved up to ensure hooks are called unconditionally
+  const pixelCRS = useMemo(() => {
+    return L.CRS.Simple;
+  }, []);
 
   useEffect(() => {
     if (!taskId) {
@@ -352,28 +405,10 @@ export default function MapViewer() {
     );
   }
 
-  const { zoomLevel, ZoomListener } = useZoomLevel(mapData?.minZoom || 0);
-  const [showGrid, setShowGrid] = useState(false);
-  const [showInfo, setShowInfo] = useState(true);
-  const [hoverCoords, setHoverCoords] = useState<PixelCoords | null>(null);
+  // Optionally, set zoom level after mapData loads (if needed)
+  // If you want to programmatically set zoom after loading, you can add logic here.
 
-  // Calculate the bounds based on the image dimensions
-  const bounds = useMemo<L.LatLngBoundsLiteral>(() => {
-    if (!mapData)
-      return [
-        [0, 0],
-        [100, 100],
-      ];
-    return [
-      [0, 0],
-      [mapData.height, mapData.width],
-    ];
-  }, [mapData]);
-
-  // Define the CRS (Coordinate Reference System) that matches our pixel coordinates
-  const pixelCRS = useMemo(() => {
-    return L.CRS.Simple;
-  }, []);
+  // useMemo hooks moved above the early returns
 
   return (
     <div className="space-y-6 pb-10">
@@ -406,13 +441,22 @@ export default function MapViewer() {
             </div>
             <div className="flex gap-2">
               <Button
-                variant={showGrid ? 'default' : 'outline'}
+                variant={showBlockGrid ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setShowGrid(!showGrid)}
+                onClick={() => setShowBlockGrid(!showBlockGrid)}
                 className="flex items-center gap-2"
               >
                 <GridIcon className="h-4 w-4" />
-                {showGrid ? 'Hide Grid' : 'Show Grid'}
+                {showBlockGrid ? 'Hide Block Grid' : 'Show Block Grid'}
+              </Button>
+              <Button
+                variant={showChunkGrid ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setShowChunkGrid(!showChunkGrid)}
+                className="flex items-center gap-2"
+              >
+                <GridIcon className="h-4 w-4" />
+                {showChunkGrid ? 'Hide Chunk Grid' : 'Show Chunk Grid'}
               </Button>
               <Button
                 variant={showInfo ? 'default' : 'outline'}
@@ -422,6 +466,15 @@ export default function MapViewer() {
               >
                 <InfoCircledIcon className="h-4 w-4" />
                 {showInfo ? 'Hide Info' : 'Show Info'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveBlock(null)}
+                className="flex items-center gap-2"
+                disabled={!activeBlock}
+              >
+                Clear Selection
               </Button>
             </div>
           </div>
@@ -444,8 +497,14 @@ export default function MapViewer() {
               >
                 <ZoomListener />
                 <TileLayerManager mapId={taskId!} mapData={mapData} />
-                <GridOverlay showGrid={showGrid} gridSize={16} />
-                <MouseTracker onMouseMove={(coords) => setHoverCoords(coords)} />
+                <GridOverlay showGrid={showBlockGrid} gridSize={16} />
+                <GridOverlay showGrid={showChunkGrid} gridSize={256} />
+                <MouseTracker
+                  onMouseMove={(coords) => setHoverCoords(coords)}
+                  onClick={(coords) => setActiveBlock(coords)}
+                  zoomLevel={zoomLevel}
+                  minActiveZoom={mapData ? mapData.maxZoom - 1 : 0}
+                />
                 <div className="leaflet-top leaflet-right">
                   <div className="leaflet-control leaflet-bar">
                     <ZoomInButton />
@@ -454,9 +513,18 @@ export default function MapViewer() {
                 </div>
               </MapContainer>
               <HoverInfo
-                pixelCoords={hoverCoords}
-                blockInfo={hoverCoords ? { type: 'Minecraft Block' } : null}
+                pixelCoords={activeBlock ?? hoverCoords}
+                blockInfo={activeBlock ?? hoverCoords ? { type: 'Minecraft Block' } : null}
+                chunkCoords={
+                  activeBlock ?? hoverCoords
+                    ? {
+                        x: Math.floor((activeBlock ?? hoverCoords)!.x / 16),
+                        y: Math.floor((activeBlock ?? hoverCoords)!.y / 16),
+                      }
+                    : null
+                }
                 visible={showInfo}
+                isActive={!!activeBlock}
               />
             </div>
           ) : (

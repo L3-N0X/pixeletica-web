@@ -92,7 +92,7 @@ export default function Create() {
       originZ: 0,
       chunkLineColor: '#ff0000',
       chunkLineOpacity: 1,
-      blockGridLineColor: '#cccccc',
+      blockGridLineColor: '#00ffAA',
       blockGridLineOpacity: 0.5,
       exportOptions: {
         noLines: false,

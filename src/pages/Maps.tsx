@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { H1, H3, Muted, P } from '@/components/ui/typography';
+import { H1, H3, P } from '@/components/ui/typography';
 import { Card } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
 import { listMaps, MapInfo, getMapMetadata, MapMetadata, getMapThumbnailUrl } from '@/api/maps';
@@ -134,9 +134,12 @@ export default function Maps() {
                   <span className="truncate">{formatDate(map.created)}</span>
                   <span>{getDimensions(map.id)}</span>
                 </div>
-                <div className="flex items-center justify-between mt-3">
-                  <Button variant="outline" size="sm" asChild className="w-full">
+                <div className="flex flex-col items-center gap-2 justify-between mt-3">
+                  <Button variant="secondary" size="sm" asChild className="w-full">
                     <Link to={`/maps/${map.id}`}>Open in Map Viewer</Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild className="w-full">
+                    <Link to={`/results/${map.id}`}>View Results</Link>
                   </Button>
                 </div>
               </div>

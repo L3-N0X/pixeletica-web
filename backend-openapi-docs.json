@@ -319,7 +319,7 @@
       "get": {
         "tags": ["conversion"],
         "summary": "List Files",
-        "description": "List files generated for a task, grouped by category.\n\nFiles are automatically organized by their categories in the response.\n\nArgs:\n    task_id: The unique task identifier\n    include_web: Whether to include web files in the response (default: False)\n    category: Optionally filter to only include files from a specific category\n    line_type: Optionally filter rendered files by line type (no_lines, block_lines, chunk_lines, both_lines)\n    parts: Optionally filter by image division parts",
+        "description": "List files generated for a task, grouped by category.\n\nFiles are automatically organized by their categories in the response.\n\nArgs:\n    task_id: The unique task identifier\n    include_web: Whether to include web files in the response (default: False)\n    category: Optionally filter to only include files from a specific category",
         "operationId": "list_files_conversion__task_id__files_get",
         "parameters": [
           {
@@ -355,40 +355,6 @@
                 }
               ],
               "title": "Category"
-            }
-          },
-          {
-            "name": "line_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "enum": ["no_lines", "block_lines", "chunk_lines", "both_lines"]
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Line Type"
-            }
-          },
-          {
-            "name": "parts",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "integer",
-                  "enum": [1, 2, 4, 9]
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Parts"
             }
           }
         ],

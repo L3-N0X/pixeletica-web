@@ -23,9 +23,11 @@ import {
   DownloadIcon,
   FileIcon,
   FileTextIcon,
+  GridIcon,
   ImageIcon,
   LayoutIcon,
 } from '@radix-ui/react-icons';
+import { LuCopy, LuGrid3X3, LuPencil } from 'react-icons/lu';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -45,8 +47,7 @@ export default function Results() {
   const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set());
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Get main files (rendered image and schematic)
-  // Try to find a rendered image with the selected line type, or fall back to any rendered image
+  // Always show full rendered, original, and dithered images if present
   const mainRenderedImage =
     files.find(
       (file) =>
@@ -57,6 +58,10 @@ export default function Results() {
           file.fileId.includes('no_lines') ||
           file.fileId.includes('both_lines'))
     ) || files.find((file) => file.category === 'rendered' && !file.filename.includes('thumbnail'));
+  const originalImage = files.find(
+    (file) => file.category === 'rendered' && file.filename.toLowerCase().includes('original')
+  );
+  const ditheredImage = files.find((file) => file.category === 'dithered');
   const schematicFile = files.find((file) => file.category === 'schematic');
 
   // Helper function to get line type from file ID
@@ -188,8 +193,8 @@ export default function Results() {
           // Status is completed, now fetch the files
           setLoadingFiles(true);
           try {
-            // Fetch all files, including different line types
-            const filesResponse = await getTaskFiles(taskId, { includeWeb: true });
+            // Fetch all files, excluding web files
+            const filesResponse = await getTaskFiles(taskId, { includeWeb: false });
             // Store the categorized files response
             setFileListResponse(filesResponse.categories);
 
@@ -259,19 +264,54 @@ export default function Results() {
         <div className="flex gap-4 mt-4 md:mt-0">
           <Button
             variant="default"
-            onClick={() => navigate(`/mapviewer/${taskId}`)}
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              toast.success('URL copied to clipboard');
+            }}
             className="flex items-center gap-2"
           >
-            <LayoutIcon /> Open Map Viewer
-          </Button>
-          <Button variant="default" onClick={handleDownloadAll} className="flex items-center gap-2">
-            <DownloadIcon /> Download All Files
+            <LuCopy className="h-5 w-5" /> Copy URL
           </Button>
           <Button variant="outline" onClick={() => navigate('/create')}>
+            <LuPencil className="h-5 w-5" />
             Convert Another Image
           </Button>
         </div>
       </div>
+
+      {/* Map Preview Card */}
+      {mainRenderedImage && (
+        <Card className="overflow-hidden border-2 border-primary/10 shadow-md flex flex-col mx-auto">
+          <CardHeader className="pb-0">
+            <div className="flex gap-2 items-center">
+              <ImageIcon className="h-5 w-5 text-primary" />
+              <div>
+                <CardTitle className="text-lg">Generated Preview</CardTitle>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 pt-4 flex-grow">
+            <div className="flex justify-center items-center bg-muted/30 rounded-lg p-2 min-h-[200px]">
+              <img
+                src={`/api/conversion/${taskId}/file/${mainRenderedImage.fileId}`}
+                alt="Map Preview"
+                className="rounded shadow max-h-[400px] w-auto h-auto object-contain"
+                style={{ maxWidth: '100%', maxHeight: 400, display: 'block' }}
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="bg-muted/10 pt-1 pb-6 mt-auto flex flex-col gap-2">
+            <Button
+              variant="default"
+              className="w-full flex gap-2 items-center"
+              onClick={() => navigate(`/mapviewer/${taskId}`)}
+            >
+              <GridIcon />
+              Open Map Viewer
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
 
       {/* Selection controls */}
       <Card className="overflow-hidden border-2 border-primary/10 shadow-md">
@@ -287,15 +327,25 @@ export default function Results() {
                 Select All Files
               </label>
             </div>
-            <Button
-              onClick={handleDownloadSelected}
-              disabled={selectedFileIds.size === 0 || isDownloading}
-              variant="secondary"
-              className="flex items-center gap-2"
-              size="sm"
-            >
-              <DownloadIcon /> Download Selected ({selectedFileIds.size})
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleDownloadSelected}
+                disabled={selectedFileIds.size === 0 || isDownloading}
+                variant="secondary"
+                className="flex items-center gap-2"
+                size="sm"
+              >
+                <DownloadIcon /> Download Selected ({selectedFileIds.size})
+              </Button>
+              <Button
+                variant="default"
+                onClick={handleDownloadAll}
+                className="flex items-center gap-2"
+                size="sm"
+              >
+                <DownloadIcon /> Download All Files
+              </Button>
+            </div>
           </div>
         </CardHeader>
       </Card>
@@ -316,61 +366,8 @@ export default function Results() {
         </Card>
       ) : (
         <>
-          {/* Main Download Options */}
+          {/* Files Download Sections */}
           <div className="grid gap-4 md:grid-cols-2">
-            {mainRenderedImage && (
-              <Card className="overflow-hidden border-2 border-primary/10 shadow-md flex flex-col">
-                <CardHeader className="pb-0">
-                  <div className="flex items-center justify-between">
-                    <div className="flex gap-2 items-start">
-                      <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                        <ImageIcon className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">Full Rendered Image</CardTitle>
-                        <CardDescription>
-                          High quality rendered Minecraft block image
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <Checkbox
-                      id={`file-${mainRenderedImage.fileId}`}
-                      checked={selectedFileIds.has(mainRenderedImage.fileId)}
-                      onCheckedChange={(checked) =>
-                        handleSelectFile(mainRenderedImage.fileId, checked === true)
-                      }
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 pt-4 flex-grow">
-                  <div className="bg-muted/30 rounded-lg p-2 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span>{mainRenderedImage.filename}</span>
-                      <span className="text-muted-foreground whitespace-nowrap">
-                        ({formatFileSize(mainRenderedImage.size)})
-                        {getLineType(mainRenderedImage.fileId) && (
-                          <span className="ml-2 px-1.5 py-0.5 bg-primary/10 text-xs rounded">
-                            {getLineType(mainRenderedImage.fileId)}
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="bg-muted/10 pt-1 pb-6 mt-auto">
-                  <Button
-                    variant="default"
-                    className="w-full flex gap-2 items-center"
-                    onClick={() =>
-                      handleDownloadSingle(mainRenderedImage.fileId, mainRenderedImage.filename)
-                    }
-                  >
-                    <DownloadIcon /> Download Image
-                  </Button>
-                </CardFooter>
-              </Card>
-            )}
-
             {schematicFile && (
               <Card className="overflow-hidden border-2 border-primary/10 shadow-md flex flex-col">
                 <CardHeader className="pb-0">
@@ -551,16 +548,6 @@ export default function Results() {
               </CardContent>
             </Card>
           )}
-
-          <div className="flex justify-center">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/maps')}
-              className="flex items-center gap-2 mt-4"
-            >
-              View All Maps
-            </Button>
-          </div>
         </>
       )}
     </div>

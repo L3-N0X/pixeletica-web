@@ -353,7 +353,7 @@ export const getTaskFiles = async (
   }
 
   if (options?.includeWeb) {
-    queryParams.append('include_web', 'true');
+    queryParams.append('include_web', 'false');
   }
 
   if (options?.lineType) {
