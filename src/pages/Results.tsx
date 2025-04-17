@@ -198,12 +198,35 @@ export default function Results() {
             // Store the categorized files response
             setFileListResponse(filesResponse.categories);
 
-            // Convert the categorized structure to a flat array for compatibility with existing code
-            const allFiles: FileInfo[] = [];
-            Object.values(filesResponse.categories).forEach((categoryFiles) => {
-              allFiles.push(...categoryFiles);
-            });
-            setFiles(allFiles);
+            // Recursively flatten all FileInfo objects from the new nested structure
+            function flattenFiles(categories: any): FileInfo[] {
+              const files: FileInfo[] = [];
+              const isFileInfo = (obj: any): obj is FileInfo =>
+                obj &&
+                typeof obj === 'object' &&
+                'fileId' in obj &&
+                'filename' in obj &&
+                'type' in obj &&
+                'size' in obj &&
+                'category' in obj;
+              Object.entries(categories).forEach(([key, value]) => {
+                if (!value) return;
+                if (Array.isArray(value)) {
+                  value.forEach((item) => {
+                    if (isFileInfo(item)) {
+                      files.push(item);
+                    }
+                  });
+                } else if (isFileInfo(value)) {
+                  files.push(value);
+                } else if (typeof value === 'object') {
+                  // For nested objects like "rendered"
+                  files.push(...flattenFiles(value));
+                }
+              });
+              return files;
+            }
+            setFiles(flattenFiles(filesResponse.categories));
           } catch (err) {
             toast.error('Could not load file list');
             console.error('Error loading file list:', err);
@@ -366,188 +389,143 @@ export default function Results() {
         </Card>
       ) : (
         <>
-          {/* Files Download Sections */}
-          <div className="grid gap-4 md:grid-cols-2">
-            {schematicFile && (
-              <Card className="overflow-hidden border-2 border-primary/10 shadow-md flex flex-col">
-                <CardHeader className="pb-0">
-                  <div className="flex items-center justify-between">
-                    <div className="flex gap-2 items-start">
-                      <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                        <LayoutIcon className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">Schematic File</CardTitle>
-                        <CardDescription>Build your image in Minecraft</CardDescription>
-                      </div>
-                    </div>
-                    <Checkbox
-                      id={`file-${schematicFile.fileId}`}
-                      checked={selectedFileIds.has(schematicFile.fileId)}
-                      onCheckedChange={(checked) =>
-                        handleSelectFile(schematicFile.fileId, checked === true)
-                      }
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 pt-4 flex-grow">
-                  <div className="bg-muted/30 rounded-lg p-2 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span>{schematicFile.filename}</span>
-                      <span className="text-muted-foreground whitespace-nowrap">
-                        ({formatFileSize(schematicFile.size)})
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="bg-muted/10 pt-1 pb-6 mt-auto">
-                  <Button
-                    variant="default"
-                    className="w-full flex gap-2 items-center"
-                    onClick={() =>
-                      handleDownloadSingle(schematicFile.fileId, schematicFile.filename)
-                    }
+          {/* Grouped Files by Category/Subcategory */}
+          <div className="space-y-6">
+            {Object.entries(fileListResponse).map(([category, value]) => {
+              if (!value) return null;
+              // Rendered category: has subcategories
+              if (category === 'rendered' && typeof value === 'object' && !Array.isArray(value)) {
+                return (
+                  <Card
+                    key={category}
+                    className="overflow-hidden border-2 border-primary/10 shadow-md"
                   >
-                    <DownloadIcon /> Download Schematic
-                  </Button>
-                </CardFooter>
-              </Card>
-            )}
+                    <CardHeader className="pb-2 border-b">
+                      <CardTitle className="flex gap-2 items-center">
+                        <ImageIcon className="h-5 w-5" /> Rendered Images
+                      </CardTitle>
+                      <CardDescription className="text-sm text-muted-foreground">
+                        Rendered images grouped by line type.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      {Object.entries(value).map(([subcat, filesArr]) =>
+                        Array.isArray(filesArr) && filesArr.length > 0 ? (
+                          <div key={subcat} className="border-b border-primary/10 last:border-b-0">
+                            <div className="px-4 py-2 bg-muted/30 font-semibold text-sm text-primary">
+                              {subcat.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                            </div>
+                            <div className="divide-y divide-primary/10">
+                              {filesArr.map((file: FileInfo) => (
+                                <div
+                                  key={file.fileId}
+                                  className="flex items-center p-3 hover:bg-muted/30"
+                                >
+                                  <Checkbox
+                                    id={`file-${file.fileId}`}
+                                    checked={selectedFileIds.has(file.fileId)}
+                                    onCheckedChange={(checked) =>
+                                      handleSelectFile(file.fileId, checked === true)
+                                    }
+                                    className="mr-3"
+                                  />
+                                  <div className="flex-1 flex items-center">
+                                    {getFileIcon(file)}
+                                    <span className="ml-2">{file.filename}</span>
+                                    <span className="ml-2 text-muted-foreground text-sm">
+                                      ({formatFileSize(file.size)})
+                                    </span>
+                                  </div>
+                                  <Button
+                                    onClick={() => handleDownloadSingle(file.fileId, file.filename)}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="hover:bg-primary/10"
+                                  >
+                                    <DownloadIcon className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              }
+              // Single file categories
+              if (
+                typeof value === 'object' &&
+                value !== null &&
+                !Array.isArray(value) &&
+                'fileId' in value
+              ) {
+                const file = value as FileInfo;
+                return (
+                  <Card
+                    key={category}
+                    className="overflow-hidden border-2 border-primary/10 shadow-md"
+                  >
+                    <CardHeader className="pb-2 border-b">
+                      <CardTitle className="flex gap-2 items-center">
+                        {category === 'schematic' ? (
+                          <>
+                            <LayoutIcon className="h-5 w-5" /> Schematic File
+                          </>
+                        ) : category === 'dithered' ? (
+                          <>
+                            <ImageIcon className="h-5 w-5" /> Dithered Image
+                          </>
+                        ) : category === 'input' ? (
+                          <>
+                            <FileIcon className="h-5 w-5" /> Input Image
+                          </>
+                        ) : category === 'task_zip' ? (
+                          <>
+                            <ArchiveIcon className="h-5 w-5" /> Task ZIP
+                          </>
+                        ) : (
+                          <>
+                            <FileIcon className="h-5 w-5" />{' '}
+                            {category.charAt(0).toUpperCase() + category.slice(1)}
+                          </>
+                        )}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="flex items-center p-3 hover:bg-muted/30">
+                        <Checkbox
+                          id={`file-${file.fileId}`}
+                          checked={selectedFileIds.has(file.fileId)}
+                          onCheckedChange={(checked) =>
+                            handleSelectFile(file.fileId, checked === true)
+                          }
+                          className="mr-3"
+                        />
+                        <div className="flex-1 flex items-center">
+                          {getFileIcon(file)}
+                          <span className="ml-2">{file.filename}</span>
+                          <span className="ml-2 text-muted-foreground text-sm">
+                            ({formatFileSize(file.size)})
+                          </span>
+                        </div>
+                        <Button
+                          onClick={() => handleDownloadSingle(file.fileId, file.filename)}
+                          variant="ghost"
+                          size="sm"
+                          className="hover:bg-primary/10"
+                        >
+                          <DownloadIcon className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              }
+              return null;
+            })}
           </div>
-
-          {/* Additional Image Files Section */}
-          {imageFiles.length > 0 && (
-            <Card className="overflow-hidden border-2 border-primary/10 shadow-md">
-              <CardHeader className="pb-4 border-b border-primary/10">
-                <CardTitle className="flex gap-2 items-center">
-                  <ImageIcon className="h-5 w-5" /> Additional Image Files
-                </CardTitle>
-                <CardDescription className="text-sm text-muted-foreground">
-                  Here you can download additional image files generated during the conversion.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y divide-primary/10">
-                  {imageFiles.map((file) => (
-                    <div key={file.fileId} className="flex items-center p-3 hover:bg-muted/30">
-                      <Checkbox
-                        id={`file-${file.fileId}`}
-                        checked={selectedFileIds.has(file.fileId)}
-                        onCheckedChange={(checked) =>
-                          handleSelectFile(file.fileId, checked === true)
-                        }
-                        className="mr-3"
-                      />
-                      <div className="flex-1 flex items-center">
-                        {getFileIcon(file)}
-                        <span className="ml-2">{file.filename}</span>
-                        <span className="ml-2 text-muted-foreground text-sm">
-                          ({formatFileSize(file.size)})
-                          {file.category === 'rendered' && getLineType(file.fileId) && (
-                            <span className="ml-2 px-1.5 py-0.5 bg-primary/10 text-xs rounded">
-                              {getLineType(file.fileId)}
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                      <Button
-                        onClick={() => handleDownloadSingle(file.fileId, file.filename)}
-                        variant="ghost"
-                        size="sm"
-                        className="hover:bg-primary/10"
-                      >
-                        <DownloadIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Web Files Section */}
-          {webFiles.length > 0 && (
-            <Card className="overflow-hidden border-2 border-primary/10 shadow-md">
-              <CardHeader className="pb-2 border-b">
-                <CardTitle className="flex gap-2 items-center">
-                  <FileTextIcon className="h-5 w-5" /> Web Files
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y">
-                  {webFiles.map((file) => (
-                    <div key={file.fileId} className="flex items-center p-3 hover:bg-muted/30">
-                      <Checkbox
-                        id={`file-${file.fileId}`}
-                        checked={selectedFileIds.has(file.fileId)}
-                        onCheckedChange={(checked) =>
-                          handleSelectFile(file.fileId, checked === true)
-                        }
-                        className="mr-3"
-                      />
-                      <div className="flex-1 flex items-center">
-                        {getFileIcon(file)}
-                        <span className="ml-2">{file.filename}</span>
-                        <span className="ml-2 text-muted-foreground text-sm">
-                          ({formatFileSize(file.size)})
-                        </span>
-                      </div>
-                      <Button
-                        onClick={() => handleDownloadSingle(file.fileId, file.filename)}
-                        variant="ghost"
-                        size="sm"
-                        className="hover:bg-primary/10"
-                      >
-                        <DownloadIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Other Files */}
-          {otherFiles.length > 0 && (
-            <Card className="overflow-hidden border-2 border-primary/10 shadow-md">
-              <CardHeader className="pb-2 border-b">
-                <CardTitle className="flex gap-2 items-center">
-                  <FileIcon className="h-5 w-5" /> Other Files
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y">
-                  {otherFiles.map((file) => (
-                    <div key={file.fileId} className="flex items-center p-3 hover:bg-muted/30">
-                      <Checkbox
-                        id={`file-${file.fileId}`}
-                        checked={selectedFileIds.has(file.fileId)}
-                        onCheckedChange={(checked) =>
-                          handleSelectFile(file.fileId, checked === true)
-                        }
-                        className="mr-3"
-                      />
-                      <div className="flex-1 flex items-center">
-                        {getFileIcon(file)}
-                        <span className="ml-2">{file.filename}</span>
-                        <span className="ml-2 text-muted-foreground text-sm">
-                          ({formatFileSize(file.size)})
-                        </span>
-                      </div>
-                      <Button
-                        onClick={() => handleDownloadSingle(file.fileId, file.filename)}
-                        variant="ghost"
-                        size="sm"
-                        className="hover:bg-primary/10"
-                      >
-                        <DownloadIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </>
       )}
     </div>

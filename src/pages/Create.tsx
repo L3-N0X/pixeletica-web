@@ -88,7 +88,7 @@ export default function Create() {
       keepAspectRatio: true,
       ditheringAlgorithm: 'floydSteinberg',
       originX: 0,
-      originY: 100,
+      originY: 0,
       originZ: 0,
       chunkLineColor: '#ff0000',
       chunkLineOpacity: 1,

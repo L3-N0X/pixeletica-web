@@ -187,6 +187,173 @@
         }
       }
     },
+    "/conversion/{task_id}/files": {
+      "options": {
+        "tags": ["conversion"],
+        "summary": "Options List Files",
+        "description": "Handle OPTIONS requests for the files listing endpoint to support CORS preflight requests.",
+        "operationId": "options_list_files_conversion__task_id__files_options",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["conversion"],
+        "summary": "List Files",
+        "description": "List files generated for a task, grouped by category.\n\nFiles are automatically organized by their categories in the response with a structure that\nseparates single-instance categories (input, dithered, schematic, task_zip) and categorizes\nrendered images by line type (block_lines, chunk_lines, both_lines, no_lines).\n\nArgs:\n    task_id: The unique task identifier\n    include_web: Whether to include web files in the response (default: False)\n    category: Optionally filter to only include files from a specific category",
+        "operationId": "list_files_conversion__task_id__files_get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          },
+          {
+            "name": "include_web",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Web"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of files for the task, grouped by category",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileListResponse"
+                },
+                "example": {
+                  "taskId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+                  "categories": {
+                    "input": {
+                      "fileId": "input_original.png",
+                      "filename": "original.png",
+                      "type": "image/png",
+                      "size": 1574956,
+                      "category": "input"
+                    },
+                    "dithered": {
+                      "fileId": "dithered_image",
+                      "filename": "dithered.png",
+                      "type": "image/png",
+                      "size": 38317,
+                      "category": "dithered"
+                    },
+                    "rendered": {
+                      "block_lines": [
+                        {
+                          "fileId": "rendered_block_lines.png",
+                          "filename": "block_lines.png",
+                          "type": "image/png",
+                          "size": 118231,
+                          "category": "rendered"
+                        },
+                        {
+                          "fileId": "rendered_block_lines_1.png",
+                          "filename": "block_lines_1.png",
+                          "type": "image/png",
+                          "size": 118231,
+                          "category": "rendered"
+                        }
+                      ],
+                      "chunk_lines": [
+                        {
+                          "fileId": "rendered_chunk_lines.png",
+                          "filename": "chunk_lines.png",
+                          "type": "image/png",
+                          "size": 63059,
+                          "category": "rendered"
+                        }
+                      ]
+                    },
+                    "schematic": {
+                      "fileId": "schematic_build.litematic",
+                      "filename": "build.litematic",
+                      "type": "application/octet-stream",
+                      "size": 18041,
+                      "category": "schematic"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/conversion/{task_id}": {
       "get": {
         "tags": ["conversion"],
@@ -288,115 +455,6 @@
                 "example": {
                   "message": "Task d290f1ee-6c54-4b01-90e6-d701748f0851 deletion initiated",
                   "success": true
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Task not found",
-            "content": {
-              "application/json": {
-                "example": {
-                  "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/conversion/{task_id}/files": {
-      "get": {
-        "tags": ["conversion"],
-        "summary": "List Files",
-        "description": "List files generated for a task, grouped by category.\n\nFiles are automatically organized by their categories in the response.\n\nArgs:\n    task_id: The unique task identifier\n    include_web: Whether to include web files in the response (default: False)\n    category: Optionally filter to only include files from a specific category",
-        "operationId": "list_files_conversion__task_id__files_get",
-        "parameters": [
-          {
-            "name": "task_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Task Id"
-            }
-          },
-          {
-            "name": "include_web",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": false,
-              "title": "Include Web"
-            }
-          },
-          {
-            "name": "category",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Category"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of files for the task, grouped by category",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FileListResponse"
-                },
-                "example": {
-                  "taskId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
-                  "categories": {
-                    "dithered": [
-                      {
-                        "fileId": "dithered_image",
-                        "filename": "dithered.png",
-                        "type": "image/png",
-                        "size": 1024567,
-                        "category": "dithered"
-                      }
-                    ],
-                    "rendered": [
-                      {
-                        "fileId": "rendered_image",
-                        "filename": "rendered.png",
-                        "type": "image/png",
-                        "size": 2048123,
-                        "category": "rendered"
-                      }
-                    ],
-                    "schematic": [
-                      {
-                        "fileId": "schematic",
-                        "filename": "build.litematic",
-                        "type": "application/octet-stream",
-                        "size": 512789,
-                        "category": "schematic"
-                      }
-                    ]
-                  }
                 }
               }
             }
@@ -957,7 +1015,7 @@
       "get": {
         "tags": ["maps"],
         "summary": "Get Map Thumbnail",
-        "description": "Get a thumbnail for a map.\n\nArgs:\n    map_id: Map identifier (task ID)\n\nReturns:\n    Thumbnail PNG image of the map",
+        "description": "Get a thumbnail for a map (returns the first dithered image).\n\nArgs:\n    map_id: Map identifier (task ID)\n\nReturns:\n    Thumbnail PNG image of the map (actually the dithered image)",
         "operationId": "get_map_thumbnail_api_map__map_id__thumbnail_png_get",
         "parameters": [
           {
@@ -1152,9 +1210,9 @@
       },
       "FileCategory": {
         "type": "string",
-        "enum": ["dithered", "rendered", "schematic", "web", "split"],
+        "enum": ["dithered", "rendered", "schematic", "web", "input", "other", "task_zip", "split"],
         "title": "FileCategory",
-        "description": "Available categories for output files."
+        "description": "Category of a file in the task output."
       },
       "FileInfo": {
         "properties": {
@@ -1188,6 +1246,69 @@
         "title": "FileInfo",
         "description": "Information about a generated file."
       },
+      "FileListCategories": {
+        "properties": {
+          "input": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FileInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Original input image"
+          },
+          "dithered": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FileInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Dithered version of the input image"
+          },
+          "rendered": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RenderedCategoryDict"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rendered images, grouped by line type"
+          },
+          "schematic": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FileInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Generated schematic file"
+          },
+          "task_zip": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FileInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ZIP archive of task files"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "FileListCategories",
+        "description": "The categories structure for the FileListResponse."
+      },
       "FileListResponse": {
         "properties": {
           "taskId": {
@@ -1196,14 +1317,7 @@
             "description": "Task identifier"
           },
           "categories": {
-            "additionalProperties": {
-              "items": {
-                "$ref": "#/components/schemas/FileInfo"
-              },
-              "type": "array"
-            },
-            "type": "object",
-            "title": "Categories",
+            "$ref": "#/components/schemas/FileListCategories",
             "description": "Files grouped by category"
           }
         },
@@ -1304,6 +1418,74 @@
         "type": "object",
         "title": "MapListResponse",
         "description": "Response model for the maps list endpoint."
+      },
+      "RenderedCategoryDict": {
+        "properties": {
+          "block_lines": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/FileInfo"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Block Lines",
+            "description": "Rendered images with block grid lines"
+          },
+          "chunk_lines": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/FileInfo"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chunk Lines",
+            "description": "Rendered images with chunk border lines"
+          },
+          "both_lines": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/FileInfo"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Both Lines",
+            "description": "Rendered images with both block and chunk lines"
+          },
+          "no_lines": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/FileInfo"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "No Lines",
+            "description": "Rendered images without any grid lines"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "RenderedCategoryDict",
+        "description": "Dictionary of rendered file subcategories grouped by line type."
       },
       "SelectiveDownloadRequest": {
         "properties": {
