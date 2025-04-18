@@ -20,14 +20,22 @@ export interface FileInfo {
   filename: string;
   type: string;
   size: number;
-  category: FileCategory;
 }
 
 // Interface for the file list response with files grouped by category
 export interface FileListResponse {
   taskId: string;
   categories: {
-    [category: string]: FileInfo[];
+    input?: FileInfo;
+    dithered?: FileInfo;
+    rendered?: {
+      no_lines?: FileInfo[];
+      block_lines?: FileInfo[];
+      chunk_lines?: FileInfo[];
+      both_lines?: FileInfo[];
+    };
+    schematic?: FileInfo;
+    task_zip?: FileInfo;
   };
 }
 
@@ -131,7 +139,7 @@ export const getConversionPreview = async (
   formData.append('height', height.toString());
   formData.append('algorithm', algorithm);
 
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+  const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || '/api';
   const apiUrl = `${BACKEND_URL}/conversion/preview`;
 
   try {
@@ -219,7 +227,7 @@ export const startConversion = async (params: StartConversionParams): Promise<Ta
   formData.append('image_file', imageFile); // First multipart boundary with image (using correct field name 'image_file')
   formData.append('metadata', JSON.stringify(metadata)); // Second multipart boundary with metadata as string, not as a Blob
 
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+  const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || '/api';
   const apiUrl = `${BACKEND_URL}/conversion/start`;
 
   try {
@@ -260,7 +268,7 @@ export const startConversion = async (params: StartConversionParams): Promise<Ta
 };
 
 export const getConversionStatus = async (taskId: string): Promise<TaskResponse> => {
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+  const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || '/api';
   const apiUrl = `${BACKEND_URL}/conversion/${taskId}`;
 
   try {
@@ -343,7 +351,7 @@ export const getTaskFiles = async (
     parts?: 1 | 2 | 4 | 9;
   }
 ): Promise<FileListResponse> => {
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+  const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || '/api';
   let apiUrl = `${BACKEND_URL}/conversion/${taskId}/files`;
 
   const queryParams = new URLSearchParams();
@@ -390,7 +398,7 @@ export const getTaskFiles = async (
 
 // Function to download a single file
 export const downloadFile = (taskId: string, fileId: string, filename: string): void => {
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+  const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || '/api';
   const downloadUrl = `${BACKEND_URL}/conversion/${taskId}/files/${fileId}`;
 
   // Create a hidden anchor element to trigger download
@@ -404,7 +412,7 @@ export const downloadFile = (taskId: string, fileId: string, filename: string): 
 
 // Function to download all files as ZIP
 export const downloadAllFiles = (taskId: string): void => {
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+  const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || '/api';
   const downloadUrl = `${BACKEND_URL}/conversion/${taskId}/download`;
 
   const anchor = document.createElement('a');
@@ -417,7 +425,7 @@ export const downloadAllFiles = (taskId: string): void => {
 
 // Function to download selected files as ZIP
 export const downloadSelectedFiles = async (taskId: string, fileIds: string[]): Promise<void> => {
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+  const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || '/api';
   const apiUrl = `${BACKEND_URL}/conversion/${taskId}/download`;
 
   try {

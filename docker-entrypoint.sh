@@ -14,11 +14,8 @@ for file in $JS_FILES; do
   # Replace API base URL if set
   if [[ -n "$API_BASE_URL" ]]; then
     sed -i "s|__PIXELETICA_API_BASE_URL__|$API_BASE_URL|g" $file
-  else
-    # Default to relative URL if not set
-    sed -i "s|__PIXELETICA_API_BASE_URL__|/api|g" $file
   fi
-  
+
   # Replace app version if set
   if [[ -n "$APP_VERSION" ]]; then
     sed -i "s|__PIXELETICA_APP_VERSION__|$APP_VERSION|g" $file
@@ -34,6 +31,10 @@ for file in $JS_FILES; do
   fi
   
   # Other environment variables can be added similarly
+  
+  # Remove any remaining /api default substitution
+  sed -i "s|__PIXELETICA_API_BASE_URL__||g" $file
+
 done
 
 echo "Environment configuration complete"

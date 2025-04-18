@@ -13,7 +13,8 @@ RUN pnpm install
 COPY . .
 
 # Create .env file from build arguments if provided
-ARG VITE_API_BASE_URL
+ARG VITE_API_BASE_URL=/api
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ARG VITE_DEFAULT_LOCALE
 ARG VITE_APP_VERSION
 RUN if [ -n "$VITE_API_BASE_URL" ]; then \
@@ -45,7 +46,7 @@ COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Expose port
-EXPOSE 3000
+EXPOSE 5000
 
 # Set entrypoint to allow environment variable replacement at runtime
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

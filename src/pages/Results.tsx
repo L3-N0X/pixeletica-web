@@ -22,13 +22,12 @@ import {
   ArchiveIcon,
   DownloadIcon,
   FileIcon,
-  FileTextIcon,
   GridIcon,
   ImageIcon,
   LayoutIcon,
 } from '@radix-ui/react-icons';
-import { LuCopy, LuGrid3X3, LuPencil } from 'react-icons/lu';
 import { useEffect, useState } from 'react';
+import { LuCopy, LuPencil } from 'react-icons/lu';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -41,53 +40,36 @@ export default function Results() {
   const [loadingFiles, setLoadingFiles] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<FileInfo[]>([]);
-  const [fileListResponse, setFileListResponse] = useState<{ [category: string]: FileInfo[] }>({});
+  const [fileListResponse, setFileListResponse] = useState<any>({});
 
   // State for file selection
   const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set());
   const [isDownloading, setIsDownloading] = useState(false);
 
   // Always show full rendered, original, and dithered images if present
-  const mainRenderedImage =
-    files.find(
-      (file) =>
-        file.category === 'rendered' &&
-        !file.filename.includes('thumbnail') &&
-        (file.fileId.includes('chunk_lines') ||
-          file.fileId.includes('block_lines') ||
-          file.fileId.includes('no_lines') ||
-          file.fileId.includes('both_lines'))
-    ) || files.find((file) => file.category === 'rendered' && !file.filename.includes('thumbnail'));
-  const originalImage = files.find(
-    (file) => file.category === 'rendered' && file.filename.toLowerCase().includes('original')
+  const mainRenderedImage = files.find(
+    (file) => file.fileId?.includes('full') && file.fileId?.includes('render')
   );
-  const ditheredImage = files.find((file) => file.category === 'dithered');
-  const schematicFile = files.find((file) => file.category === 'schematic');
+  // const originalImage = files.find(
+  //   (file) => file.filename?.includes('input') || file.filename?.includes('original')
+  // );
+  // const ditheredImage = files.find((file) => file.fileId?.includes('dithered'));
+  // const schematicFile = files.find((file) => file.fileId?.includes('schematic'));
 
-  // Helper function to get line type from file ID
-  const getLineType = (fileId: string): string | null => {
-    if (fileId.includes('no_lines')) return 'No Lines';
-    if (fileId.includes('block_lines')) return 'Block Grid Lines';
-    if (fileId.includes('chunk_lines')) return 'Chunk Lines';
-    if (fileId.includes('both_lines')) return 'Both Lines';
-    return null;
-  };
+  // // Helper function to get line type from file ID
+  // const getLineType = (fileId: string): string | null => {
+  //   if (fileId.includes('no_lines')) return 'No Lines';
+  //   if (fileId.includes('block_lines')) return 'Block Grid Lines';
+  //   if (fileId.includes('chunk_lines')) return 'Chunk Lines';
+  //   if (fileId.includes('both_lines')) return 'Both Lines';
+  //   return null;
+  // };
 
   // Group files by category
-  const imageFiles = files.filter(
-    (file) =>
-      (file.category === 'dithered' || file.category === 'rendered' || file.category === 'split') &&
-      !(file === mainRenderedImage)
-  );
+  // const imageFiles: FileInfo[] = [];
 
-  const webFiles = files.filter((file) => file.category === 'web');
-  const otherFiles = files.filter(
-    (file) =>
-      file !== mainRenderedImage &&
-      file !== schematicFile &&
-      !imageFiles.includes(file) &&
-      !webFiles.includes(file)
-  );
+  // const webFiles: FileInfo[] = [];
+  // const otherFiles: FileInfo[] = [];
 
   // Handle select all checkbox
   const handleSelectAll = (checked: boolean) => {
@@ -155,19 +137,13 @@ export default function Results() {
     }
   };
 
-  // Get icon based on file type
-  const getFileIcon = (file: FileInfo) => {
-    if (file.type.includes('image')) {
-      return <ImageIcon className="h-5 w-5" />;
-    } else if (file.category === 'schematic') {
-      return <LayoutIcon className="h-5 w-5" />;
-    } else if (file.type.includes('text')) {
-      return <FileTextIcon className="h-5 w-5" />;
-    } else if (file.type.includes('zip')) {
-      return <ArchiveIcon className="h-5 w-5" />;
-    }
-    return <FileIcon className="h-5 w-5" />;
-  };
+  // const getFileIcon = (file: FileInfo) => {
+  //   if (file.type.includes('image')) {
+  //     return <ImageIcon className="h-5 w-5" />;
+  //   } else {
+  //     return <FileIcon className="h-5 w-5" />;
+  //   }
+  // };
 
   useEffect(() => {
     if (!taskId) {
@@ -201,29 +177,43 @@ export default function Results() {
             // Recursively flatten all FileInfo objects from the new nested structure
             function flattenFiles(categories: any): FileInfo[] {
               const files: FileInfo[] = [];
-              const isFileInfo = (obj: any): obj is FileInfo =>
-                obj &&
-                typeof obj === 'object' &&
-                'fileId' in obj &&
-                'filename' in obj &&
-                'type' in obj &&
-                'size' in obj &&
-                'category' in obj;
-              Object.entries(categories).forEach(([key, value]) => {
-                if (!value) return;
-                if (Array.isArray(value)) {
-                  value.forEach((item) => {
-                    if (isFileInfo(item)) {
-                      files.push(item);
+
+              for (const category in categories) {
+                if (categories.hasOwnProperty(category)) {
+                  const value = categories[category];
+
+                  if (Array.isArray(value)) {
+                    value.forEach((item: any) => {
+                      if (item && typeof item === 'object' && item !== null) {
+                        files.push(item);
+                      }
+                    });
+                  } else if (typeof value === 'object' && value !== null) {
+                    for (const subCategory in value) {
+                      if (value.hasOwnProperty(subCategory)) {
+                        const subValue = value[subCategory];
+
+                        if (Array.isArray(subValue)) {
+                          subValue.forEach((item: any) => {
+                            if (item && typeof item === 'object' && item !== null) {
+                              files.push(item);
+                            }
+                          });
+                        } else if (
+                          typeof subValue === 'object' &&
+                          subValue !== null &&
+                          'fileId' in subValue
+                        ) {
+                          files.push(subValue);
+                        }
+                      }
                     }
-                  });
-                } else if (isFileInfo(value)) {
-                  files.push(value);
-                } else if (typeof value === 'object') {
-                  // For nested objects like "rendered"
-                  files.push(...flattenFiles(value));
+                  } else if (value && typeof value === 'object' && 'fileId' in value) {
+                    files.push(value);
+                  }
                 }
-              });
+              }
+
               return files;
             }
             setFiles(flattenFiles(filesResponse.categories));
@@ -303,7 +293,7 @@ export default function Results() {
       </div>
 
       {/* Map Preview Card */}
-      {mainRenderedImage && (
+      {mainRenderedImage?.fileId && (
         <Card className="overflow-hidden border-2 border-primary/10 shadow-md flex flex-col mx-auto">
           <CardHeader className="pb-0">
             <div className="flex gap-2 items-center">
@@ -316,7 +306,7 @@ export default function Results() {
           <CardContent className="p-4 pt-4 flex-grow">
             <div className="flex justify-center items-center bg-muted/30 rounded-lg p-2 min-h-[200px]">
               <img
-                src={`/api/conversion/${taskId}/file/${mainRenderedImage.fileId}`}
+                src={`/api/conversion/${taskId}/files/${mainRenderedImage.fileId}`}
                 alt="Map Preview"
                 className="rounded shadow max-h-[400px] w-auto h-auto object-contain"
                 style={{ maxWidth: '100%', maxHeight: 400, display: 'block' }}
@@ -430,7 +420,6 @@ export default function Results() {
                                     className="mr-3"
                                   />
                                   <div className="flex-1 flex items-center">
-                                    {getFileIcon(file)}
                                     <span className="ml-2">{file.filename}</span>
                                     <span className="ml-2 text-muted-foreground text-sm">
                                       ({formatFileSize(file.size)})
@@ -504,7 +493,6 @@ export default function Results() {
                           className="mr-3"
                         />
                         <div className="flex-1 flex items-center">
-                          {getFileIcon(file)}
                           <span className="ml-2">{file.filename}</span>
                           <span className="ml-2 text-muted-foreground text-sm">
                             ({formatFileSize(file.size)})
