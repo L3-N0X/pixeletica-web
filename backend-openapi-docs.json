@@ -23,14 +23,8 @@
                     "format": "binary",
                     "description": "Image file to preview (optional - if not provided, a blank image will be used)"
                   },
-                  "width": {
-                    "type": "integer",
-                    "description": "Image width in pixels"
-                  },
-                  "height": {
-                    "type": "integer",
-                    "description": "Image height in pixels"
-                  },
+                  "width": { "type": "integer", "description": "Image width in pixels" },
+                  "height": { "type": "integer", "description": "Image height in pixels" },
                   "algorithm": {
                     "type": "string",
                     "enum": ["floyd_steinberg", "ordered", "random"],
@@ -53,15 +47,8 @@
           "200": {
             "description": "Converted image with dithering applied",
             "content": {
-              "application/json": {
-                "schema": {}
-              },
-              "image/png": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
+              "application/json": { "schema": {} },
+              "image/png": { "schema": { "type": "string", "format": "binary" } }
             }
           },
           "400": {
@@ -87,20 +74,14 @@
           "500": {
             "description": "Internal Server Error",
             "content": {
-              "application/json": {
-                "example": {
-                  "detail": "Error generating preview"
-                }
-              }
+              "application/json": { "example": { "detail": "Error generating preview" } }
             }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -142,9 +123,7 @@
             "description": "Task created successfully",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TaskResponse"
-                },
+                "schema": { "$ref": "#/components/schemas/TaskResponse" },
                 "example": {
                   "taskId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
                   "status": "queued",
@@ -157,20 +136,14 @@
           "400": {
             "description": "Bad Request - Invalid JSON metadata",
             "content": {
-              "application/json": {
-                "example": {
-                  "detail": "Invalid JSON metadata format"
-                }
-              }
+              "application/json": { "example": { "detail": "Invalid JSON metadata format" } }
             }
           },
           "413": {
             "description": "File too large",
             "content": {
               "application/json": {
-                "example": {
-                  "detail": "Image size exceeds maximum limit of 10MB"
-                }
+                "example": { "detail": "Image size exceeds maximum limit of 10MB" }
               }
             }
           },
@@ -178,9 +151,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -198,28 +169,19 @@
             "name": "task_id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Task Id"
-            }
+            "schema": { "type": "string", "title": "Task Id" }
           }
         ],
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -235,36 +197,19 @@
             "name": "task_id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Task Id"
-            }
+            "schema": { "type": "string", "title": "Task Id" }
           },
           {
             "name": "include_web",
             "in": "query",
             "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": false,
-              "title": "Include Web"
-            }
+            "schema": { "type": "boolean", "default": false, "title": "Include Web" }
           },
           {
             "name": "category",
             "in": "query",
             "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Category"
-            }
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Category" }
           }
         ],
         "responses": {
@@ -272,9 +217,7 @@
             "description": "List of files for the task, grouped by category",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FileListResponse"
-                },
+                "schema": { "$ref": "#/components/schemas/FileListResponse" },
                 "example": {
                   "taskId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
                   "categories": {
@@ -282,49 +225,49 @@
                       "fileId": "input_original.png",
                       "filename": "original.png",
                       "type": "image/png",
-                      "size": 1574956,
-                      "category": "input"
+                      "size": 1574956
                     },
                     "dithered": {
                       "fileId": "dithered_image",
                       "filename": "dithered.png",
                       "type": "image/png",
-                      "size": 38317,
-                      "category": "dithered"
+                      "size": 38317
                     },
                     "rendered": {
                       "block_lines": [
                         {
-                          "fileId": "rendered_block_lines.png",
-                          "filename": "block_lines.png",
+                          "fileId": "rendered_filename_block_lines.png",
+                          "filename": "filename_block_lines.png",
                           "type": "image/png",
-                          "size": 118231,
-                          "category": "rendered"
+                          "size": 118231
                         },
                         {
-                          "fileId": "rendered_block_lines_1.png",
-                          "filename": "block_lines_1.png",
+                          "fileId": "rendered_filename_block_lines_split1.png",
+                          "filename": "filename_block_lines_split1.png",
                           "type": "image/png",
-                          "size": 118231,
-                          "category": "rendered"
+                          "size": 118231
                         }
                       ],
                       "chunk_lines": [
                         {
-                          "fileId": "rendered_chunk_lines.png",
-                          "filename": "chunk_lines.png",
+                          "fileId": "rendered_filename_chunk_lines.png",
+                          "filename": "filename_chunk_lines.png",
                           "type": "image/png",
-                          "size": 63059,
-                          "category": "rendered"
+                          "size": 63059
                         }
                       ]
                     },
                     "schematic": {
-                      "fileId": "schematic_build.litematic",
-                      "filename": "build.litematic",
+                      "fileId": "filename_Floyd_Steinberg_20250417_194844.litematic",
+                      "filename": "filename_Floyd_Steinberg_20250417_194844.litematic",
                       "type": "application/octet-stream",
-                      "size": 18041,
-                      "category": "schematic"
+                      "size": 18041
+                    },
+                    "task_zip": {
+                      "fileId": "filename_task.zip",
+                      "filename": "filename_task.zip",
+                      "type": "application/zip",
+                      "size": 12345678
                     }
                   }
                 }
@@ -335,9 +278,7 @@
             "description": "Task not found",
             "content": {
               "application/json": {
-                "example": {
-                  "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851"
-                }
+                "example": { "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
               }
             }
           },
@@ -345,9 +286,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -365,10 +304,7 @@
             "name": "task_id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Task Id"
-            }
+            "schema": { "type": "string", "title": "Task Id" }
           }
         ],
         "responses": {
@@ -376,9 +312,7 @@
             "description": "Task status retrieved successfully",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TaskResponse"
-                },
+                "schema": { "$ref": "#/components/schemas/TaskResponse" },
                 "examples": {
                   "processing": {
                     "value": {
@@ -412,9 +346,7 @@
             "description": "Task not found",
             "content": {
               "application/json": {
-                "example": {
-                  "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851"
-                }
+                "example": { "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
               }
             }
           },
@@ -422,9 +354,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -440,10 +370,7 @@
             "name": "task_id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Task Id"
-            }
+            "schema": { "type": "string", "title": "Task Id" }
           }
         ],
         "responses": {
@@ -463,9 +390,7 @@
             "description": "Task not found",
             "content": {
               "application/json": {
-                "example": {
-                  "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851"
-                }
+                "example": { "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
               }
             }
           },
@@ -473,9 +398,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -493,37 +416,25 @@
             "name": "task_id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Task Id"
-            }
+            "schema": { "type": "string", "title": "Task Id" }
           },
           {
             "name": "file_id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "title": "File Id"
-            }
+            "schema": { "type": "string", "title": "File Id" }
           }
         ],
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -539,71 +450,37 @@
             "name": "task_id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Task Id"
-            }
+            "schema": { "type": "string", "title": "Task Id" }
           },
           {
             "name": "file_id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "title": "File Id"
-            }
+            "schema": { "type": "string", "title": "File Id" }
           }
         ],
         "responses": {
           "200": {
             "description": "File downloaded successfully",
             "content": {
-              "application/json": {
-                "schema": {}
-              },
-              "application/octet-stream": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              },
-              "image/png": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              },
-              "image/jpeg": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              },
-              "application/zip": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
+              "application/json": { "schema": {} },
+              "application/octet-stream": { "schema": { "type": "string", "format": "binary" } },
+              "image/png": { "schema": { "type": "string", "format": "binary" } },
+              "image/jpeg": { "schema": { "type": "string", "format": "binary" } },
+              "application/zip": { "schema": { "type": "string", "format": "binary" } }
             }
           },
           "404": {
             "description": "Task or file not found",
             "content": {
-              "application/json": {
-                "example": {
-                  "detail": "File not found: example_file_id"
-                }
-              }
+              "application/json": { "example": { "detail": "File not found: example_file_id" } }
             }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -621,28 +498,19 @@
             "name": "task_id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Task Id"
-            }
+            "schema": { "type": "string", "title": "Task Id" }
           }
         ],
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -658,54 +526,36 @@
             "name": "task_id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Task Id"
-            }
+            "schema": { "type": "string", "title": "Task Id" }
           }
         ],
         "responses": {
           "200": {
             "description": "ZIP file with all task files",
             "content": {
-              "application/json": {
-                "schema": {}
-              },
-              "application/zip": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
+              "application/json": { "schema": {} },
+              "application/zip": { "schema": { "type": "string", "format": "binary" } }
             }
           },
           "404": {
             "description": "Task not found",
             "content": {
               "application/json": {
-                "example": {
-                  "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851"
-                }
+                "example": { "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
               }
             }
           },
           "500": {
             "description": "Failed to create ZIP archive",
             "content": {
-              "application/json": {
-                "example": {
-                  "detail": "Failed to create ZIP archive"
-                }
-              }
+              "application/json": { "example": { "detail": "Failed to create ZIP archive" } }
             }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -721,19 +571,14 @@
             "name": "task_id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Task Id"
-            }
+            "schema": { "type": "string", "title": "Task Id" }
           }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SelectiveDownloadRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/SelectiveDownloadRequest" }
             }
           }
         },
@@ -741,44 +586,29 @@
           "200": {
             "description": "ZIP file with selected task files",
             "content": {
-              "application/json": {
-                "schema": {}
-              },
-              "application/zip": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
+              "application/json": { "schema": {} },
+              "application/zip": { "schema": { "type": "string", "format": "binary" } }
             }
           },
           "404": {
             "description": "Task not found",
             "content": {
               "application/json": {
-                "example": {
-                  "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851"
-                }
+                "example": { "detail": "Task not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
               }
             }
           },
           "500": {
             "description": "Failed to create ZIP archive",
             "content": {
-              "application/json": {
-                "example": {
-                  "detail": "Failed to create ZIP archive"
-                }
-              }
+              "application/json": { "example": { "detail": "Failed to create ZIP archive" } }
             }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -796,9 +626,7 @@
             "description": "List of available maps",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MapListResponse"
-                },
+                "schema": { "$ref": "#/components/schemas/MapListResponse" },
                 "example": {
                   "maps": [
                     {
@@ -834,10 +662,7 @@
             "name": "map_id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Map Id"
-            }
+            "schema": { "type": "string", "title": "Map Id" }
           }
         ],
         "responses": {
@@ -867,9 +692,7 @@
             "description": "Map not found",
             "content": {
               "application/json": {
-                "example": {
-                  "detail": "Map not found: d290f1ee-6c54-4b01-90e6-d701748f0851"
-                }
+                "example": { "detail": "Map not found: d290f1ee-6c54-4b01-90e6-d701748f0851" }
               }
             }
           },
@@ -877,9 +700,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -893,11 +714,7 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           }
         }
       }
@@ -911,11 +728,7 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           }
         }
       },
@@ -929,66 +742,43 @@
             "name": "map_id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Map Id"
-            }
+            "schema": { "type": "string", "title": "Map Id" }
           },
           {
             "name": "zoom",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Zoom"
-            }
+            "schema": { "type": "integer", "title": "Zoom" }
           },
           {
             "name": "x",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "X"
-            }
+            "schema": { "type": "integer", "title": "X" }
           },
           {
             "name": "y",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Y"
-            }
+            "schema": { "type": "integer", "title": "Y" }
           }
         ],
         "responses": {
           "200": {
             "description": "Map tile image",
-            "content": {
-              "application/json": {
-                "schema": {}
-              },
-              "image/png": {}
-            }
+            "content": { "application/json": { "schema": {} }, "image/png": {} }
           },
           "404": {
             "description": "Tile not found",
             "content": {
-              "application/json": {
-                "example": {
-                  "detail": "Tile not found: zoom=2, x=3, y=4"
-                }
-              }
+              "application/json": { "example": { "detail": "Tile not found: zoom=2, x=3, y=4" } }
             }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -1004,11 +794,7 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           }
         }
       },
@@ -1022,21 +808,13 @@
             "name": "map_id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Map Id"
-            }
+            "schema": { "type": "string", "title": "Map Id" }
           }
         ],
         "responses": {
           "200": {
             "description": "Thumbnail image",
-            "content": {
-              "application/json": {
-                "schema": {}
-              },
-              "image/png": {}
-            }
+            "content": { "application/json": { "schema": {} }, "image/png": {} }
           },
           "404": {
             "description": "Map not found",
@@ -1052,9 +830,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -1070,11 +846,7 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           }
         }
       },
@@ -1088,28 +860,19 @@
             "name": "map_id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Map Id"
-            }
+            "schema": { "type": "string", "title": "Map Id" }
           }
         ],
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -1145,13 +908,13 @@
         "properties": {
           "width": {
             "type": "integer",
-            "exclusiveMinimum": 0,
+            "exclusiveMinimum": 0.0,
             "title": "Width",
             "description": "Image width in pixels"
           },
           "height": {
             "type": "integer",
-            "exclusiveMinimum": 0,
+            "exclusiveMinimum": 0.0,
             "title": "Height",
             "description": "Image height in pixels (minimum: 1)"
           },
@@ -1167,15 +930,7 @@
             "default": "minecraft"
           },
           "image_file": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "binary"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string", "format": "binary" }, { "type": "null" }],
             "title": "Image File",
             "description": "Image file to preview (optional)"
           }
@@ -1208,12 +963,6 @@
         "title": "DitherAlgorithm",
         "description": "Supported dithering algorithms."
       },
-      "FileCategory": {
-        "type": "string",
-        "enum": ["dithered", "rendered", "schematic", "web", "input", "other", "task_zip", "split"],
-        "title": "FileCategory",
-        "description": "Category of a file in the task output."
-      },
       "FileInfo": {
         "properties": {
           "fileId": {
@@ -1221,86 +970,35 @@
             "title": "Fileid",
             "description": "Unique file identifier"
           },
-          "filename": {
-            "type": "string",
-            "title": "Filename",
-            "description": "Original filename"
-          },
-          "type": {
-            "type": "string",
-            "title": "Type",
-            "description": "MIME type"
-          },
-          "size": {
-            "type": "integer",
-            "title": "Size",
-            "description": "File size in bytes"
-          },
-          "category": {
-            "$ref": "#/components/schemas/FileCategory",
-            "description": "File category (dithered, rendered, schematic, web, split)"
-          }
+          "filename": { "type": "string", "title": "Filename", "description": "Original filename" },
+          "type": { "type": "string", "title": "Type", "description": "MIME type" },
+          "size": { "type": "integer", "title": "Size", "description": "File size in bytes" }
         },
         "type": "object",
-        "required": ["fileId", "filename", "type", "size", "category"],
+        "required": ["fileId", "filename", "type", "size"],
         "title": "FileInfo",
         "description": "Information about a generated file."
       },
       "FileListCategories": {
         "properties": {
           "input": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/FileInfo"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "$ref": "#/components/schemas/FileInfo" }, { "type": "null" }],
             "description": "Original input image"
           },
           "dithered": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/FileInfo"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "$ref": "#/components/schemas/FileInfo" }, { "type": "null" }],
             "description": "Dithered version of the input image"
           },
           "rendered": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/RenderedCategoryDict"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "$ref": "#/components/schemas/RenderedCategoryDict" }, { "type": "null" }],
             "description": "Rendered images, grouped by line type"
           },
           "schematic": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/FileInfo"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "$ref": "#/components/schemas/FileInfo" }, { "type": "null" }],
             "description": "Generated schematic file"
           },
           "task_zip": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/FileInfo"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "$ref": "#/components/schemas/FileInfo" }, { "type": "null" }],
             "description": "ZIP archive of task files"
           }
         },
@@ -1311,11 +1009,7 @@
       },
       "FileListResponse": {
         "properties": {
-          "taskId": {
-            "type": "string",
-            "title": "Taskid",
-            "description": "Task identifier"
-          },
+          "taskId": { "type": "string", "title": "Taskid", "description": "Task identifier" },
           "categories": {
             "$ref": "#/components/schemas/FileListCategories",
             "description": "Files grouped by category"
@@ -1329,9 +1023,7 @@
       "HTTPValidationError": {
         "properties": {
           "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
+            "items": { "$ref": "#/components/schemas/ValidationError" },
             "type": "array",
             "title": "Detail"
           }
@@ -1341,16 +1033,8 @@
       },
       "MapInfo": {
         "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id",
-            "description": "Map identifier (task ID)"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": "Human-readable map name"
-          },
+          "id": { "type": "string", "title": "Id", "description": "Map identifier (task ID)" },
+          "name": { "type": "string", "title": "Name", "description": "Human-readable map name" },
           "created": {
             "type": "string",
             "format": "date-time",
@@ -1363,38 +1047,17 @@
             "description": "URL to thumbnail image"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Description",
             "description": "Map description"
           },
           "width": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Width",
             "description": "Map width in blocks"
           },
           "height": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Height",
             "description": "Map height in blocks"
           }
@@ -1407,9 +1070,7 @@
       "MapListResponse": {
         "properties": {
           "maps": {
-            "items": {
-              "$ref": "#/components/schemas/MapInfo"
-            },
+            "items": { "$ref": "#/components/schemas/MapInfo" },
             "type": "array",
             "title": "Maps",
             "description": "Available maps"
@@ -1423,60 +1084,32 @@
         "properties": {
           "block_lines": {
             "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/FileInfo"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
+              { "items": { "$ref": "#/components/schemas/FileInfo" }, "type": "array" },
+              { "type": "null" }
             ],
             "title": "Block Lines",
             "description": "Rendered images with block grid lines"
           },
           "chunk_lines": {
             "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/FileInfo"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
+              { "items": { "$ref": "#/components/schemas/FileInfo" }, "type": "array" },
+              { "type": "null" }
             ],
             "title": "Chunk Lines",
             "description": "Rendered images with chunk border lines"
           },
           "both_lines": {
             "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/FileInfo"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
+              { "items": { "$ref": "#/components/schemas/FileInfo" }, "type": "array" },
+              { "type": "null" }
             ],
             "title": "Both Lines",
             "description": "Rendered images with both block and chunk lines"
           },
           "no_lines": {
             "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/FileInfo"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
+              { "items": { "$ref": "#/components/schemas/FileInfo" }, "type": "array" },
+              { "type": "null" }
             ],
             "title": "No Lines",
             "description": "Rendered images without any grid lines"
@@ -1490,9 +1123,7 @@
       "SelectiveDownloadRequest": {
         "properties": {
           "fileIds": {
-            "items": {
-              "type": "string"
-            },
+            "items": { "type": "string" },
             "type": "array",
             "title": "Fileids",
             "description": "IDs of files to include in download"
@@ -1515,14 +1146,7 @@
             "description": "Current task status"
           },
           "progress": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Progress",
             "description": "Progress percentage (0-100)"
           },
@@ -1533,14 +1157,7 @@
             "description": "Last status update time"
           },
           "error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Error",
             "description": "Error message if task failed"
           }
@@ -1559,27 +1176,12 @@
       "ValidationError": {
         "properties": {
           "loc": {
-            "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
             "type": "array",
             "title": "Location"
           },
-          "msg": {
-            "type": "string",
-            "title": "Message"
-          },
-          "type": {
-            "type": "string",
-            "title": "Error Type"
-          }
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" }
         },
         "type": "object",
         "required": ["loc", "msg", "type"],

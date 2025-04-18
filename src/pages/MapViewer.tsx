@@ -27,7 +27,7 @@ import { toast } from 'sonner';
 // Types for map components
 interface PixelCoords {
   x: number;
-  y: number;
+  z: number;
 }
 
 interface BlockInfo {
@@ -37,7 +37,7 @@ interface BlockInfo {
 interface HoverInfoProps {
   pixelCoords: PixelCoords | null;
   blockInfo: BlockInfo | null;
-  chunkCoords: { x: number; y: number } | null;
+  chunkCoords: { x: number; z: number } | null;
   visible: boolean;
   isActive: boolean;
 }
@@ -86,12 +86,12 @@ function HoverInfo({ pixelCoords, blockInfo, chunkCoords, visible, isActive }: H
       <div className="font-semibold mb-1">{isActive ? 'Active Block' : 'Cursor Position'}</div>
       <div className="flex gap-2">
         <span className="text-muted-foreground">Block X:</span> {pixelCoords.x}
-        <span className="text-muted-foreground ml-2">Block Y:</span> {pixelCoords.y}
+        <span className="text-muted-foreground ml-2">Block Z:</span> {pixelCoords.z}
       </div>
       {chunkCoords && (
         <div className="flex gap-2 mt-1">
           <span className="text-muted-foreground">Chunk X:</span> {chunkCoords.x}
-          <span className="text-muted-foreground ml-2">Chunk Y:</span> {chunkCoords.y}
+          <span className="text-muted-foreground ml-2">Chunk Z:</span> {chunkCoords.z}
         </div>
       )}
       {blockInfo && (
@@ -295,12 +295,15 @@ function MouseTracker({
   onClick,
   zoomLevel,
   minActiveZoom,
-}: MouseTrackerProps & { zoomLevel: number; minActiveZoom: number }) {
+}: MouseTrackerProps & {
+  zoomLevel: number;
+  minActiveZoom: number;
+}) {
   useMapEvents({
     mousemove: (e: L.LeafletMouseEvent) => {
       if (zoomLevel >= minActiveZoom) {
         const { lat, lng } = e.latlng;
-        onMouseMove({ x: Math.floor(lng), y: Math.floor(lat) });
+        onMouseMove({ x: Math.floor(lng), z: Math.floor(lat) });
       } else {
         onMouseMove(null);
       }
@@ -311,7 +314,7 @@ function MouseTracker({
     click: (e: L.LeafletMouseEvent) => {
       if (zoomLevel >= minActiveZoom) {
         const { lat, lng } = e.latlng;
-        onClick({ x: Math.floor(lng), y: Math.floor(lat) });
+        onClick({ x: Math.floor(lng), z: Math.floor(lat) });
       }
     },
   });
@@ -486,14 +489,18 @@ export default function MapViewer() {
                 bounds={bounds}
                 // @ts-ignore - react-leaflet types don't include CRS but the prop works
                 crs={pixelCRS}
-                minZoom={mapData.minZoom}
-                maxZoom={mapData.maxZoom}
-                zoomSnap={1}
-                zoomDelta={1}
-                wheelPxPerZoomLevel={120}
+                minZoom={0}
+                maxZoom={10}
+                zoom={4}
+                zoomSnap={0.25}
+                zoomDelta={0.25}
+                wheelPxPerZoomLevel={40}
+                scrollWheelZoom={true}
+                wheelDebounceTime={0}
                 attributionControl={false}
                 className="w-full h-full"
                 zoomControl={false}
+                center={[0, 0]}
               >
                 <ZoomListener />
                 <TileLayerManager mapId={taskId!} mapData={mapData} />
@@ -513,13 +520,20 @@ export default function MapViewer() {
                 </div>
               </MapContainer>
               <HoverInfo
-                pixelCoords={activeBlock ?? hoverCoords}
+                pixelCoords={
+                  activeBlock ?? hoverCoords
+                    ? {
+                        x: Math.floor((activeBlock ?? hoverCoords)!.x / 16),
+                        z: Math.floor((activeBlock ?? hoverCoords)!.z / 16),
+                      }
+                    : null
+                }
                 blockInfo={activeBlock ?? hoverCoords ? { type: 'Minecraft Block' } : null}
                 chunkCoords={
                   activeBlock ?? hoverCoords
                     ? {
-                        x: Math.floor((activeBlock ?? hoverCoords)!.x / 16),
-                        y: Math.floor((activeBlock ?? hoverCoords)!.y / 16),
+                        x: Math.floor((activeBlock ?? hoverCoords)!.x / 256),
+                        z: Math.floor((activeBlock ?? hoverCoords)!.z / 256),
                       }
                     : null
                 }

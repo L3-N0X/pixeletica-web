@@ -36,7 +36,7 @@ const getBaseUrl = (): string => {
  */
 export const listMaps = async (): Promise<MapListResponse> => {
   const baseUrl = getBaseUrl();
-  const apiUrl = `${baseUrl}/api/maps.json`;
+  const apiUrl = `${baseUrl}/maps.json`;
 
   try {
     const response = await fetch(apiUrl);
@@ -56,7 +56,7 @@ export const listMaps = async (): Promise<MapListResponse> => {
  */
 export const getMapMetadata = async (mapId: string): Promise<MapMetadata> => {
   const baseUrl = getBaseUrl();
-  const apiUrl = `${baseUrl}/api/map/${mapId}/metadata.json`;
+  const apiUrl = `${baseUrl}/map/${mapId}/metadata.json`;
 
   try {
     const response = await fetch(apiUrl);
@@ -76,7 +76,7 @@ export const getMapMetadata = async (mapId: string): Promise<MapMetadata> => {
  */
 export const getMapThumbnailUrl = (mapId: string): string => {
   const baseUrl = getBaseUrl();
-  return `${baseUrl}/api/map/${mapId}/thumbnail.png`;
+  return `${baseUrl}/map/${mapId}/thumbnail.png`;
 };
 
 /**
@@ -85,7 +85,7 @@ export const getMapThumbnailUrl = (mapId: string): string => {
  */
 export const getMapFullImageUrl = (mapId: string): string => {
   const baseUrl = getBaseUrl();
-  return `${baseUrl}/api/map/${mapId}/full-image.png`;
+  return `${baseUrl}/map/${mapId}/full-image.png`;
 };
 
 /**
@@ -97,7 +97,7 @@ export const getMapFullImageUrl = (mapId: string): string => {
  */
 export const getMapTileUrl = (mapId: string, zoom: number, x: number, y: number): string => {
   const baseUrl = getBaseUrl();
-  return `${baseUrl}/api/map/${mapId}/tiles/${zoom}/${x}/${y}.png`;
+  return `${baseUrl}/map/${mapId}/tiles/${zoom}/${x}/${y}.png`;
 };
 
 /**

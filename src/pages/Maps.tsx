@@ -136,7 +136,7 @@ export default function Maps() {
                 </div>
                 <div className="flex flex-col items-center gap-2 justify-between mt-3">
                   <Button variant="secondary" size="sm" asChild className="w-full">
-                    <Link to={`/maps/${map.id}`}>Open in Map Viewer</Link>
+                    <Link to={`/mapviewer/${map.id}`}>Open in Map Viewer</Link>
                   </Button>
                   <Button variant="outline" size="sm" asChild className="w-full">
                     <Link to={`/results/${map.id}`}>View Results</Link>
