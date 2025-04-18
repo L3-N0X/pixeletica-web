@@ -275,6 +275,13 @@ export default function Results() {
           >
             <LuCopy className="h-5 w-5" /> Copy URL
           </Button>
+          <Button
+            variant="secondary"
+            onClick={() => navigate(`/mapviewer/${taskId}`)}
+            className="flex items-center gap-2"
+          >
+            <GridIcon className="h-5 w-5" /> Open Map Viewer
+          </Button>
           <Button variant="outline" onClick={() => navigate('/create')}>
             <LuPencil className="h-5 w-5" />
             Convert Another Image

@@ -1,4 +1,4 @@
-import { getMapFullImageUrl, getMapMetadata, getMapTileUrl, MapMetadata } from '@/api/maps';
+import { getMapMetadata, MapMetadata } from '@/api/maps';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -19,8 +19,8 @@ import {
 } from '@radix-ui/react-icons';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { MapContainer, useMap, useMapEvents } from 'react-leaflet';
+import { useEffect, useMemo, useState } from 'react';
+import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -106,148 +106,135 @@ function HoverInfo({ pixelCoords, blockInfo, chunkCoords, visible, isActive }: H
   );
 }
 
-// Custom grid overlay component
+// Custom grid overlay component using Canvas for better performance and scaling
 function GridOverlay({ showGrid, gridSize = 16 }: GridOverlayProps) {
   const map = useMap();
 
   useEffect(() => {
     if (!showGrid) return;
 
-    // Create a custom grid layer class
-    class CustomGridLayer extends L.GridLayer {
-      createTile(coords: L.Coords): HTMLElement {
-        const tile = document.createElement('div');
-        tile.style.width = '100%';
-        tile.style.height = '100%';
-        tile.style.border = '1px solid rgba(0, 0, 0, 0.2)';
-        return tile;
+    // Create a canvas overlay for the grid
+    const canvas = L.DomUtil.create('canvas', 'leaflet-grid-canvas') as HTMLCanvasElement;
+    const overlay = L.DomUtil.create('div', 'leaflet-grid-overlay');
+    overlay.appendChild(canvas);
+
+    const updateGrid = () => {
+      const size = map.getSize();
+      canvas.width = size.x;
+      canvas.height = size.y;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const bounds = map.getBounds();
+      const zoom = map.getZoom();
+      const topLeft = map.latLngToLayerPoint(bounds.getNorthWest());
+      const bottomRight = map.latLngToLayerPoint(bounds.getSouthEast());
+
+      // Calculate grid spacing in pixels at current zoom
+      const start = map.layerPointToLatLng([0, 0]);
+      const end = map.layerPointToLatLng([gridSize, gridSize]);
+      const deltaLng = Math.abs(end.lng - start.lng);
+      const deltaLat = Math.abs(end.lat - start.lat);
+
+      // Draw vertical lines
+      for (
+        let lng = Math.floor(bounds.getWest() / deltaLng) * deltaLng;
+        lng < bounds.getEast();
+        lng += deltaLng
+      ) {
+        const p1 = map.latLngToContainerPoint([bounds.getNorth(), lng]);
+        const p2 = map.latLngToContainerPoint([bounds.getSouth(), lng]);
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
       }
-    }
 
-    // Create an instance of our custom grid layer
-    const gridLayer = new CustomGridLayer({
-      tileSize: gridSize,
-      opacity: 0.4,
-    });
+      // Draw horizontal lines
+      for (
+        let lat = Math.floor(bounds.getSouth() / deltaLat) * deltaLat;
+        lat < bounds.getNorth();
+        lat += deltaLat
+      ) {
+        const p1 = map.latLngToContainerPoint([lat, bounds.getWest()]);
+        const p2 = map.latLngToContainerPoint([lat, bounds.getEast()]);
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    };
 
-    map.addLayer(gridLayer);
+    // Add overlay to map container
+    map.getContainer().appendChild(overlay);
+
+    // Redraw grid on map events
+    const redraw = () => updateGrid();
+    map.on('move zoom resize', redraw);
+    updateGrid();
 
     return () => {
-      map.removeLayer(gridLayer);
+      map.off('move zoom resize', redraw);
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
     };
   }, [map, showGrid, gridSize]);
 
   return null;
 }
 
-// Custom component to handle tile loading based on zoom level
+/**
+ * Custom component to handle tile loading based on new zoom_levels structure.
+ * For each zoom level, overlays the correct tiles as images.
+ */
 function TileLayerManager({ mapId, mapData }: TileLayerManagerProps) {
-  const map = useMap();
-  const tileCache = useRef(new Map<string, string>());
+  if (!mapId || !mapData) return null;
 
-  useEffect(() => {
-    if (!mapId || !mapData) return;
+  const baseUrl = (import.meta.env && import.meta.env.VITE_API_BASE_URL) || '/api';
+  const tileSize = mapData.tileSize || 256;
+  const minZoom = mapData.minZoom ?? 0;
+  const maxZoom = mapData.maxZoom ?? 10;
 
-    // Create a custom tile layer class
-    class CustomTileLayer extends L.GridLayer {
-      createTile(
-        coords: L.Coords,
-        done: (error: Error | undefined, tile: HTMLElement) => void
-      ): HTMLElement {
-        const tile = document.createElement('img') as HTMLImageElement;
-        const tileKey = `${coords.z}_${coords.x}_${coords.y}`;
+  // Compute bounds for the highest zoom level (full map area)
+  let bounds: [[number, number], [number, number]] = [
+    [0, 0],
+    [mapData.height, mapData.width],
+  ];
 
-        // Check if tile is cached
-        if (tileCache.current.has(tileKey)) {
-          tile.src = tileCache.current.get(tileKey)!;
-          setTimeout(() => done(undefined, tile), 0);
-          return tile;
-        }
-
-        const zoom = coords.z;
-        const size = mapData.tileSize || 512;
-        const x = coords.x * size;
-        const y = coords.y * size;
-
-        // For max zoom level, fetch individual tiles
-        if (zoom >= mapData.maxZoom - 1) {
-          const tileUrl = getMapTileUrl(mapId, zoom, coords.x, coords.y);
-          tile.crossOrigin = 'anonymous';
-          tile.onload = () => {
-            // Cache the tile
-            if (tile.src.startsWith('blob:')) {
-              const canvas = document.createElement('canvas');
-              canvas.width = tile.width;
-              canvas.height = tile.height;
-              const ctx = canvas.getContext('2d')!;
-              ctx.drawImage(tile, 0, 0);
-              const dataUrl = canvas.toDataURL('image/png');
-              tileCache.current.set(tileKey, dataUrl);
-            } else {
-              tileCache.current.set(tileKey, tile.src);
-            }
-            done(undefined, tile);
-          };
-          tile.onerror = (e) => {
-            console.error('Error loading tile:', e);
-            done(new Error('Failed to load tile'), tile);
-          };
-          tile.src = tileUrl;
-        }
-        // For lower zoom levels, use the full image
-        else {
-          const fullImageUrl = getMapFullImageUrl(mapId);
-          tile.crossOrigin = 'anonymous';
-
-          // Create a temporary image to load the full image
-          const tempImage = new Image();
-          tempImage.crossOrigin = 'anonymous';
-          tempImage.onload = () => {
-            // Draw the appropriate portion of the full image on a canvas
-            const canvas = document.createElement('canvas');
-            canvas.width = size;
-            canvas.height = size;
-            const ctx = canvas.getContext('2d')!;
-
-            // Calculate the source coordinates in the full image
-            const scale = Math.pow(2, mapData.maxZoom - zoom - 1);
-            const sourceX = (x / Math.pow(2, zoom)) * scale;
-            const sourceY = (y / Math.pow(2, zoom)) * scale;
-            const sourceWidth = (size / Math.pow(2, zoom)) * scale;
-            const sourceHeight = (size / Math.pow(2, zoom)) * scale;
-
-            // Draw the portion on the canvas
-            ctx.drawImage(tempImage, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, size, size);
-
-            // Convert canvas to data URL and use as tile source
-            const dataUrl = canvas.toDataURL('image/png');
-            tileCache.current.set(tileKey, dataUrl);
-            tile.src = dataUrl;
-            done(undefined, tile);
-          };
-
-          tempImage.onerror = (e) => {
-            console.error('Error loading full image:', e);
-            done(new Error('Failed to load full image'), tile);
-          };
-
-          tempImage.src = fullImageUrl;
-        }
-
-        return tile;
-      }
+  // If zoomLevels info is available, use it to set bounds for each zoom level
+  if (mapData.zoomLevels && Array.isArray(mapData.zoomLevels)) {
+    const zl =
+      mapData.zoomLevels.find(
+        (z: any) => z.zoomLevel === maxZoom || z.zoomLevel === mapData.maxZoom
+      ) || mapData.zoomLevels[mapData.zoomLevels.length - 1];
+    if (zl) {
+      const width = zl.tiles_x * tileSize;
+      const height = zl.tiles_z * tileSize;
+      bounds = [
+        [0, 0],
+        [height, width],
+      ];
     }
+  }
 
-    // Create an instance of our custom tile layer
-    const tileLayerInstance = new CustomTileLayer();
-    tileLayerInstance.addTo(map);
+  const urlTemplate = `${baseUrl}/map/${mapId}/tiles/{z}/{x}/{y}.png`;
 
-    return () => {
-      map.removeLayer(tileLayerInstance);
-    };
-  }, [map, mapId, mapData]);
-
-  return null;
+  return (
+    <TileLayer
+      url={urlTemplate}
+      tileSize={tileSize}
+      minZoom={minZoom}
+      maxZoom={maxZoom}
+      bounds={bounds}
+      noWrap={true}
+      className="pixelated-image"
+    />
+  );
 }
 
 // Zoom button components

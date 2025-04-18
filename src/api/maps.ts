@@ -11,6 +11,24 @@ export interface MapListResponse {
   maps: MapInfo[];
 }
 
+export interface MapTile {
+  x: number;
+  z: number;
+  zoomLevel: number;
+  world_x: number;
+  world_z: number;
+  width: number;
+  height: number;
+  filename: string;
+}
+
+export interface MapZoomLevel {
+  zoomLevel: number;
+  tiles_x: number;
+  tiles_z: number;
+  tiles: MapTile[];
+}
+
 export interface MapMetadata {
   id: string;
   name: string;
@@ -23,6 +41,7 @@ export interface MapMetadata {
   maxZoom: number;
   minZoom: number;
   tileFormat: string;
+  zoomLevels: MapZoomLevel[];
   description?: string;
 }
 
