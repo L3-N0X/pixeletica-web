@@ -222,7 +222,7 @@ export default function MapViewer() {
               onClick={() => navigate(`/results/${taskId}`)}
               className="rounded-full"
             >
-              <ArrowLeftIcon className="h-5 w-5" />
+              <ArrowLeftIcon className="h-6 w-6" />
             </Button>
             <H1>Map Viewer</H1>
           </div>
@@ -295,7 +295,7 @@ export default function MapViewer() {
                 wheelPxPerZoomLevel={60}
                 scrollWheelZoom={true}
                 attributionControl={false}
-                className="w-full h-full bg-muted"
+                className="w-full h-full bg-background"
                 zoomControl={false}
                 maxBoundsViscosity={1.0}
                 bounds={bounds}
@@ -334,7 +334,7 @@ export default function MapViewer() {
                       [activeBlockCoords.z, activeBlockCoords.x],
                       [activeBlockCoords.z + blockSize, activeBlockCoords.x + blockSize],
                     ]}
-                    pathOptions={{ color: 'yellow', weight: 2, fillOpacity: 0.1 }}
+                    pathOptions={{ color: 'var(--accent)', weight: 2, fillOpacity: 0.1 }}
                   />
                 )}
 
