@@ -70,6 +70,28 @@ export const listMaps = async (): Promise<MapListResponse> => {
 };
 
 /**
+ * Fetches the block data (mapping and matrix) for a specific map.
+ * @param mapId - The ID of the map.
+ * @returns A promise that resolves with the block data object.
+ */
+export const getMapBlockData = async (mapId: string): Promise<any> => {
+  // Define a proper type later if needed
+  const baseUrl = getBaseUrl();
+  const apiUrl = `${baseUrl}/map/${mapId}/blockdata.json`;
+
+  try {
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch block data: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(`Error fetching block data for map ${mapId}:`, error);
+    throw error;
+  }
+};
+
+/**
  * Get detailed metadata for a specific map
  * @param mapId - Map identifier (task ID)
  */
