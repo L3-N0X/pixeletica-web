@@ -97,14 +97,18 @@ function BoundedTileLayerComponent({
     // Define the getTileUrl function directly
     const getTileUrl = (coords: L.Coords): string => {
       const zoom = coords.z;
+      console.log(`getTileUrl called for z=${zoom}, x=${coords.x}, y=${coords.y}`); // Log requested coords
+
       const zoomLevelData = metadata.zoomLevels?.find((zl) => zl.zoomLevel === zoom);
       const tilesX = zoomLevelData?.tiles_x ?? 1;
       const tilesZ = zoomLevelData?.tiles_z ?? 1;
       const maxTileX = tilesX - 1;
       const maxTileY = tilesZ - 1;
+      console.log(`Zoom ${zoom}: Max Tile X=${maxTileX}, Max Tile Y=${maxTileY}`); // Log calculated max tiles
 
       if (coords.x < 0 || coords.y < 0 || coords.x > maxTileX || coords.y > maxTileY) {
-        console.debug(
+        console.warn(
+          // Use warn for visibility
           `Tile out of bounds: z=${zoom}, x=${coords.x}, y=${coords.y}. Max: x=${maxTileX}, y=${maxTileY}`
         );
         return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
@@ -139,6 +143,14 @@ function BoundedTileLayerComponent({
       if (map && typeof map.addLayer === 'function' && tilePane) {
         console.log('Map is ready and tilePane exists, adding tile layer...');
         tileLayer.addTo(map);
+
+        // Explicitly fit bounds after layer is added
+        const mapBounds = L.latLngBounds([
+          [metadata.height, 0], // South-West corner (max Y, min X)
+          [0, metadata.width], // North-East corner (min Y, max X)
+        ]);
+        console.log('Fitting map to bounds:', mapBounds);
+        map.fitBounds(mapBounds);
       } else {
         console.error(
           'Map or tilePane unavailable when trying to add layer. Map:',
@@ -597,11 +609,11 @@ export default function MapViewer() {
                 key={taskId} // Add key to force remount if taskId changes
                 // @ts-ignore - react-leaflet types might mismatch CRS prop, but it's valid Leaflet option
                 crs={pixelCRS}
-                bounds={bounds} // Set initial bounds - Removed duplicate
+                // bounds={bounds} // REMOVED: Rely on programmatic fitBounds in BoundedTileLayerComponent
+                center={[mapData.height / 2, mapData.width / 2]} // ADDED: Provide initial center
+                zoom={mapData.minZoom ?? 0} // ADDED: Provide initial zoom
                 minZoom={mapData.minZoom ?? 0} // Use metadata minZoom
                 maxZoom={mapData.maxZoom ?? 10} // Use metadata maxZoom
-                // Initial zoom can be set here, or let fitBounds handle it
-                // zoom={mapData.minZoom ?? 0}
                 zoomSnap={1} // Snap zoom to integer levels
                 zoomDelta={1} // Zoom by integer levels
                 wheelPxPerZoomLevel={60} // Standard Leaflet value
