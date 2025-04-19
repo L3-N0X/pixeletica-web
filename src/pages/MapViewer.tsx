@@ -54,7 +54,7 @@ export default function MapViewer() {
   // All hooks must be called before any early return!
   const { zoomLevel, ZoomListener } = useZoomLevel(0);
   const [showBlockGrid, setShowBlockGrid] = useState(false);
-  const [showChunkGrid, setShowChunkGrid] = useState(false);
+  const [showChunkGrid, setShowChunkGrid] = useState(true); // Set to true by default
   const [showInfo, setShowInfo] = useState(true);
   const [hoverCoords, setHoverCoords] = useState<PixelCoords | null>(null);
   const [activeBlockCoords, setActiveBlockCoords] = useState<PixelCoords | null>(null);
@@ -309,14 +309,14 @@ export default function MapViewer() {
                 />
 
                 {/* Block grid (1x1 block) */}
-                <GridOverlay showGrid={showBlockGrid} gridSize={1} />
+                {showBlockGrid && <GridOverlay showGrid={showBlockGrid} gridSize={1} />}
 
                 {/* Chunk grid (16x16 blocks) */}
-                <GridOverlay showGrid={showChunkGrid} gridSize={16} />
+                {showChunkGrid && <GridOverlay showGrid={showChunkGrid} gridSize={16} />}
 
                 {/* Highlight for the selected block with proper scaling */}
                 {activeBlockCoords && (
-                  <Rectangle // Adjust size to match coordinate scale
+                  <Rectangle
                     bounds={[
                       [activeBlockCoords.z, activeBlockCoords.x],
                       [activeBlockCoords.z + blockSize, activeBlockCoords.x + blockSize],
