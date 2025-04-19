@@ -228,7 +228,6 @@ export default function MapViewer() {
           </div>
           <div className="space-y-1">
             <P className="text-muted-foreground">Task ID: {taskId}</P>
-            {mapData && <P className="text-muted-foreground">Map: {mapData.name}</P>}
           </div>
         </div>
       </div>
@@ -299,6 +298,12 @@ export default function MapViewer() {
                 zoomControl={false}
                 maxBoundsViscosity={1.0}
                 bounds={bounds}
+                style={{
+                  background:
+                    'linear-gradient(45deg, var(--background) 25%, transparent 25%), linear-gradient(-45deg, var(--background) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--background) 75%), linear-gradient(-45deg, transparent 75%, var(--background) 75%)',
+                  backgroundSize: '16px 16px',
+                  backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
+                }}
               >
                 <ZoomListener />
                 <BoundedTileLayerComponent
@@ -334,7 +339,7 @@ export default function MapViewer() {
                       [activeBlockCoords.z, activeBlockCoords.x],
                       [activeBlockCoords.z + blockSize, activeBlockCoords.x + blockSize],
                     ]}
-                    pathOptions={{ color: 'var(--accent)', weight: 2, fillOpacity: 0.1 }}
+                    pathOptions={{ color: 'var(--primary)', weight: 2, fillOpacity: 0.1 }}
                   />
                 )}
 

@@ -586,6 +586,7 @@ export default function Create() {
                   <p className="text-red-500 mb-2">⚠️ Preview not available</p>
                   <p className="text-sm text-muted-foreground">{previewError}</p>
                   <Button
+                    type="button" // Prevent form submission
                     onClick={() => generatePreview()}
                     className="mt-4"
                     disabled={!selectedFile}
