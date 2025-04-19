@@ -1,4 +1,4 @@
-import { BLOCK_SIZE, CHUNK_SIZE, COORDINATE_SCALE } from '@/constants/map-constants';
+import { CHUNK_SIZE, COORDINATE_SCALE } from '@/constants/map-constants';
 import { HoverInfoProps } from '@/types/map-types';
 
 // Component to show hover/active block information

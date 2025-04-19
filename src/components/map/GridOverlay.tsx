@@ -5,59 +5,58 @@ import { useEffect, useState } from 'react';
 import { Polyline, LayerGroup } from 'react-leaflet';
 import { LatLngExpression } from 'leaflet';
 
-export function GridOverlay({ showGrid, gridSize }: GridOverlayProps) {
+export function GridOverlay({ showGrid, gridSize, originX, originZ }: GridOverlayProps) {
   const map = useMap();
   const [verticalLines, setVerticalLines] = useState<LatLngExpression[][]>([]);
   const [horizontalLines, setHorizontalLines] = useState<LatLngExpression[][]>([]);
 
-  // Create grid when visibility changes or on map movement
   useEffect(() => {
     if (!showGrid || !map) return;
 
-    // Function to generate the grid
     const updateGrid = () => {
-      // Calculate the effective grid size (accounting for coordinate scale)
       const effectiveGridSize = gridSize * COORDINATE_SCALE;
-
-      // Get current map bounds
       const bounds = map.getBounds();
 
-      // Calculate grid start/end points with some buffer
-      const startX = Math.floor(bounds.getWest() / effectiveGridSize) * effectiveGridSize;
-      const endX = Math.ceil(bounds.getEast() / effectiveGridSize) * effectiveGridSize;
-      const startY = Math.floor(bounds.getSouth() / effectiveGridSize) * effectiveGridSize;
-      const endY = Math.ceil(bounds.getNorth() / effectiveGridSize) * effectiveGridSize;
+      // compute world‐coords for current view
+      const offsetLng = originX * COORDINATE_SCALE;
+      const offsetLat = originZ * COORDINATE_SCALE;
+      const worldWest = bounds.getWest() + offsetLng;
+      const worldEast = bounds.getEast() + offsetLng;
+      const worldSouth = bounds.getSouth() + offsetLat;
+      const worldNorth = bounds.getNorth() + offsetLat;
 
-      // Create vertical grid lines
-      const vLines: LatLngExpression[][] = [];
-      for (let x = startX; x <= endX; x += effectiveGridSize) {
-        vLines.push([
-          [bounds.getNorth(), x],
-          [bounds.getSouth(), x],
+      // range of world grid lines
+      const firstX = Math.ceil(worldWest / effectiveGridSize) * effectiveGridSize;
+      const lastX = Math.floor(worldEast / effectiveGridSize) * effectiveGridSize;
+      const firstZ = Math.ceil(worldSouth / effectiveGridSize) * effectiveGridSize;
+      const lastZ = Math.floor(worldNorth / effectiveGridSize) * effectiveGridSize;
+
+      const v: LatLngExpression[][] = [];
+      for (let wx = firstX; wx <= lastX; wx += effectiveGridSize) {
+        const x = wx - offsetLng;
+        v.push([
+          [worldNorth - offsetLat, x],
+          [worldSouth - offsetLat, x],
         ]);
       }
 
-      // Create horizontal grid lines
-      const hLines: LatLngExpression[][] = [];
-      for (let y = startY; y <= endY; y += effectiveGridSize) {
-        hLines.push([
-          [y, bounds.getWest()],
-          [y, bounds.getEast()],
+      const h: LatLngExpression[][] = [];
+      for (let wz = firstZ; wz <= lastZ; wz += effectiveGridSize) {
+        const y = wz - offsetLat;
+        h.push([
+          [y, worldWest - offsetLng],
+          [y, worldEast - offsetLng],
         ]);
       }
 
-      setVerticalLines(vLines);
-      setHorizontalLines(hLines);
+      setVerticalLines(v);
+      setHorizontalLines(h);
     };
 
-    // Update grid initially and when map moves
     updateGrid();
     map.on('moveend zoomend', updateGrid);
-
-    return () => {
-      map.off('moveend zoomend', updateGrid);
-    };
-  }, [map, showGrid, gridSize]);
+    return () => void map.off('moveend zoomend', updateGrid);
+  }, [map, showGrid, gridSize, originX, originZ]);
 
   if (!showGrid) return null;
 
@@ -70,10 +69,10 @@ export function GridOverlay({ showGrid, gridSize }: GridOverlayProps) {
 
   return (
     <LayerGroup>
-      {verticalLines.map((positions, index) => (
+      {verticalLines.map((pos, i) => (
         <Polyline
-          key={`v-${index}`}
-          positions={positions}
+          key={`v-${i}`}
+          positions={pos}
           pathOptions={{
             color: lineColor,
             weight: lineWeight,
@@ -82,11 +81,10 @@ export function GridOverlay({ showGrid, gridSize }: GridOverlayProps) {
           }}
         />
       ))}
-
-      {horizontalLines.map((positions, index) => (
+      {horizontalLines.map((pos, i) => (
         <Polyline
-          key={`h-${index}`}
-          positions={positions}
+          key={`h-${i}`}
+          positions={pos}
           pathOptions={{
             color: lineColor,
             weight: lineWeight,

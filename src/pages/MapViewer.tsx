@@ -101,10 +101,8 @@ export default function MapViewer() {
 
   // Handle block click - Uses the raw block coordinates
   const handleBlockClick = (clickedCoords: PixelCoords | null) => {
-    if (clickedCoords) {
-      console.debug(`Block clicked at [${clickedCoords.x}, ${clickedCoords.z}]`);
-
-      // If clicking the same block again, deselect it
+    if (clickedCoords && mapData) {
+      // deselect on same click
       if (
         activeBlockCoords &&
         activeBlockCoords.x === clickedCoords.x &&
@@ -114,23 +112,24 @@ export default function MapViewer() {
         setActiveBlockInfo(null);
         setSelectedRawCoords(null);
       } else {
-        // Select new block
+        // compute world‐pixel coords by adding origin offset
+        const worldX = clickedCoords.x + mapData.origin_x * COORDINATE_SCALE;
+        const worldZ = clickedCoords.z + mapData.origin_z * COORDINATE_SCALE;
+
+        // select and fetch info using world coords
         setSelectedRawCoords(clickedCoords);
         setActiveBlockCoords(clickedCoords);
-
-        // Look up block info using block coordinates
-        const info = getBlockInfoFromData(clickedCoords.x, clickedCoords.z, blockData, mapData);
+        const info = getBlockInfoFromData(worldX, worldZ, blockData, mapData);
         setActiveBlockInfo(info);
 
         if (!info) {
-          // Display block coordinates in the warning
-          const actualBlockX = Math.floor(clickedCoords.x / COORDINATE_SCALE);
-          const actualBlockZ = Math.floor(clickedCoords.z / COORDINATE_SCALE);
+          const actualBlockX = Math.floor(worldX / COORDINATE_SCALE);
+          const actualBlockZ = Math.floor(worldZ / COORDINATE_SCALE);
           toast.warning(`No block data found for coordinates (${actualBlockX}, ${actualBlockZ})`);
         }
       }
     } else {
-      // Clicking outside map or at low zoom clears selection
+      // clear on outside click or low zoom
       setActiveBlockCoords(null);
       setActiveBlockInfo(null);
       setSelectedRawCoords(null);
@@ -309,10 +308,24 @@ export default function MapViewer() {
                 />
 
                 {/* Block grid (1x1 block) */}
-                {showBlockGrid && <GridOverlay showGrid={showBlockGrid} gridSize={1} />}
+                {showBlockGrid && (
+                  <GridOverlay
+                    showGrid={showBlockGrid}
+                    gridSize={1}
+                    originX={mapData.origin_x}
+                    originZ={mapData.origin_z}
+                  />
+                )}
 
                 {/* Chunk grid (16x16 blocks) */}
-                {showChunkGrid && <GridOverlay showGrid={showChunkGrid} gridSize={16} />}
+                {showChunkGrid && (
+                  <GridOverlay
+                    showGrid={showChunkGrid}
+                    gridSize={16}
+                    originX={mapData.origin_x}
+                    originZ={mapData.origin_z}
+                  />
+                )}
 
                 {/* Highlight for the selected block with proper scaling */}
                 {activeBlockCoords && (

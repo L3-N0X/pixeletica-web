@@ -28,6 +28,8 @@ export interface HoverInfoProps {
 export interface GridOverlayProps {
   showGrid: boolean;
   gridSize: number;
+  originX: number; // world‐coord origin X
+  originZ: number; // world‐coord origin Z
 }
 
 // Props for the MouseTracker component

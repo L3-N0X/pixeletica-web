@@ -73,9 +73,6 @@ export function BoundedTileLayerComponent({
         ]);
 
         map.fitBounds(mapBounds);
-
-        // Log current center after fitting bounds
-        const center = map.getCenter();
       } else {
         console.error(
           'Map or tilePane unavailable when trying to add layer. Map:',
