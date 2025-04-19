@@ -321,7 +321,6 @@ export default function Create() {
       toast.error('Please upload an image file before submitting.');
       return;
     }
-    console.log('Form submitted:', data);
 
     try {
       // Show loading overlay immediately

@@ -16,8 +16,8 @@ export function HoverInfo({
   if (!visible || !displayCoords || !mapOrigin) return null;
 
   // Calculate actual block coordinates using map origin and the chosen display coordinates
-  const actualBlockX = (mapOrigin.x + displayCoords.x) / COORDINATE_SCALE;
-  const actualBlockZ = (mapOrigin.z + displayCoords.z) / COORDINATE_SCALE;
+  const actualBlockX = Math.floor(mapOrigin.x + displayCoords.x / COORDINATE_SCALE);
+  const actualBlockZ = Math.floor(mapOrigin.z + displayCoords.z / COORDINATE_SCALE);
 
   // Calculate actual chunk coordinates using actual block coordinates
   const actualChunkX = Math.floor(actualBlockX / CHUNK_SIZE);

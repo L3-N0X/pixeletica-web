@@ -1,5 +1,6 @@
 import { BlockInfo } from '@/types/map-types';
 import { MapMetadata } from '@/api/maps';
+import { BLOCK_SIZE, COORDINATE_SCALE } from '@/constants/map-constants';
 
 // Function to get block info from the block data matrix
 export function getBlockInfoFromData(
@@ -25,41 +26,64 @@ export function getBlockInfoFromData(
     console.warn('[getBlockInfoFromData] Block data blocks lookup is missing.');
     return null;
   }
-  if (typeof blockData.height !== 'number') {
-    console.warn('[getBlockInfoFromData] blockData.height is missing or invalid.');
-    return null;
-  }
 
-  console.debug(`Looking up block info at [${blockX}, ${blockZ}]`);
+  // Get actual block coordinates from UI coordinates
+  const actualBlockX = Math.floor(blockX / COORDINATE_SCALE);
+  const actualBlockZ = Math.floor(blockZ / COORDINATE_SCALE);
 
-  // Calculate the index within the blockData matrix
-  const matrixX = blockX;
-  const matrixZ = blockData.height - 1 - blockZ;
-
+  // Calculate matrix dimensions
   const matrixHeight = blockData.matrix.length;
   const matrixWidth = blockData.matrix[0].length;
 
+  // Calculate map dimensions in blocks
+  const mapHeightInBlocks = Math.floor(mapData.height / BLOCK_SIZE);
+
+  // Calculate the coordinates in the matrix
+  // First, calculate the position relative to the map origin
+  const relativeBlockX = actualBlockX - mapData.origin_x;
+
+  // For Z axis, flip the coordinate system and move down by the map height
+  // This handles the case where Z is negative and ensures we're in the bottom-left quadrant
+  // We add mapHeightInBlocks to shift everything down
+  const relativeZAdjusted = mapHeightInBlocks + actualBlockZ - mapData.origin_z;
+
+  // Matrix index (top-down in matrix, which is inverted from our desired bottom-up)
+  const matrixRowIndex = matrixHeight - 1 - relativeZAdjusted;
+
   console.debug(
-    `[getBlockInfoFromData] blockCoords=(${blockX}, ${blockZ}), matrixIndices=(${matrixX}, ${matrixZ}), matrixDims=(${matrixWidth}x${matrixHeight})`
+    `[getBlockInfoFromData] blockCoords=(${blockX}, ${blockZ}), ` +
+      `actualCoords=(${actualBlockX}, ${actualBlockZ}), ` +
+      `mapOrigin=(${mapData.origin_x}, ${mapData.origin_z}), ` +
+      `mapHeightInBlocks=${mapHeightInBlocks}, ` +
+      `relativeX=${relativeBlockX}, relativeZAdjusted=${relativeZAdjusted}, ` +
+      `matrixRowIndex=${matrixRowIndex}, matrixDims=(${matrixWidth}x${matrixHeight})`
   );
 
   // Ensure calculated indices are within matrix bounds
-  if (matrixZ < 0 || matrixZ >= matrixHeight || matrixX < 0 || matrixX >= matrixWidth) {
+  if (
+    matrixRowIndex < 0 ||
+    matrixRowIndex >= matrixHeight ||
+    relativeBlockX < 0 ||
+    relativeBlockX >= matrixWidth
+  ) {
     console.warn(
-      `[getBlockInfoFromData] Matrix indices (${matrixX}, ${matrixZ}) out of bounds for block coords (${blockX}, ${blockZ}).`
+      `[getBlockInfoFromData] Matrix indices (${relativeBlockX}, ${matrixRowIndex}) out of bounds for block coords (${actualBlockX}, ${actualBlockZ}). ` +
+        `Matrix dimensions: ${matrixWidth}x${matrixHeight}`
     );
     return null;
   }
 
-  // Check if the row exists
-  if (!blockData.matrix[matrixZ]) {
-    console.warn(`[getBlockInfoFromData] Matrix row ${matrixZ} is undefined.`);
+  // Access the matrix at the calculated position
+  if (!blockData.matrix[matrixRowIndex]) {
+    console.warn(`[getBlockInfoFromData] Matrix row ${matrixRowIndex} is undefined.`);
     return null;
   }
 
-  const shortId = blockData.matrix[matrixZ][matrixX];
+  const shortId = blockData.matrix[matrixRowIndex][relativeBlockX];
   if (typeof shortId === 'undefined') {
-    console.warn(`[getBlockInfoFromData] Value at matrix[${matrixZ}][${matrixX}] is undefined.`);
+    console.warn(
+      `[getBlockInfoFromData] Value at matrix[${matrixRowIndex}][${relativeBlockX}] is undefined.`
+    );
     return null;
   }
 
@@ -74,7 +98,7 @@ export function getBlockInfoFromData(
     };
   } else {
     console.warn(
-      `No block details found for short ID: ${shortId} at block coords (${blockX}, ${blockZ})`
+      `No block details found for short ID: ${shortId} at block coords (${actualBlockX}, ${actualBlockZ})`
     );
     return null;
   }

@@ -15,20 +15,15 @@ export function BoundedTileLayerComponent({
   useEffect(() => {
     if (!metadata || !mapId || !map) return; // Ensure map instance is available
 
-    // Log zoom level data
-    console.log('DEBUG: Metadata Zoom Levels:', metadata.zoomLevels);
-
     // Define the getTileUrl function directly
     const getTileUrl = (coords: L.Coords): string => {
       const zoom = coords.z;
-      console.log(`getTileUrl called for z=${zoom}, x=${coords.x}, y=${coords.y}`); // Log requested coords
 
       const zoomLevelData = metadata.zoomLevels?.find((zl) => zl.zoomLevel === zoom);
       const tilesX = zoomLevelData?.tiles_x ?? 1;
       const tilesZ = zoomLevelData?.tiles_z ?? 1;
       const maxTileX = tilesX - 1;
       const maxTileY = tilesZ - 1;
-      console.log(`Zoom ${zoom}: Max Tile X=${maxTileX}, Max Tile Y=${maxTileY}`); // Log calculated max tiles
 
       if (coords.x < 0 || coords.y < 0 || coords.x > maxTileX || coords.y > maxTileY) {
         console.warn(
@@ -65,7 +60,6 @@ export function BoundedTileLayerComponent({
       // Check map instance and specifically if the tile pane exists
       const tilePane = map.getPane('tilePane');
       if (map && typeof map.addLayer === 'function' && tilePane) {
-        console.log('Map is ready and tilePane exists, adding tile layer...');
         tileLayer.addTo(map);
 
         // Convert metadata dimensions to block coordinates for proper bounds
@@ -78,16 +72,10 @@ export function BoundedTileLayerComponent({
           [heightInBlocks, widthInBlocks], // Bottom-right corner
         ]);
 
-        console.log('DEBUG: Fitting map to bounds:', mapBounds);
-        console.log(
-          `DEBUG: Map width in blocks: ${widthInBlocks}, height in blocks: ${heightInBlocks}`
-        );
-
         map.fitBounds(mapBounds);
 
         // Log current center after fitting bounds
         const center = map.getCenter();
-        console.log(`DEBUG: Map center after fitBounds: lat=${center.lat}, lng=${center.lng}`);
       } else {
         console.error(
           'Map or tilePane unavailable when trying to add layer. Map:',
@@ -104,7 +92,6 @@ export function BoundedTileLayerComponent({
     return () => {
       // Check map instance and if layer exists before removing
       if (map && typeof map.removeLayer === 'function' && map.hasLayer(tileLayer)) {
-        console.log('Removing tile layer from component...');
         map.removeLayer(tileLayer);
       }
     };

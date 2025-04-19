@@ -71,8 +71,6 @@ export default function MapViewer() {
     const widthInBlocks = mapData.width / BLOCK_SIZE;
     const heightInBlocks = mapData.height / BLOCK_SIZE;
 
-    console.log(`DEBUG: Map dimensions in blocks: ${widthInBlocks}x${heightInBlocks}`);
-
     return { width: widthInBlocks, height: heightInBlocks };
   }, [mapData]);
 
@@ -126,8 +124,8 @@ export default function MapViewer() {
 
         if (!info) {
           // Display block coordinates in the warning
-          const actualBlockX = mapData ? mapData.origin_x + clickedCoords.x : clickedCoords.x;
-          const actualBlockZ = mapData ? mapData.origin_z + clickedCoords.z : clickedCoords.z;
+          const actualBlockX = Math.floor(clickedCoords.x / COORDINATE_SCALE);
+          const actualBlockZ = Math.floor(clickedCoords.z / COORDINATE_SCALE);
           toast.warning(`No block data found for coordinates (${actualBlockX}, ${actualBlockZ})`);
         }
       }
@@ -157,14 +155,6 @@ export default function MapViewer() {
     const loadMapData = async () => {
       try {
         const metadata = await getMapMetadata(taskId);
-        console.log('Loaded Map Metadata:', metadata);
-        console.log(`DEBUG: Map Origin Loaded - X: ${metadata.origin_x}, Z: ${metadata.origin_z}`);
-        console.log(`DEBUG: Map Dimensions - Width: ${metadata.width}, Height: ${metadata.height}`);
-        console.log(
-          `DEBUG: Map Dimensions in Blocks - Width: ${metadata.width / BLOCK_SIZE}, Height: ${
-            metadata.height / BLOCK_SIZE
-          }`
-        );
         setMapData(metadata);
         setLoading(false);
       } catch (err) {
@@ -178,9 +168,7 @@ export default function MapViewer() {
     const loadBlockData = async () => {
       if (!taskId) return;
       try {
-        console.log(`Fetching block data for map: ${taskId}`);
         const data = await getMapBlockData(taskId);
-        console.log('Block data received:', data);
         setBlockData(data);
       } catch (err) {
         console.error('Error fetching block data:', err);
@@ -223,8 +211,6 @@ export default function MapViewer() {
   const centerPoint = mapData
     ? [mapDimensionsInBlocks.height / 2, mapDimensionsInBlocks.width / 2]
     : [0, 0];
-
-  console.log(`DEBUG: Map center for render:`, centerPoint);
 
   return (
     <div className="space-y-6 pb-10">
