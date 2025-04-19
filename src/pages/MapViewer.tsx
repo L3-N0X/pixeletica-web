@@ -11,6 +11,7 @@ import {
 import { H1, P } from '@/components/ui/typography';
 import {
   ArrowLeftIcon,
+  Cross1Icon, // Import Cross1Icon for the clear button
   GridIcon,
   InfoCircledIcon,
   MinusIcon,
@@ -20,7 +21,8 @@ import {
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+// Removed unused LayersControl, ZoomControl
+import { MapContainer, Rectangle, useMap, useMapEvents } from 'react-leaflet';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -30,26 +32,23 @@ interface PixelCoords {
   z: number;
 }
 
+// Keep BlockInfo simple for now, expand if needed
 interface BlockInfo {
   type: string;
+  // Add other properties like biome, light level etc. if available from API
 }
 
 interface HoverInfoProps {
-  pixelCoords: PixelCoords | null;
-  blockInfo: BlockInfo | null;
-  chunkCoords: { x: number; z: number } | null;
-  visible: boolean;
-  isActive: boolean;
+  pixelCoords: PixelCoords | null; // Coordinates being hovered or clicked
+  blockInfo: BlockInfo | null; // Info for the hovered/clicked block
+  chunkCoords: { x: number; z: number } | null; // Chunk coords for display
+  visible: boolean; // Whether the info box should be shown
+  isActive: boolean; // True if a block is actively selected (clicked)
 }
 
 interface GridOverlayProps {
   showGrid: boolean;
   gridSize?: number;
-}
-
-interface TileLayerManagerProps {
-  mapId: string;
-  mapData: MapMetadata;
 }
 
 // Updated MouseTrackerProps to support click
@@ -77,28 +76,126 @@ function useZoomLevel(initialZoom = 0) {
   return { zoomLevel, ZoomListener };
 }
 
-// Custom component to show hover information
+// NEW: BoundedTileLayer as a Component
+interface BoundedTileLayerProps {
+  mapId: string;
+  metadata: MapMetadata;
+  layerName?: string;
+}
+
+function BoundedTileLayerComponent({
+  mapId,
+  metadata,
+  layerName = 'Minecraft Map',
+}: BoundedTileLayerProps) {
+  const map = useMap();
+  const baseUrl = (import.meta.env && import.meta.env.VITE_API_BASE_URL) || '/api';
+
+  useEffect(() => {
+    if (!metadata || !mapId || !map) return; // Ensure map instance is available
+
+    // Define the getTileUrl function directly
+    const getTileUrl = (coords: L.Coords): string => {
+      const zoom = coords.z;
+      const zoomLevelData = metadata.zoomLevels?.find((zl) => zl.zoomLevel === zoom);
+      const tilesX = zoomLevelData?.tiles_x ?? 1;
+      const tilesZ = zoomLevelData?.tiles_z ?? 1;
+      const maxTileX = tilesX - 1;
+      const maxTileY = tilesZ - 1;
+
+      if (coords.x < 0 || coords.y < 0 || coords.x > maxTileX || coords.y > maxTileY) {
+        console.debug(
+          `Tile out of bounds: z=${zoom}, x=${coords.x}, y=${coords.y}. Max: x=${maxTileX}, y=${maxTileY}`
+        );
+        return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+      }
+
+      const tileUrl = `${baseUrl}/map/${mapId}/tiles/${zoom}/${coords.x}/${coords.y}.${
+        metadata.tileFormat || 'png'
+      }`;
+      console.debug(`[TileLayer] Requesting tile: ${tileUrl}`);
+      return tileUrl;
+    };
+
+    // Create the instance using L.TileLayer directly with the custom getTileUrl
+    // Pass an empty string initially for the URL template, as getTileUrl overrides it.
+    const tileLayer = new L.TileLayer('', {
+      attribution: `© ${layerName}`,
+      maxZoom: metadata.maxZoom ?? 10,
+      minZoom: metadata.minZoom ?? 0,
+      noWrap: true,
+      tileSize: metadata.tileSize,
+      className: 'pixelated-image',
+      // getTileUrl cannot be passed in options
+    });
+
+    // Assign the custom getTileUrl function AFTER creating the instance
+    tileLayer.getTileUrl = getTileUrl;
+
+    // Add using whenReady, checking for the tile pane
+    map.whenReady(() => {
+      // Check map instance and specifically if the tile pane exists
+      const tilePane = map.getPane('tilePane');
+      if (map && typeof map.addLayer === 'function' && tilePane) {
+        console.log('Map is ready and tilePane exists, adding tile layer...');
+        tileLayer.addTo(map);
+      } else {
+        console.error(
+          'Map or tilePane unavailable when trying to add layer. Map:',
+          !!map,
+          'addLayer:',
+          typeof map?.addLayer,
+          'tilePane:',
+          !!tilePane
+        );
+      }
+    });
+
+    // Cleanup
+    return () => {
+      // Check map instance and if layer exists before removing
+      if (map && typeof map.removeLayer === 'function' && map.hasLayer(tileLayer)) {
+        console.log('Removing tile layer from component...');
+        map.removeLayer(tileLayer);
+      }
+    };
+    // Dependencies: map instance, metadata, mapId, layerName, baseUrl
+  }, [map, mapId, metadata, layerName, baseUrl]);
+
+  return null; // This component doesn't render anything itself
+}
+
+// MapSetup component is no longer needed as BoundedTileLayerComponent handles the layer.
+// const MapSetup = ({ metadata }: { metadata: MapMetadata }) => { ... }; // Removed
+
+// Custom component to show hover/active block information
 function HoverInfo({ pixelCoords, blockInfo, chunkCoords, visible, isActive }: HoverInfoProps) {
   if (!visible || !pixelCoords) return null;
 
+  const blockName = blockInfo?.type ?? (isActive ? 'Loading...' : 'Unknown');
+
   return (
-    <div className="absolute bottom-4 left-4 bg-card border shadow-md p-3 rounded-md z-[1000] text-sm">
-      <div className="font-semibold mb-1">{isActive ? 'Active Block' : 'Cursor Position'}</div>
+    <div className="absolute bottom-4 left-4 bg-card border shadow-md p-3 rounded-md z-[1000] text-sm max-w-xs">
+      <div className="font-semibold mb-1">{isActive ? 'Selected Block' : 'Cursor Position'}</div>
+      {/* Display Block Coordinates */}
       <div className="flex gap-2">
         <span className="text-muted-foreground">Block X:</span> {pixelCoords.x}
         <span className="text-muted-foreground ml-2">Block Z:</span> {pixelCoords.z}
       </div>
+      {/* Display Chunk Coordinates */}
       {chunkCoords && (
         <div className="flex gap-2 mt-1">
           <span className="text-muted-foreground">Chunk X:</span> {chunkCoords.x}
           <span className="text-muted-foreground ml-2">Chunk Z:</span> {chunkCoords.z}
         </div>
       )}
-      {blockInfo && (
-        <div className="mt-2">
-          <div className="font-semibold mb-1">Block</div>
+      {/* Display Block Type/Name */}
+      {/* Only show block type if hovering at high zoom or if a block is active */}
+      {(isActive || blockInfo) && (
+        <div className="mt-2 pt-2 border-t">
+          <div className="font-semibold mb-1">Block Type</div>
           <div className="flex gap-2">
-            <span>{blockInfo.type || 'Unknown'}</span>
+            <span>{blockName}</span>
           </div>
         </div>
       )}
@@ -128,13 +225,12 @@ function GridOverlay({ showGrid, gridSize = 16 }: GridOverlayProps) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       const bounds = map.getBounds();
-      const zoom = map.getZoom();
-      const topLeft = map.latLngToLayerPoint(bounds.getNorthWest());
-      const bottomRight = map.latLngToLayerPoint(bounds.getSouthEast());
+      // Removed unused variables: zoom, topLeft, bottomRight
 
       // Calculate grid spacing in pixels at current zoom
-      const start = map.layerPointToLatLng([0, 0]);
-      const end = map.layerPointToLatLng([gridSize, gridSize]);
+      // Use L.point() to potentially fix type error
+      const start = map.layerPointToLatLng(L.point(0, 0));
+      const end = map.layerPointToLatLng(L.point(gridSize, gridSize));
       const deltaLng = Math.abs(end.lng - start.lng);
       const deltaLat = Math.abs(end.lat - start.lat);
 
@@ -185,56 +281,7 @@ function GridOverlay({ showGrid, gridSize = 16 }: GridOverlayProps) {
     };
   }, [map, showGrid, gridSize]);
 
-  return null;
-}
-
-/**
- * Custom component to handle tile loading based on new zoom_levels structure.
- * For each zoom level, overlays the correct tiles as images.
- */
-function TileLayerManager({ mapId, mapData }: TileLayerManagerProps) {
-  if (!mapId || !mapData) return null;
-
-  const baseUrl = (import.meta.env && import.meta.env.VITE_API_BASE_URL) || '/api';
-  const tileSize = mapData.tileSize || 256;
-  const minZoom = mapData.minZoom ?? 0;
-  const maxZoom = mapData.maxZoom ?? 10;
-
-  // Compute bounds for the highest zoom level (full map area)
-  let bounds: [[number, number], [number, number]] = [
-    [0, 0],
-    [mapData.height, mapData.width],
-  ];
-
-  // If zoomLevels info is available, use it to set bounds for each zoom level
-  if (mapData.zoomLevels && Array.isArray(mapData.zoomLevels)) {
-    const zl =
-      mapData.zoomLevels.find(
-        (z: any) => z.zoomLevel === maxZoom || z.zoomLevel === mapData.maxZoom
-      ) || mapData.zoomLevels[mapData.zoomLevels.length - 1];
-    if (zl) {
-      const width = zl.tiles_x * tileSize;
-      const height = zl.tiles_z * tileSize;
-      bounds = [
-        [0, 0],
-        [height, width],
-      ];
-    }
-  }
-
-  const urlTemplate = `${baseUrl}/map/${mapId}/tiles/{z}/{x}/{y}.png`;
-
-  return (
-    <TileLayer
-      url={urlTemplate}
-      tileSize={tileSize}
-      minZoom={minZoom}
-      maxZoom={maxZoom}
-      bounds={bounds}
-      noWrap={true}
-      className="pixelated-image"
-    />
-  );
+  return null; // GridOverlay must return null to be a valid component
 }
 
 // Zoom button components
@@ -323,7 +370,9 @@ export default function MapViewer() {
   const [showChunkGrid, setShowChunkGrid] = useState(false);
   const [showInfo, setShowInfo] = useState(true);
   const [hoverCoords, setHoverCoords] = useState<PixelCoords | null>(null);
-  const [activeBlock, setActiveBlock] = useState<PixelCoords | null>(null);
+  const [activeBlockCoords, setActiveBlockCoords] = useState<PixelCoords | null>(null); // Renamed for clarity
+  const [activeBlockInfo, setActiveBlockInfo] = useState<BlockInfo | null>(null); // State for active block details
+  const [isFetchingBlockInfo, setIsFetchingBlockInfo] = useState(false); // Loading state for block info fetch
 
   // Calculate the bounds based on the image dimensions
   // Moved up to ensure hooks are called unconditionally
@@ -331,19 +380,89 @@ export default function MapViewer() {
     if (!mapData)
       return [
         [0, 0],
-        [100, 100], // Default bounds if mapData is not yet loaded
+        [100, 0], // Default south-west [y, x]
+        [0, 100], // Default north-east [y, x]
       ];
+    // For CRS.Simple with top-left origin (0,0):
+    // Bounds format is [[south, west], [north, east]] which translates to [[maxY, minX], [minY, maxX]]
     return [
-      [0, 0],
-      [mapData.height, mapData.width],
+      [mapData.height, 0], // South-West corner (max Y, min X)
+      [0, mapData.width], // North-East corner (min Y, max X)
     ];
   }, [mapData]);
 
   // Define the CRS (Coordinate Reference System) that matches our pixel coordinates
-  // Moved up to ensure hooks are called unconditionally
   const pixelCRS = useMemo(() => {
+    // L.CRS.Simple maps coordinates directly to pixels (lat=y, lng=x)
+    // We might need transformation if the origin isn't top-left (0,0)
+    // For now, assume Simple CRS works if tiles are generated accordingly.
     return L.CRS.Simple;
   }, []);
+
+  // Placeholder for the actual API call - MUST BE REPLACED
+  // Needs error handling and potentially caching
+  async function fetchBlockInfo(x: number, z: number): Promise<BlockInfo | null> {
+    if (!taskId) return null;
+    setIsFetchingBlockInfo(true);
+    try {
+      // In a real scenario, this would fetch data from an endpoint like:
+      // const response = await fetch(`${baseUrl}/map/${taskId}/block/${x}/${z}`); // Adjust endpoint as needed
+      // if (!response.ok) throw new Error('Failed to fetch block info');
+      // const data = await response.json();
+      // return data;
+
+      console.log(`Fetching block info for task ${taskId} at (${x}, ${z})`);
+      // Simulate fetching data
+      await new Promise((resolve) => setTimeout(resolve, 250)); // Simulate network delay
+      // Return dummy data for now - REPLACE THIS
+      const blockType = `Simulated Block (${x}, ${z})`; // Example name
+      return { type: blockType };
+    } catch (error) {
+      console.error('Failed to fetch block info:', error);
+      toast.error('Could not load block details.');
+      return null;
+    } finally {
+      setIsFetchingBlockInfo(false);
+    }
+  }
+
+  // Handle block click
+  const handleBlockClick = async (coords: PixelCoords | null) => {
+    if (coords) {
+      // If clicking the same block again, deselect it
+      if (
+        activeBlockCoords &&
+        activeBlockCoords.x === coords.x &&
+        activeBlockCoords.z === coords.z
+      ) {
+        setActiveBlockCoords(null);
+        setActiveBlockInfo(null);
+      } else {
+        // Select new block
+        setActiveBlockCoords(coords);
+        setActiveBlockInfo(null); // Clear previous info immediately
+        const info = await fetchBlockInfo(coords.x, coords.z);
+        // Check if the selected block is still the same after the async call
+        if (
+          activeBlockCoords &&
+          activeBlockCoords.x === coords.x &&
+          activeBlockCoords.z === coords.z
+        ) {
+          setActiveBlockInfo(info);
+        }
+      }
+    } else {
+      // Clicking outside map or at low zoom clears selection
+      setActiveBlockCoords(null);
+      setActiveBlockInfo(null);
+    }
+  };
+
+  // Handle clearing the selection via button
+  const clearSelection = () => {
+    setActiveBlockCoords(null);
+    setActiveBlockInfo(null);
+  };
 
   useEffect(() => {
     if (!taskId) {
@@ -356,6 +475,7 @@ export default function MapViewer() {
     const loadMapData = async () => {
       try {
         const metadata = await getMapMetadata(taskId);
+        console.log('Loaded Map Metadata:', metadata); // Log loaded metadata
         setMapData(metadata);
         setLoading(false);
       } catch (err) {
@@ -457,14 +577,15 @@ export default function MapViewer() {
                 <InfoCircledIcon className="h-4 w-4" />
                 {showInfo ? 'Hide Info' : 'Show Info'}
               </Button>
+              {/* Updated Clear Selection Button */}
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setActiveBlock(null)}
+                onClick={clearSelection}
                 className="flex items-center gap-2"
-                disabled={!activeBlock}
+                disabled={!activeBlockCoords || isFetchingBlockInfo} // Disable while fetching or if nothing selected
               >
-                Clear Selection
+                <Cross1Icon className="h-4 w-4" /> Clear Selection
               </Button>
             </div>
           </div>
@@ -473,59 +594,75 @@ export default function MapViewer() {
           {mapData ? (
             <div className="w-full h-[600px] rounded-md overflow-hidden relative">
               <MapContainer
-                bounds={bounds}
-                // @ts-ignore - react-leaflet types don't include CRS but the prop works
+                key={taskId} // Add key to force remount if taskId changes
+                // @ts-ignore - react-leaflet types might mismatch CRS prop, but it's valid Leaflet option
                 crs={pixelCRS}
-                minZoom={0}
-                maxZoom={10}
-                zoom={4}
-                zoomSnap={0.25}
-                zoomDelta={0.25}
-                wheelPxPerZoomLevel={40}
+                bounds={bounds} // Set initial bounds - Removed duplicate
+                minZoom={mapData.minZoom ?? 0} // Use metadata minZoom
+                maxZoom={mapData.maxZoom ?? 10} // Use metadata maxZoom
+                // Initial zoom can be set here, or let fitBounds handle it
+                // zoom={mapData.minZoom ?? 0}
+                zoomSnap={1} // Snap zoom to integer levels
+                zoomDelta={1} // Zoom by integer levels
+                wheelPxPerZoomLevel={60} // Standard Leaflet value
                 scrollWheelZoom={true}
-                wheelDebounceTime={0}
                 attributionControl={false}
-                className="w-full h-full"
-                zoomControl={false}
-                center={[0, 0]}
+                className="w-full h-full bg-muted" // Added background color
+                zoomControl={false} // Disable default zoom control, using custom
+                maxBoundsViscosity={1.0} // Prevent dragging outside bounds
+                // center={[mapData.height / 2, mapData.width / 2]} // Center initially
               >
                 <ZoomListener />
-                <TileLayerManager mapId={taskId!} mapData={mapData} />
-                <GridOverlay showGrid={showBlockGrid} gridSize={16} />
-                <GridOverlay showGrid={showChunkGrid} gridSize={256} />
-                <MouseTracker
-                  onMouseMove={(coords) => setHoverCoords(coords)}
-                  onClick={(coords) => setActiveBlock(coords)}
-                  zoomLevel={zoomLevel}
-                  minActiveZoom={mapData ? mapData.maxZoom - 1 : 0}
+                {/* Render the new BoundedTileLayerComponent directly */}
+                <BoundedTileLayerComponent
+                  mapId={taskId!}
+                  metadata={mapData}
+                  layerName={mapData.name || 'Map Layer'}
                 />
-                <div className="leaflet-top leaflet-right">
-                  <div className="leaflet-control leaflet-bar">
+                {/* MapSetup call removed */}
+                <GridOverlay showGrid={showBlockGrid} gridSize={16} />
+                <GridOverlay showGrid={showChunkGrid} gridSize={256} /> {/* Chunk Grid */}
+                {/* Highlight for the selected block */}
+                {activeBlockCoords && (
+                  <Rectangle
+                    // Leaflet bounds are [[south, west], [north, east]] => [[minZ, minX], [maxZ, maxX]]
+                    bounds={[
+                      [activeBlockCoords.z, activeBlockCoords.x], // Bottom-left corner (z, x)
+                      [activeBlockCoords.z + 1, activeBlockCoords.x + 1], // Top-right corner (z+1, x+1)
+                    ]}
+                    pathOptions={{ color: 'yellow', weight: 2, fillOpacity: 0.1 }} // Style the highlight
+                  />
+                )}
+                <MouseTracker
+                  onMouseMove={setHoverCoords} // Pass setter directly
+                  onClick={handleBlockClick} // Use the new handler
+                  zoomLevel={zoomLevel}
+                  minActiveZoom={mapData ? mapData.maxZoom - 2 : 0} // Allow clicking at slightly lower zoom
+                />
+                {/* Zoom Controls */}
+                <div className="leaflet-top leaflet-right z-[1000]">
+                  {' '}
+                  {/* Ensure controls are on top */}
+                  <div className="leaflet-control leaflet-bar flex flex-col">
                     <ZoomInButton />
                     <ZoomOutButton />
                   </div>
                 </div>
               </MapContainer>
+              {/* Display Hover/Active Block Info */}
               <HoverInfo
-                pixelCoords={
-                  activeBlock ?? hoverCoords
-                    ? {
-                        x: Math.floor((activeBlock ?? hoverCoords)!.x / 16),
-                        z: Math.floor((activeBlock ?? hoverCoords)!.z / 16),
-                      }
-                    : null
-                }
-                blockInfo={activeBlock ?? hoverCoords ? { type: 'Minecraft Block' } : null}
+                pixelCoords={activeBlockCoords ?? hoverCoords} // Show active first, then hover
+                blockInfo={activeBlockCoords ? activeBlockInfo : null} // Show active info, or null if only hovering
                 chunkCoords={
-                  activeBlock ?? hoverCoords
+                  activeBlockCoords ?? hoverCoords
                     ? {
-                        x: Math.floor((activeBlock ?? hoverCoords)!.x / 256),
-                        z: Math.floor((activeBlock ?? hoverCoords)!.z / 256),
+                        x: Math.floor((activeBlockCoords ?? hoverCoords)!.x / 256), // Chunk X
+                        z: Math.floor((activeBlockCoords ?? hoverCoords)!.z / 256), // Chunk Z
                       }
                     : null
                 }
                 visible={showInfo}
-                isActive={!!activeBlock}
+                isActive={!!activeBlockCoords} // Determine if a block is actively selected
               />
             </div>
           ) : (
